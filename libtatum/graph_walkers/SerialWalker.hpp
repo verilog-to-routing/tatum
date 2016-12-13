@@ -33,7 +33,7 @@ class SerialWalker : public TimingGraphWalker<Visitor, DelayCalc> {
 #ifdef LOG_TRAVERSAL_LEVELS
             std::cout << "Required Pre-traversal\n";
 #endif
-            for(NodeId node_id : tg.primary_outputs()) {
+            for(NodeId node_id : tg.logical_outputs()) {
                 visitor.do_required_pre_traverse_node(tg, tc, node_id);
             }
         }

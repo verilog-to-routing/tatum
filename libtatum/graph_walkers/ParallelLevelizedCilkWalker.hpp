@@ -26,7 +26,7 @@ class ParallelLevelizedCilkWalker : public TimingGraphWalker<Visitor, DelayCalc>
         }
 
         void do_required_pre_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, Visitor& visitor) override {
-            const auto& po = tg.primary_outputs();
+            const auto& po = tg.logical_outputs();
             cilk_for(auto iter = po.begin(); iter != po.end(); ++iter) {
                 visitor.do_required_pre_traverse_node(tg, tc, *iter);
             }
