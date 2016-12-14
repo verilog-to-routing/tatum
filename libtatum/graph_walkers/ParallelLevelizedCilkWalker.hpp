@@ -56,6 +56,13 @@ class ParallelLevelizedCilkWalker : public TimingGraphWalker<Visitor, DelayCalc>
                 visitor.do_reset_node(*iter);
             }
         }
+
+        void do_update_slack_impl(const TimingGraph& tg, const DelayCalc& dc, Visitor& visitor) override {
+            auto edges = tg.edges();
+            cilk_for(auto iter = edges.begin(); iter != edges.end(); ++iter) {
+                visitor.do_slack_traverse_edge(tg, dc, *iter);
+            }
+        }
 };
 
 } //namepsace
