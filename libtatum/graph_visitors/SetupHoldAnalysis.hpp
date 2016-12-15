@@ -26,6 +26,10 @@ class SetupHoldAnalysis {
             setup_visitor_.do_reset_node(node_id); 
             hold_visitor_.do_reset_node(node_id); 
         }
+        void do_reset_edge(const EdgeId edge_id) { 
+            setup_visitor_.do_reset_edge(edge_id); 
+            hold_visitor_.do_reset_edge(edge_id); 
+        }
 
         void do_arrival_pre_traverse_node(const TimingGraph& tg, const TimingConstraints& tc, const NodeId node_id) { 
             setup_visitor_.do_arrival_pre_traverse_node(tg, tc, node_id); 

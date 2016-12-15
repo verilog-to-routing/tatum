@@ -36,6 +36,7 @@ class CommonAnalysisVisitor {
             : ops_(num_tags, num_slacks) { }
 
         void do_reset_node(const NodeId node_id) { ops_.reset_node(node_id); }
+        void do_reset_edge(const EdgeId edge_id) { ops_.reset_edge(edge_id); }
 
         void do_arrival_pre_traverse_node(const TimingGraph& tg, const TimingConstraints& tc, const NodeId node_id);
         void do_required_pre_traverse_node(const TimingGraph& tg, const TimingConstraints& tc, const NodeId node_id);

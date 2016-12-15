@@ -64,6 +64,9 @@ class SerialWalker : public TimingGraphWalker<Visitor, DelayCalc> {
             for(NodeId node_id : tg.nodes()) {
                 visitor.do_reset_node(node_id);
             }
+            for(EdgeId edge_id : tg.edges()) {
+                visitor.do_reset_edge(edge_id);
+            }
         }
 
         void do_update_slack_impl(const TimingGraph& tg, const DelayCalc& dc, Visitor& visitor) override {
