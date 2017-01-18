@@ -191,8 +191,8 @@ int main(int argc, char** argv) {
 
         std::vector<NodeId> nodes;
         //nodes = find_related_nodes(*timing_graph, {NodeId(71663)});
-        write_dot_file_setup("tg_setup_annotated.dot", *timing_graph, delay_calculator, serial_analyzer, nodes);
-        write_dot_file_hold("tg_hold_annotated.dot", *timing_graph, delay_calculator, serial_analyzer, nodes);
+        write_dot_file_setup("tg_setup_annotated.dot", *timing_graph, *delay_calculator, *std::dynamic_pointer_cast<tatum::SetupTimingAnalyzer>(setup_analyzer), nodes);
+        write_dot_file_hold("tg_hold_annotated.dot", *timing_graph, *delay_calculator, *std::dynamic_pointer_cast<tatum::HoldTimingAnalyzer>(serial_analyzer), nodes);
 
         //Verify
         clock_gettime(CLOCK_MONOTONIC, &verify_start);
