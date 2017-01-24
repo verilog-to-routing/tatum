@@ -216,7 +216,8 @@ DelayModel: DELAY_MODEL EOL { callback.start_delay_model(); }
 
 Results:  ANALYSIS_RESULTS EOL { callback.start_results(); }
         | Results TagType NodeId LaunchDomainId CaptureDomainId Time EOL { callback.add_node_tag($2, $3, $4, $5, NAN); }
-        | Results TagType EdgeId LaunchDomainId CaptureDomainId Slack EOL { callback.add_edge_tag($2, $3, $4, $5, NAN); }
+        | Results TagType EdgeId LaunchDomainId CaptureDomainId Slack EOL { callback.add_edge_slack($2, $3, $4, $5, NAN); }
+        | Results TagType NodeId LaunchDomainId CaptureDomainId Slack EOL { callback.add_node_slack($2, $3, $4, $5, NAN); }
 
 Time: TIME Number { $$ = $2; }
 Slack: SLACK Number { $$ = $2; }
