@@ -49,7 +49,7 @@ class FullSetupHoldTimingAnalyzer : public SetupHoldTimingAnalyzer {
             double total_analysis_sec = analysis_sec + graph_walker_.get_profiling_data("total_analysis_sec");
             graph_walker_.set_profiling_data("total_analysis_sec", total_analysis_sec);
             graph_walker_.set_profiling_data("analysis_sec", analysis_sec);
-            graph_walker_.set_profiling_data("num_full_updates", graph_walker_.get_profiling_data("total_analysis_sec") + 1);
+            graph_walker_.set_profiling_data("num_full_updates", graph_walker_.get_profiling_data("num_full_updates") + 1);
         }
 
         double get_profiling_data_impl(std::string key) override { return graph_walker_.get_profiling_data(key); }
