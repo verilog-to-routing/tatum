@@ -482,7 +482,13 @@ template<class AnalysisOps>
 bool CommonAnalysisVisitor<AnalysisOps>::should_calculate_slack(const TimingTag& src_tag, const TimingTag& sink_tag) const {
     TATUM_ASSERT_SAFE(src_tag.type() == TagType::DATA_ARRIVAL && sink_tag.type() == TagType::DATA_REQUIRED);
 
+    //NOTE: we do not need to check the constraints to determine whether this domain pair should be analyzed,
+    //      this check has already been done when we created the DATA_REQUIRED tags (i.e. sink tags in this context),
+    //      ensuring we only calculate slack for valid domain pairs (otherwise the DATA_REQUIREd tag would note exist)
+
+
     return src_tag.launch_clock_domain() == sink_tag.launch_clock_domain();
+
 }
 
 }} //namepsace
