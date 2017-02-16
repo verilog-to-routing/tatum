@@ -56,6 +56,8 @@ class SetupAnalysisOps : public CommonAnalysisOps {
                 Time tsu = dc.setup_time(tg, edge_id);
                 TATUM_ASSERT_MSG(tsu.value() >= 0., "Setup Time (Tsu) expected to be positive");
 
+                //The setup time is returned as a negative value, since it is placed on the clock path
+                //(instead of the data path).
                 return -tsu;
             } else {
                 Time tcq = dc.min_edge_delay(tg, edge_id);
