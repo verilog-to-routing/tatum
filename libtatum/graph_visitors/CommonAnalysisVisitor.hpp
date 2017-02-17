@@ -162,6 +162,9 @@ bool CommonAnalysisVisitor<AnalysisOps>::do_arrival_pre_traverse_node(const Timi
                 //Add the launch tag
                 ops_.add_tag(node_id, launch_tag);
 
+                //An input constraint means there is 'input_constraint' delay from when an external 
+                //signal is launched by its clock (external to the chip) until it arrives at the
+                //primary input
                 float input_constraint = tc.input_constraint(node_id, domain_id);
                 TATUM_ASSERT(!isnan(input_constraint));
 
@@ -213,7 +216,12 @@ bool CommonAnalysisVisitor<AnalysisOps>::do_required_pre_traverse_node(const Tim
                     float clock_constraint = ops_.clock_constraint(tc, launch_domain_id, capture_domain_id);
                     TATUM_ASSERT(!isnan(clock_constraint));
 
-                    float output_constraint = tc.output_constraint(node_id, capture_domain_id);
+                    //An output constraint means there is output_constraint delay outside the chip,
+                    //as a result signals need to reach the primary-output at least output_constraint
+                    //before the capture clock.
+                    //
+                    //Hence we subtract the output constraint from the target clock constraint
+                    float output_constraint = -tc.output_constraint(node_id, capture_domain_id);
                     TATUM_ASSERT(!isnan(output_constraint));
 
                     TimingTag constraint_tag = TimingTag(Time(clock_constraint) + Time(output_constraint), 
