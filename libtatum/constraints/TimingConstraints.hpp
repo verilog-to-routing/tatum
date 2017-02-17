@@ -64,8 +64,11 @@ class TimingConstraints {
         ///\returns The hold (min) constraint between src_domain and sink_domain
         float hold_constraint(const DomainId src_domain, const DomainId sink_domain) const;
         
-        //\returns The clock uncertainty between src_domain and sink_domain (defaults to zero if unspecified)
-        float clock_uncertainty(const DomainId src_domain, const DomainId sink_domain) const;
+        //\returns The setup clock uncertainty between src_domain and sink_domain (defaults to zero if unspecified)
+        float setup_clock_uncertainty(const DomainId src_domain, const DomainId sink_domain) const;
+
+        //\returns The hold clock uncertainty between src_domain and sink_domain (defaults to zero if unspecified)
+        float hold_clock_uncertainty(const DomainId src_domain, const DomainId sink_domain) const;
 
         ///\returns The input delay constraint on node_id
         float input_constraint(const NodeId node_id, const DomainId domain_id) const;
@@ -82,8 +85,11 @@ class TimingConstraints {
         //\returns A range of all setup constraints
         clock_constraint_range hold_constraints() const;
 
-        //\returns A rnage of all clock uncertainties
-        clock_uncertainty_range clock_uncertainties() const;
+        //\returns A range of all setup clock uncertainties
+        clock_uncertainty_range setup_clock_uncertainties() const;
+
+        //\returns A range of all hold clock uncertainties
+        clock_uncertainty_range hold_clock_uncertainties() const;
 
         //\returns A range of all input constraints
         io_constraint_range input_constraints() const;
@@ -109,8 +115,11 @@ class TimingConstraints {
         ///Sets the hold constraint between src_domain and sink_domain with value constraint
         void set_hold_constraint(const DomainId src_domain, const DomainId sink_domain, const float constraint);
 
-        ///Sets the hold constraint between src_domain and sink_domain with value constraint
-        void set_clock_uncertainty(const DomainId src_domain, const DomainId sink_domain, const float uncertainty);
+        ///Sets the setup clock uncertainty between src_domain and sink_domain with value uncertainty
+        void set_setup_clock_uncertainty(const DomainId src_domain, const DomainId sink_domain, const float uncertainty);
+
+        ///Sets the hold clock uncertainty between src_domain and sink_domain with value uncertainty
+        void set_hold_clock_uncertainty(const DomainId src_domain, const DomainId sink_domain, const float uncertainty);
 
         ///Sets the input delay constraint on node_id with value constraint
         void set_input_constraint(const NodeId node_id, const DomainId domain_id, const float constraint);
@@ -147,7 +156,8 @@ class TimingConstraints {
 
         std::map<DomainPair,float> setup_constraints_;
         std::map<DomainPair,float> hold_constraints_;
-        std::map<DomainPair,float> clock_uncertainties_;
+        std::map<DomainPair,float> setup_clock_uncertainties_;
+        std::map<DomainPair,float> hold_clock_uncertainties_;
         std::multimap<NodeId,IoConstraint> input_constraints_;
         std::multimap<NodeId,IoConstraint> output_constraints_;
 };
