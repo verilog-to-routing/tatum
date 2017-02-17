@@ -193,21 +193,27 @@ bool CommonAnalysisVisitor<AnalysisOps>::do_required_pre_traverse_node(const Tim
 
         if(!output_constraints.empty()) { //Some outputs may be unconstrained, so do not create tags for them
             //TODO: support multi-domain constraints on a single input
-            DomainId domain_id = tc.node_clock_domain(node_id);
-            TATUM_ASSERT(domain_id);
+            DomainId capture_domain_id = tc.node_clock_domain(node_id);
+            TATUM_ASSERT(capture_domain_id);
 
-            float output_constraint = tc.output_constraint(node_id, domain_id);
-            TATUM_ASSERT(!isnan(output_constraint));
+            for(DomainId launch_domain_id : tc.clock_domains()) {
+                if(tc.should_analyze(launch_domain_id, capture_domain_id)) {
 
-            for(auto constraint : output_constraints) {
-                TimingTag constraint_tag = TimingTag(Time(output_constraint), 
-                                                     DomainId::INVALID(), 
-                                                     constraint.second.domain,
-                                                     NodeId::INVALID(), //Origin
-                                                     TagType::CLOCK_CAPTURE);
-                ops_.add_tag(node_id, constraint_tag);
+                    float clock_constraint = ops_.clock_constraint(tc, launch_domain_id, capture_domain_id);
+                    TATUM_ASSERT(!isnan(clock_constraint));
 
-                node_constrained = true;
+                    float output_constraint = tc.output_constraint(node_id, capture_domain_id);
+                    TATUM_ASSERT(!isnan(output_constraint));
+
+                    TimingTag constraint_tag = TimingTag(Time(clock_constraint) + Time(output_constraint), 
+                                                         launch_domain_id,
+                                                         capture_domain_id, 
+                                                         NodeId::INVALID(), //Origin
+                                                         TagType::CLOCK_CAPTURE);
+                    ops_.add_tag(node_id, constraint_tag);
+
+                    node_constrained = true;
+                }
             }
         }
     } else {
