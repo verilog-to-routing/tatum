@@ -151,6 +151,17 @@ bool CommonAnalysisVisitor<AnalysisOps>::do_arrival_pre_traverse_node(const Timi
                 DomainId domain_id = tc.node_clock_domain(node_id);
                 TATUM_ASSERT(domain_id);
 
+                //Launch tag
+                //
+                //We assume primary inputs are clocked at time 0
+                TimingTag launch_tag = TimingTag(Time(0.), 
+                                                 domain_id,
+                                                 DomainId::INVALID(),
+                                                 NodeId::INVALID(), //Origin
+                                                 TagType::CLOCK_LAUNCH);
+                //Add the launch tag
+                ops_.add_tag(node_id, launch_tag);
+
                 float input_constraint = tc.input_constraint(node_id, domain_id);
                 TATUM_ASSERT(!isnan(input_constraint));
 
