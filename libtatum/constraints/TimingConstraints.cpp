@@ -378,6 +378,14 @@ void TimingConstraints::print_constraints() const {
         cout << " Uncertainty: " << uncertainty;
         cout << endl;
     }
+    cout << "Source Latency" << endl;
+    for(auto kv : source_latencies()) {
+        auto domain = kv.first;
+        float latency = kv.second;
+        cout << "Domain: " << domain;
+        cout << " Latency: " << latency;
+        cout << endl;
+    }
 }
 
 TimingConstraints::io_constraint_iterator TimingConstraints::find_io_constraint(const NodeId node_id, const DomainId domain_id, const std::multimap<NodeId,IoConstraint>& io_constraints) const {
