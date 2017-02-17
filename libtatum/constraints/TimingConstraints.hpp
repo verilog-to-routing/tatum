@@ -104,7 +104,7 @@ class TimingConstraints {
         io_constraint_range output_constraints(const NodeId id) const;
 
         ///Prints out the timing constraints for debug purposes
-        void print() const;
+        void print_constraints() const;
     public: //Mutators
         ///\returns The DomainId of the clock with the specified name (will be created if it doesn not exist)
         DomainId create_clock_domain(const std::string name);

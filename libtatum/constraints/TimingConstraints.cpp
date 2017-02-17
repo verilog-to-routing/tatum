@@ -208,14 +208,12 @@ DomainId TimingConstraints::create_clock_domain(const std::string name) {
 }
 
 void TimingConstraints::set_setup_constraint(const DomainId src_domain, const DomainId sink_domain, const float constraint) {
-    std::cout << "SRC: " << src_domain << " SINK: " << sink_domain << " Constraint: " << constraint << std::endl;
     auto key = DomainPair(src_domain, sink_domain);
     auto iter = setup_constraints_.insert(std::make_pair(key, constraint));
     TATUM_ASSERT_MSG(iter.second, "Attempted to insert duplicate setup clock constraint");
 }
 
 void TimingConstraints::set_hold_constraint(const DomainId src_domain, const DomainId sink_domain, const float constraint) {
-    std::cout << "SRC: " << src_domain << " SINK: " << sink_domain << " Constraint: " << constraint << std::endl;
     auto key = DomainPair(src_domain, sink_domain);
     auto iter = hold_constraints_.insert(std::make_pair(key, constraint));
     TATUM_ASSERT_MSG(iter.second, "Attempted to insert duplicate hold clock constraint");
@@ -307,9 +305,9 @@ void TimingConstraints::remap_nodes(const tatum::util::linear_map<NodeId,NodeId>
     output_constraints_ = std::move(remapped_output_constraints);
 }
 
-void TimingConstraints::print() const {
+void TimingConstraints::print_constraints() const {
     cout << "Setup Clock Constraints" << endl;
-    for(auto kv : setup_constraints_) {
+    for(auto kv : setup_constraints()) {
         auto key = kv.first;
         float constraint = kv.second;
         cout << "SRC: " << key.src_domain_id;
@@ -318,7 +316,7 @@ void TimingConstraints::print() const {
         cout << endl;
     }
     cout << "Hold Clock Constraints" << endl;
-    for(auto kv : hold_constraints_) {
+    for(auto kv : hold_constraints()) {
         auto key = kv.first;
         float constraint = kv.second;
         cout << "SRC: " << key.src_domain_id;
@@ -327,7 +325,7 @@ void TimingConstraints::print() const {
         cout << endl;
     }
     cout << "Input Constraints" << endl;
-    for(auto kv : input_constraints_) {
+    for(auto kv : input_constraints()) {
         auto node_id = kv.first;
         auto io_constraint = kv.second;
         cout << "Node: " << node_id;
@@ -336,12 +334,30 @@ void TimingConstraints::print() const {
         cout << endl;
     }
     cout << "Output Constraints" << endl;
-    for(auto kv : output_constraints_) {
+    for(auto kv : output_constraints()) {
         auto node_id = kv.first;
         auto io_constraint = kv.second;
         cout << "Node: " << node_id;
         cout << " Domain: " << io_constraint.domain;
         cout << " Constraint: " << io_constraint.constraint;
+        cout << endl;
+    }
+    cout << "Setup Clock Uncertainty" << endl;
+    for(auto kv : setup_clock_uncertainties()) {
+        auto key = kv.first;
+        float uncertainty = kv.second;
+        cout << "SRC: " << key.src_domain_id;
+        cout << " SINK: " << key.sink_domain_id;
+        cout << " Uncertainty: " << uncertainty;
+        cout << endl;
+    }
+    cout << "Hold Clock Uncertainty" << endl;
+    for(auto kv : hold_clock_uncertainties()) {
+        auto key = kv.first;
+        float uncertainty = kv.second;
+        cout << "SRC: " << key.src_domain_id;
+        cout << " SINK: " << key.sink_domain_id;
+        cout << " Uncertainty: " << uncertainty;
         cout << endl;
     }
 }
