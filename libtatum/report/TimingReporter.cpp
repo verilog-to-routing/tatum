@@ -35,7 +35,24 @@ void TimingReporter::report_timing_setup(std::string filename,
 void TimingReporter::report_timing_setup(std::ostream& os, 
                                          const SetupTimingAnalyzer& setup_analyzer,
                                          size_t npaths) const {
-    auto paths = collect_worst_setup_paths(setup_analyzer, npaths);
+    detail::SetupTagRetriever tag_retriever(setup_analyzer);
+    auto paths = collect_worst_paths(tag_retriever, npaths);
+
+    report_timing(os, paths, npaths);
+}
+
+void TimingReporter::report_timing_hold(std::string filename, 
+                                         const HoldTimingAnalyzer& hold_analyzer,
+                                         size_t npaths) const {
+    std::ofstream os(filename);
+    report_timing_hold(os, hold_analyzer, npaths);
+}
+
+void TimingReporter::report_timing_hold(std::ostream& os, 
+                                         const HoldTimingAnalyzer& hold_analyzer,
+                                         size_t npaths) const {
+    detail::HoldTagRetriever tag_retriever(hold_analyzer);
+    auto paths = collect_worst_paths(tag_retriever, npaths);
 
     report_timing(os, paths, npaths);
 }
@@ -155,7 +172,6 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
     }
 
 
-
     //Capture path (required time)
     Time req_time;
     {
@@ -186,7 +202,13 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
                 TATUM_ASSERT(path_elem.tag.type() == TagType::DATA_REQUIRED);
                 
                 //Uncertainty
-                Time uncertainty = -Time(timing_constraints_.setup_clock_uncertainty(timing_path.launch_domain, timing_path.capture_domain));
+                Time uncertainty;
+                
+                if(timing_path.type == TimingPathType::SETUP) {
+                    uncertainty = -Time(timing_constraints_.setup_clock_uncertainty(timing_path.launch_domain, timing_path.capture_domain));
+                } else {
+                    uncertainty = Time(timing_constraints_.hold_clock_uncertainty(timing_path.launch_domain, timing_path.capture_domain));
+                }
                 path += uncertainty;
                 print_path_line(os, "clock uncertainty", uncertainty, path);
 
@@ -229,7 +251,7 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
             prev_path = path;
         }
 
-        //Sanity check required times
+        //Sanity check required time
         if(!nearly_equal(req_time, path)) {
             std::stringstream ss;
             ss << "Internal Error: analyzer required time (" << req_time.value() << ")"
@@ -269,7 +291,7 @@ void TimingReporter::print_path_line(std::ostream& os, std::string point, std::s
     os << "\n";
 }
 
-std::vector<TimingPath> TimingReporter::collect_worst_setup_paths(const SetupTimingAnalyzer& setup_analyzer, size_t npaths) const {
+std::vector<TimingPath> TimingReporter::collect_worst_paths(const detail::TagRetriever& tag_retriever, size_t npaths) const {
     std::vector<TimingPath> paths;
 
     //Sort the sinks by slack
@@ -277,7 +299,7 @@ std::vector<TimingPath> TimingReporter::collect_worst_setup_paths(const SetupTim
 
     //Add the slacks of all sink
     for(NodeId node : timing_graph_.logical_outputs()) {
-        for(TimingTag tag : setup_analyzer.setup_slacks(node)) {
+        for(TimingTag tag : tag_retriever.slacks(node)) {
             tags_and_sinks.emplace(tag,node);
         }
     }
@@ -290,7 +312,7 @@ std::vector<TimingPath> TimingReporter::collect_worst_setup_paths(const SetupTim
         TimingTag sink_tag;
         std::tie(sink_tag, sink_node) = kv;
 
-        TimingPath path = trace_setup_path(setup_analyzer, sink_tag, sink_node); 
+        TimingPath path = trace_path(tag_retriever, sink_tag, sink_node); 
 
         paths.push_back(path);
 
@@ -300,16 +322,16 @@ std::vector<TimingPath> TimingReporter::collect_worst_setup_paths(const SetupTim
     return paths;
 }
 
-TimingPath TimingReporter::trace_setup_path(const SetupTimingAnalyzer& setup_analyzer, 
-                                            const TimingTag& sink_tag, 
-                                            const NodeId sink_node) const {
+TimingPath TimingReporter::trace_path(const detail::TagRetriever& tag_retriever, 
+                                      const TimingTag& sink_tag, 
+                                      const NodeId sink_node) const {
     TATUM_ASSERT(timing_graph_.node_type(sink_node) == NodeType::SINK);
     TATUM_ASSERT(sink_tag.type() == TagType::SLACK);
 
     TimingPath path;
     path.launch_domain = sink_tag.launch_clock_domain();
     path.capture_domain = sink_tag.capture_clock_domain();
-    path.type = TimingPathType::SETUP;
+    path.type = tag_retriever.type();
 
     //Trace the data launch path
     NodeId curr_node = sink_node;
@@ -318,14 +340,14 @@ TimingPath TimingReporter::trace_setup_path(const SetupTimingAnalyzer& setup_ana
 
         if(curr_node == sink_node) {
             //Record the slack at the sink node
-            auto slack_tags = setup_analyzer.setup_slacks(curr_node);
+            auto slack_tags = tag_retriever.slacks(curr_node);
             auto iter = find_tag(slack_tags, path.launch_domain, path.capture_domain);
             TATUM_ASSERT(iter != slack_tags.end());
 
             path.slack_tag = *iter;
         }
 
-        auto data_tags = setup_analyzer.setup_tags(curr_node, TagType::DATA_ARRIVAL);
+        auto data_tags = tag_retriever.tags(curr_node, TagType::DATA_ARRIVAL);
 
         //First try to find the exact tag match
         auto iter = find_tag(data_tags, path.launch_domain, path.capture_domain);
@@ -356,7 +378,7 @@ TimingPath TimingReporter::trace_setup_path(const SetupTimingAnalyzer& setup_ana
         TATUM_ASSERT(timing_graph_.node_type(curr_node) == NodeType::CPIN);
 
         while(curr_node) {
-            auto launch_tags = setup_analyzer.setup_tags(curr_node, TagType::CLOCK_LAUNCH);
+            auto launch_tags = tag_retriever.tags(curr_node, TagType::CLOCK_LAUNCH);
             auto iter = find_tag(launch_tags, path.launch_domain, path.capture_domain);
             TATUM_ASSERT(iter != launch_tags.end());
 
@@ -376,7 +398,7 @@ TimingPath TimingReporter::trace_setup_path(const SetupTimingAnalyzer& setup_ana
         //From the primary input launch tag
         TATUM_ASSERT(path.data_launch.size() > 0);
         NodeId launch_node = path.data_launch[0].node;
-        auto clock_launch_tags = setup_analyzer.setup_tags(launch_node, TagType::CLOCK_LAUNCH);
+        auto clock_launch_tags = tag_retriever.tags(launch_node, TagType::CLOCK_LAUNCH);
         //First try to find the exact tag match
         auto iter = find_tag(clock_launch_tags, path.launch_domain, path.capture_domain);
         if(iter == clock_launch_tags.end()) {
@@ -397,7 +419,7 @@ TimingPath TimingReporter::trace_setup_path(const SetupTimingAnalyzer& setup_ana
 
         if(curr_node == sink_node) {
             //Record the required time
-            auto required_tags = setup_analyzer.setup_tags(curr_node, TagType::DATA_REQUIRED);
+            auto required_tags = tag_retriever.tags(curr_node, TagType::DATA_REQUIRED);
             auto iter = find_tag(required_tags, path.launch_domain, path.capture_domain);
             TATUM_ASSERT(iter != required_tags.end());
             path.clock_capture.emplace_back(*iter, curr_node, EdgeId::INVALID());
@@ -405,7 +427,7 @@ TimingPath TimingReporter::trace_setup_path(const SetupTimingAnalyzer& setup_ana
 
 
         //Record the clock capture tag
-        auto capture_tags = setup_analyzer.setup_tags(curr_node, TagType::CLOCK_CAPTURE);
+        auto capture_tags = tag_retriever.tags(curr_node, TagType::CLOCK_CAPTURE);
         auto iter = find_tag(capture_tags, path.launch_domain, path.capture_domain);
         TATUM_ASSERT(iter != capture_tags.end());
 
