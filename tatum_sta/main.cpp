@@ -197,7 +197,7 @@ int main(int argc, char** argv) {
     std::shared_ptr<tatum::TimingAnalyzer> setup_hold_analyzer = tatum::AnalyzerFactory<tatum::SetupHoldAnalysis>::make(*timing_graph, *timing_constraints, *delay_calculator);
 
     //Create the timing analyzer
-    std::shared_ptr<tatum::TimingAnalyzer> serial_analyzer = tatum::AnalyzerFactory<tatum::SetupAnalysis>::make(*timing_graph, *timing_constraints, *delay_calculator);
+    std::shared_ptr<tatum::TimingAnalyzer> serial_analyzer = tatum::AnalyzerFactory<tatum::SetupHoldAnalysis>::make(*timing_graph, *timing_constraints, *delay_calculator);
     auto serial_setup_analyzer = std::dynamic_pointer_cast<tatum::SetupTimingAnalyzer>(serial_analyzer);
     auto serial_hold_analyzer = std::dynamic_pointer_cast<tatum::HoldTimingAnalyzer>(serial_analyzer);
 
@@ -226,8 +226,7 @@ int main(int argc, char** argv) {
         std::shared_ptr<tatum::HoldTimingAnalyzer> echo_hold_analyzer = std::dynamic_pointer_cast<tatum::HoldTimingAnalyzer>(serial_analyzer);
         if(echo_hold_analyzer) {
             write_dot_file_hold("tg_hold_annotated.dot", *timing_graph, *delay_calculator, *echo_hold_analyzer, nodes);
-            //TODO impelemnt hold reporting
-            //timing_reporter.report_timing_hold("report_timing.hold.rpt", *echo_hold_analyzer);
+            timing_reporter.report_timing_hold("report_timing.hold.rpt", *echo_hold_analyzer);
         }
 
         //Verify
@@ -282,6 +281,7 @@ int main(int argc, char** argv) {
             cout << "\tVerified " << serial_tags_verified << " tags (expected " << golden_reference->num_tags() << " or " << golden_reference->num_tags()/2 << ") accross " << timing_graph->nodes().size() << " nodes" << endl;
         }
         cout << endl;
+        cout << endl << "Net Serial Analysis elapsed time: " << serial_analyzer->get_profiling_data("total_analysis_sec") << " sec over " << serial_analyzer->get_profiling_data("num_full_updates") << " full updates" << endl;
     }
 
 #ifdef ECHO
@@ -368,6 +368,8 @@ int main(int argc, char** argv) {
     cout << "\t    Req-traversal: " << std::fixed << median(serial_prof_data["required_traversal_sec"]) / median(parallel_prof_data["required_traversal_sec"]) << "x" << endl;
     cout << "\t     Update-slack: " << std::fixed << median(serial_prof_data["update_slack_sec"]) / median(parallel_prof_data["update_slack_sec"]) << "x" << endl;
     cout << endl;
+
+    cout << endl << "Net Parallel Analysis elapsed time: " << parallel_analyzer->get_profiling_data("total_analysis_sec") << " sec over " << parallel_analyzer->get_profiling_data("num_full_updates") << " full updates" << endl;
 #endif //NUM_PARALLEL_RUNS
 
 
@@ -382,8 +384,6 @@ int main(int argc, char** argv) {
 
     clock_gettime(CLOCK_MONOTONIC, &prog_end);
 
-    cout << endl << "Net Serial Analysis elapsed time: " << serial_analyzer->get_profiling_data("total_analysis_sec") << " sec over " << serial_analyzer->get_profiling_data("num_full_updates") << " full updates" << endl;
-    cout << endl << "Net Parallel Analysis elapsed time: " << parallel_analyzer->get_profiling_data("total_analysis_sec") << " sec over " << parallel_analyzer->get_profiling_data("num_full_updates") << " full updates" << endl;
     cout << endl << "Total time: " << tatum::time_sec(prog_start, prog_end) << " sec" << endl;
 
     return 0;
