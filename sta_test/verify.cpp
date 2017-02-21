@@ -1,8 +1,8 @@
 #include <iostream>
 #include "verify.hpp"
-#include "TimingTags.hpp"
-#include "TimingTag.hpp"
-#include "timing_analyzers.hpp"
+#include "tatum/tags/TimingTags.hpp"
+#include "tatum/tags/TimingTag.hpp"
+#include "tatum/timing_analyzers.hpp"
 #include "util.hpp"
 
 using namespace tatum;

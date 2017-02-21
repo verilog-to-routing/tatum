@@ -2,7 +2,7 @@
 #define TATUM_STA_GOLDEN_REFERENCE
 #include <map>
 
-#include "TimingGraphFwd.hpp"
+#include "tatum/TimingGraphFwd.hpp"
 #include "tatumparse.hpp"
 
 struct TagResult {

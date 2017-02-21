@@ -7,27 +7,26 @@
 #include <memory>
 #include <numeric>
 
-#include "tatum_assert.hpp"
+#include "tatum/util/tatum_assert.hpp"
 
-#include "timing_analyzers.hpp"
-#include "full_timing_analyzers.hpp"
-#include "graph_walkers.hpp"
-#include "analyzer_factory.hpp"
+#include "tatum/timing_analyzers.hpp"
+#include "tatum/graph_walkers.hpp"
+#include "tatum/analyzer_factory.hpp"
 
-#include "TimingGraph.hpp"
-#include "TimingConstraints.hpp"
-#include "TimingReporter.hpp"
-#include "NodeNumNameResolver.hpp"
+#include "tatum/TimingGraph.hpp"
+#include "tatum/TimingConstraints.hpp"
+#include "tatum/TimingReporter.hpp"
+#include "tatum/report/NodeNumNameResolver.hpp"
 
-#include "FixedDelayCalculator.hpp"
+#include "tatum/delay_calc/FixedDelayCalculator.hpp"
 
-#include "sta_util.hpp"
+#include "tatum/base/sta_util.hpp"
+#include "tatum/base/echo_writer.hpp"
 
 #include "golden_reference.hpp"
 #include "echo_loader.hpp"
 #include "verify.hpp"
 #include "util.hpp"
-#include "echo_writer.hpp"
 #include "profile.hpp"
 
 #define NUM_SERIAL_RUNS 10

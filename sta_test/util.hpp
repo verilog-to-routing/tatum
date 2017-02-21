@@ -2,9 +2,9 @@
 #include <set>
 #include <vector>
 
-#include "TimingGraphFwd.hpp"
-#include "TimingConstraintsFwd.hpp"
-#include "FixedDelayCalculator.hpp"
+#include "tatum/TimingGraphFwd.hpp"
+#include "tatum/TimingConstraintsFwd.hpp"
+#include "tatum/delay_calc/FixedDelayCalculator.hpp"
 
 float relative_error(float A, float B);
 

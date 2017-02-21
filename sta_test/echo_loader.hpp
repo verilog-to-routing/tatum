@@ -2,9 +2,9 @@
 #define TATUMSTA_ECHO_LOADER
 #include <memory>
 
-#include "TimingGraph.hpp"
-#include "TimingConstraints.hpp"
-#include "FixedDelayCalculator.hpp"
+#include "tatum/TimingGraph.hpp"
+#include "tatum/TimingConstraints.hpp"
+#include "tatum/delay_calc/FixedDelayCalculator.hpp"
 #include "golden_reference.hpp"
 
 #include "tatumparse.hpp"

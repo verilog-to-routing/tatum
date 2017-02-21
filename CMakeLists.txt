@@ -26,7 +26,7 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
     set(FLEX_BISON_WARN_SUPPRESS_FLAGS -Wno-switch-default -Wno-unused-parameter -Wno-missing-declarations)
 endif()
 
-add_subdirectory(tatum)
+add_subdirectory(libtatum)
 
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
     #Only build the parser, test executable and docs if not a sub-project
