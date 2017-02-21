@@ -3,6 +3,7 @@
 #include <map>
 
 #include "tatum/TimingGraphFwd.hpp"
+#include "tatum/util/tatum_linear_map.hpp"
 #include "tatumparse.hpp"
 
 struct TagResult {

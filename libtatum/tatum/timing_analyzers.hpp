@@ -1,4 +1,7 @@
-#pragma once
+#ifndef TATUM_TIMING_ANALYZERS_HPP
+#define TATUM_TIMING_ANALYZERS_HPP
+
+#include "timing_analyzers_fwd.hpp"
 
 /** \file
  * Timing Analysis: Overview
@@ -207,3 +210,5 @@
 #include "analyzers/SetupTimingAnalyzer.hpp"
 #include "analyzers/HoldTimingAnalyzer.hpp"
 #include "analyzers/SetupHoldTimingAnalyzer.hpp"
+
+#endif

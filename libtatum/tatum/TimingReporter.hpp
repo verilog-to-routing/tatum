@@ -1,5 +1,5 @@
-#ifndef VPR_TIMING_REPORTER_H
-#define VPR_TIMING_REPORTER_H
+#ifndef TATUM_TIMING_REPORTER_HPP
+#define TATUM_TIMING_REPORTER_HPP
 #include <iosfwd>
 #include "tatum/TimingGraphFwd.hpp"
 #include "tatum/TimingConstraintsFwd.hpp"

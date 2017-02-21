@@ -1,6 +1,8 @@
-#ifndef TATUM_ANALYZER_FACTORY
-#define TATUM_ANALYZER_FACTORY
+#ifndef TATUM_ANALYZER_FACTORY_HPP
+#define TATUM_ANALYZER_FACTORY_HPP
 #include <memory>
+
+#include "analyzer_factory_fwd.hpp"
 
 #include "tatum/TimingGraphFwd.hpp"
 #include "tatum/TimingConstraintsFwd.hpp"
@@ -54,7 +56,7 @@ namespace tatum {
 ///\tparam Visitor The analysis type visitor (e.g. SetupAnalysis)
 ///\tparam GraphWalker The graph walker to use (defaults to serial traversals)
 template<class Visitor,
-         template<class V, class D> class GraphWalker=SerialWalker>
+         template<class V, class D> class GraphWalker>
 struct AnalyzerFactory {
 
     //We use the dependent_false template to detect if the un-specialized AnalyzerFactor 

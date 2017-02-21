@@ -1,4 +1,6 @@
 #include <iostream>
+#include <memory>
+
 #include "verify.hpp"
 #include "tatum/tags/TimingTags.hpp"
 #include "tatum/tags/TimingTag.hpp"
