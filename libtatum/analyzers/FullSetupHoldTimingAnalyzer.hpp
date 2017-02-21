@@ -43,6 +43,8 @@ class FullSetupHoldTimingAnalyzer : public SetupHoldTimingAnalyzer {
             graph_walker_.do_required_pre_traversal(timing_graph_, timing_constraints_, setup_hold_visitor_);            
             graph_walker_.do_required_traversal(timing_graph_, timing_constraints_, delay_calculator_, setup_hold_visitor_);            
 
+            graph_walker_.do_update_slack(timing_graph_, delay_calculator_, setup_hold_visitor_);
+
             double analysis_sec = std::chrono::duration_cast<dsec>(Clock::now() - start_time).count();
 
             //Record profiling data
