@@ -191,6 +191,22 @@ class TimingTags {
 
 };
 
+/*
+ * Tag utilities
+ */
+
+//Return the tag from the range [first,last) which has the lowest value
+TimingTags::const_iterator find_minimum_tag(TimingTags::tag_range tags);
+
+//Return the tag from the range [first,last) which has the highest value
+TimingTags::const_iterator find_maximum_tag(TimingTags::tag_range tags);
+
+//Return the tag for the specified clock domains
+TimingTags::const_iterator find_tag(TimingTags::tag_range tags,
+                                           DomainId launch_domain, 
+                                           DomainId capture_domain);
+
+
 } //namepsace
 
 //Implementation

@@ -132,6 +132,13 @@ class TimingTag {
         TagType type_;
 };
 
+//For comparing the values of two timing tags
+struct TimingTagValueComp {
+    bool operator()(const tatum::TimingTag& lhs, const tatum::TimingTag& rhs) {
+        return lhs.time().value() < rhs.time().value();
+    }
+};
+
 } //namepsace
 
 //Implementation
