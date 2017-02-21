@@ -83,14 +83,14 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
         for(TimingPathElem path_elem : timing_path.clock_launch) {
             std::string point;
             if(!path_elem.tag.origin_node() && path_elem.tag.type() == TagType::CLOCK_LAUNCH) {
-                Time latency = Time(timing_constraints_.source_latency(timing_path.launch_domain));
-                Time orig = path_elem.tag.time() - latency;
-
                 point = "clock " + timing_constraints_.clock_domain_name(timing_path.launch_domain) + " (rise edge)";
-                print_path_line(os, point, orig, orig);
-                prev_path = orig;
+                print_path_line(os, point, path - prev_path, path);
 
                 point = "clock source latency";
+                Time latency = Time(timing_constraints_.source_latency(timing_path.launch_domain));
+                prev_path = path;
+                path = latency;
+
             } else {
                 point = name_resolver_.node_name(path_elem.node) + " (" + name_resolver_.node_block_type_name(path_elem.node) + ")";
             }
