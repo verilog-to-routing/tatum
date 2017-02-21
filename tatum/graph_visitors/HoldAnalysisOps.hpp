@@ -58,7 +58,7 @@ class HoldAnalysisOps : public CommonAnalysisOps {
 
             if(tg.node_type(src_node) == NodeType::CPIN && tg.node_type(sink_node) == NodeType::SINK) {
                 Time thld = dc.hold_time(tg, edge_id);
-                TATUM_ASSERT_MSG(thld.value() >= 0., "Hold Time (Thld) expected to be positive");
+                TATUM_ASSERT_MSG(!std::isnan(thld.value()), "Hold Time (Thld) must be numeric value (not NaN)");
 
                 //The hold time is returned as a positive value, since it is placed on the clock path
                 //(instead of the data path).

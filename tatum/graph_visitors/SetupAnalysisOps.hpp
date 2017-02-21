@@ -59,7 +59,7 @@ class SetupAnalysisOps : public CommonAnalysisOps {
 
             if(tg.node_type(src_node) == NodeType::CPIN && tg.node_type(sink_node) == NodeType::SINK) {
                 Time tsu = dc.setup_time(tg, edge_id);
-                TATUM_ASSERT_MSG(tsu.value() >= 0., "Setup Time (Tsu) expected to be positive");
+                TATUM_ASSERT_MSG(!std::isnan(tsu.value()), "Setup Time (Tsu) expected to be numeric value (not NaN)");
 
                 //The setup time is returned as a negative value, since it is placed on the clock path
                 //(instead of the data path).
