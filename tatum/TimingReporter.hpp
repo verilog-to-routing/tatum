@@ -6,8 +6,8 @@
 #include "timing_analyzers.hpp"
 
 #include "TimingGraphNameResolver.hpp"
-#include "TimingPath.hpp"
-#include "TimingReportTagRetriever.hpp"
+#include "report/TimingPath.hpp"
+#include "report/TimingReportTagRetriever.hpp"
 
 namespace tatum {
 
