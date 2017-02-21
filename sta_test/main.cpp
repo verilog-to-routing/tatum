@@ -20,7 +20,6 @@
 #include "NodeNumNameResolver.hpp"
 
 #include "FixedDelayCalculator.hpp"
-#include "ConstantDelayCalculator.hpp"
 
 #include "sta_util.hpp"
 
