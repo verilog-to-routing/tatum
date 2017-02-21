@@ -1,7 +1,7 @@
 #ifndef TATUM_TIMING_GRAPH_NAME_RESOLVER_HPP
 #define TATUM_TIMING_GRAPH_NAME_RESOLVER_HPP
 #include <string>
-#include "timing_graph_fwd.hpp"
+#include "TimingGraphFwd.hpp"
 
 namespace tatum {
 

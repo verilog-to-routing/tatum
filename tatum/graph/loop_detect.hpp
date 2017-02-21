@@ -1,7 +1,7 @@
 #ifndef TATUM_LOOP_DETECT
 #define TATUM_LOOP_DETECT
 
-#include "timing_graph_fwd.hpp"
+#include "TimingGraphFwd.hpp"
 #include <set>
 #include <vector>
 

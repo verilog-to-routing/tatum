@@ -1,7 +1,7 @@
 #ifndef TATUM_VALIDATE_GRAPH_COSNTRAINTS
 #define TATUM_VALIDATE_GRAPH_COSNTRAINTS
 
-#include "timing_graph_fwd.hpp"
+#include "TimingGraphFwd.hpp"
 #include "TimingConstraintsFwd.hpp"
 
 namespace tatum {

@@ -2,7 +2,7 @@
 #include <iosfwd>
 
 #include "Time.hpp"
-#include "timing_graph_fwd.hpp"
+#include "TimingGraphFwd.hpp"
 
 namespace tatum {
 

@@ -1,5 +1,5 @@
 #pragma once
-#include "timing_graph_fwd.hpp"
+#include "TimingGraphFwd.hpp"
 
 namespace tatum {
 

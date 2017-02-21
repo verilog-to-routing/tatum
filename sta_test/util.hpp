@@ -2,7 +2,7 @@
 #include <set>
 #include <vector>
 
-#include "timing_graph_fwd.hpp"
+#include "TimingGraphFwd.hpp"
 #include "TimingConstraintsFwd.hpp"
 #include "FixedDelayCalculator.hpp"
 

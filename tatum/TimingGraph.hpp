@@ -58,7 +58,7 @@
 
 #include "tatum_range.hpp"
 #include "tatum_linear_map.hpp"
-#include "timing_graph_fwd.hpp"
+#include "TimingGraphFwd.hpp"
 
 //#define LOG_ACCESS_ORDER
 

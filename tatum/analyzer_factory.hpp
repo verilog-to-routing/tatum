@@ -2,7 +2,7 @@
 #define TATUM_ANALYZER_FACTORY
 #include <memory>
 
-#include "timing_graph_fwd.hpp"
+#include "TimingGraphFwd.hpp"
 #include "TimingConstraintsFwd.hpp"
 
 #include "graph_walkers.hpp"

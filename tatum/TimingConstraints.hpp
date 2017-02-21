@@ -3,11 +3,11 @@
 #include <vector>
 #include <unordered_set>
 
-#include "TimingConstraintsFwd.hpp"
-
 #include "tatum_linear_map.hpp"
 #include "tatum_range.hpp"
-#include "timing_graph_fwd.hpp"
+
+#include "TimingConstraintsFwd.hpp"
+#include "TimingGraphFwd.hpp"
 
 namespace tatum {
 

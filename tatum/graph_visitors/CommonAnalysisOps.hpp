@@ -1,6 +1,6 @@
 #pragma once
 #include "TimingTags.hpp"
-#include "timing_graph_fwd.hpp"
+#include "TimingGraphFwd.hpp"
 #include "tatum_linear_map.hpp"
 
 namespace tatum { namespace detail {
