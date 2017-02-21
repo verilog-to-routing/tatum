@@ -216,11 +216,11 @@ void write_dot_file_hold(std::string filename,
             os << "\tnode" << size_t(node_id) << " -> node" << size_t(sink_node_id);
             os << " [ label=\"" << edge_id;
             if(tg.node_type(node_id) == NodeType::CPIN && tg.node_type(sink_node_id) == NodeType::SINK) {
-                os << " [ label=\"" << edge_id << "\n" << delay_calc.hold_time(tg, edge_id) << " (thld)\" ]";
+                os << "\\n" << delay_calc.hold_time(tg, edge_id) << " (thld)";
             } else if(tg.node_type(node_id) == NodeType::CPIN && tg.node_type(sink_node_id) == NodeType::SOURCE) {
-                os << " [ label=\"" << edge_id << "\n" << delay_calc.min_edge_delay(tg, edge_id) << " (tcq)\" ]";
+                os << "\\n" << delay_calc.min_edge_delay(tg, edge_id) << " (tcq)";
             } else {
-                os << " [ label=\"" << edge_id << "\n" << delay_calc.min_edge_delay(tg, edge_id) << "\" ]";
+                os << "\\n" << delay_calc.min_edge_delay(tg, edge_id);
             }
             auto slacks = analyzer.hold_slacks(edge_id);
             for(const auto& tag : slacks) {
