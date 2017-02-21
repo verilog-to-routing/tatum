@@ -2,13 +2,15 @@
 #include <memory>
 #include <vector>
 
-#include "tatum_assert.hpp"
-
-#include "CommonAnalysisVisitor.hpp"
 #include "TimingTags.hpp"
 #include "TimingGraph.hpp"
 #include "TimingConstraints.hpp"
-#include "HoldAnalysisOps.hpp"
+
+#include "graph_visitors/CommonAnalysisVisitor.hpp"
+#include "graph_visitors/HoldAnalysisOps.hpp"
+
+#include "util/tatum_assert.hpp"
+
 
 namespace tatum {
 
