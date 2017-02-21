@@ -64,13 +64,20 @@ double arithmean(std::vector<double> values);
 //track real node names
 class NodeNumResolver : public tatum::TimingGraphNameResolver {
     public:
+        NodeNumResolver(const tatum::TimingGraph& tg): tg_(tg) {}
+
         std::string node_name(tatum::NodeId node) const override {
             return "Node(" + std::to_string(size_t(node)) + ")";
         }
 
-        std::string node_block_type_name(tatum::NodeId /*node*/) const override {
-            return "Node";
+        std::string node_block_type_name(tatum::NodeId node) const override {
+            auto type = tg_.node_type(node);
+            std::stringstream ss;
+            ss << type;
+            return ss.str();
         }
+    private:
+        const tatum::TimingGraph& tg_;
 };
 
 int main(int argc, char** argv) {
@@ -208,7 +215,7 @@ int main(int argc, char** argv) {
         //std::vector<NodeId> nodes = find_related_nodes(*timing_graph, {NodeId(152625)});
         std::vector<NodeId> nodes;
 
-        NodeNumResolver name_resolver;
+        NodeNumResolver name_resolver(*timing_graph);
         tatum::TimingReporter timing_reporter(name_resolver, *timing_graph, *timing_constraints);
 
         std::shared_ptr<tatum::SetupTimingAnalyzer> echo_setup_analyzer = std::dynamic_pointer_cast<tatum::SetupTimingAnalyzer>(serial_analyzer);
