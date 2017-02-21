@@ -3,9 +3,9 @@
      * Include Files
      */
     #include "tatumparse.hpp"
-    #include "tatumparse_common.hpp"
-    #include "tatumparse_error.hpp"
-    #include "tatumparse_lexer.hpp"
+    #include "tatumparse/tatumparse_common.hpp"
+    #include "tatumparse/tatumparse_error.hpp"
+    #include "tatumparse/tatumparse_lexer.hpp"
 
 %}
 

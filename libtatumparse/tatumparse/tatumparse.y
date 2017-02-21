@@ -68,11 +68,11 @@
 %code requires {
     #include <memory>
     #include "tatumparse.hpp"
-    #include "tatumparse_lexer_fwd.hpp"
+    #include "tatumparse/tatumparse_lexer_fwd.hpp"
 }
 
 %code top {
-    #include "tatumparse_lexer.hpp"
+    #include "tatumparse/tatumparse_lexer.hpp"
     //Bison calls tatumparse_lex() to get the next token.
     //We use the Lexer class as the interface to the lexer, so we
     //re-defined the function to tell Bison how to get the next token.
@@ -88,8 +88,8 @@
 #include "assert.h"
 
 #include "tatumparse.hpp"
-#include "tatumparse_common.hpp"
-#include "tatumparse_error.hpp"
+#include "tatumparse/tatumparse_common.hpp"
+#include "tatumparse/tatumparse_error.hpp"
 
 using namespace tatumparse;
 

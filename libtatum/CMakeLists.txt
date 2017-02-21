@@ -1,3 +1,5 @@
+project("libtatum")
+
 if(TATUM_ENABLE_PARALLEL_ANALYSIS)
     #
     # Determine if the compiler has Cilk Plus support
