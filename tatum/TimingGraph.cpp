@@ -4,9 +4,9 @@
 #include <stack>
 #include <set>
 
-#include "tatum_assert.hpp"
-#include "tatum_error.hpp"
-#include "loop_detect.hpp"
+#include "util/tatum_assert.hpp"
+#include "util/tatum_error.hpp"
+#include "base/loop_detect.hpp"
 #include "TimingGraph.hpp"
 
 
