@@ -7,7 +7,7 @@
 
 #include "graph_walkers.hpp"
 #include "timing_analyzers.hpp"
-#include "full_timing_analyzers.hpp"
+#include "analyzers/full_timing_analyzers.hpp"
 
 namespace tatum {
 

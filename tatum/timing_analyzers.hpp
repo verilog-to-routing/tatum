@@ -203,7 +203,7 @@
  * protected virtual member function.
  */
 
-#include "TimingAnalyzer.hpp"
-#include "SetupTimingAnalyzer.hpp"
-#include "HoldTimingAnalyzer.hpp"
-#include "SetupHoldTimingAnalyzer.hpp"
+#include "analyzers/TimingAnalyzer.hpp"
+#include "analyzers/SetupTimingAnalyzer.hpp"
+#include "analyzers/HoldTimingAnalyzer.hpp"
+#include "analyzers/SetupHoldTimingAnalyzer.hpp"
