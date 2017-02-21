@@ -2,7 +2,7 @@
 #include <memory>
 #include <iostream>
 #include "TimingGraph.hpp"
-#include "timing_constraints_fwd.hpp"
+#include "TimingConstraintsFwd.hpp"
 #include "TimingAnalyzer.hpp"
 
 namespace tatum {

@@ -2,7 +2,7 @@
 #define VPR_TIMING_REPORTER_H
 #include <iosfwd>
 #include "timing_graph_fwd.hpp"
-#include "timing_constraints_fwd.hpp"
+#include "TimingConstraintsFwd.hpp"
 #include "timing_analyzers.hpp"
 
 #include "TimingGraphNameResolver.hpp"

@@ -2,7 +2,7 @@
 #define TATUM_VALIDATE_GRAPH_COSNTRAINTS
 
 #include "timing_graph_fwd.hpp"
-#include "timing_constraints_fwd.hpp"
+#include "TimingConstraintsFwd.hpp"
 
 namespace tatum {
 

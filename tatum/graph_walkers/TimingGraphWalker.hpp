@@ -1,6 +1,6 @@
 #pragma once
 #include "timing_graph_fwd.hpp"
-#include "timing_constraints_fwd.hpp"
+#include "TimingConstraintsFwd.hpp"
 #include <chrono>
 #include <map>
 
