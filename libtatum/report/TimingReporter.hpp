@@ -38,12 +38,17 @@ class TimingReporter {
 
         std::string to_printable_string(tatum::Time val) const;
 
+        bool nearly_equal(const tatum::Time& lhs, const tatum::Time& rhs) const;
+
     private:
         const TimingGraphNameResolver& name_resolver_;
         const tatum::TimingGraph& timing_graph_;
         const tatum::TimingConstraints& timing_constraints_;
         float unit_scale_;
         size_t precision_;
+
+        float relative_error_tolerance_ = 1.e-5;
+        float absolute_error_tolerance_ = 1e-13; //Sub pico-second
 };
 
 } //namespace

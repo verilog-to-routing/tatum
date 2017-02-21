@@ -4,6 +4,8 @@
 #include <iomanip>
 #include <vector>
 
+#include "tatum_math.hpp"
+#include "tatum_error.hpp"
 #include "TimingReporter.hpp"
 #include "TimingGraph.hpp"
 #include "TimingConstraints.hpp"
@@ -140,7 +142,19 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
         arr_time = last_tag.time();
         print_path_line(os, "data arrival time", arr_time);
         os << "\n";
+
+        //Sanity check the arrival time calculated by this timing report (i.e. path) and the one calculated by
+        //the analyzer (i.e. arr_time) agree
+        if(!nearly_equal(arr_time, path)) {
+            std::stringstream ss;
+            ss << "Internal Error: analyzer arrival time (" << arr_time.value() << ")"
+               << " differs from timing report path arrival time (" << path.value() << ")"
+               << " beyond tolerance";
+            throw tatum::Error(ss.str());
+        }
     }
+
+
 
     //Capture path (required time)
     Time req_time;
@@ -213,6 +227,15 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
             }
 
             prev_path = path;
+        }
+
+        //Sanity check required times
+        if(!nearly_equal(req_time, path)) {
+            std::stringstream ss;
+            ss << "Internal Error: analyzer required time (" << req_time.value() << ")"
+               << " differs from report_timing path required time (" << path.value() << ")"
+               << " beyond tolerance";
+            throw tatum::Error(ss.str());
         }
     }
 
@@ -412,6 +435,10 @@ std::string TimingReporter::to_printable_string(Time val) const {
     ss << std::fixed << std::setprecision(precision_) << convert_to_printable_units(val.value());
 
     return ss.str();
+}
+
+bool TimingReporter::nearly_equal(const Time& lhs, const Time& rhs) const {
+    return tatum::util::nearly_equal(lhs.value(), rhs.value(), absolute_error_tolerance_, relative_error_tolerance_);
 }
 
 } //namespace
