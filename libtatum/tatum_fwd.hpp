@@ -7,6 +7,7 @@
 
 //Analyzers
 #include "tatum/timing_analyzers_fwd.hpp"
+#include "tatum/graph_walkers_fwd.hpp"
 #include "tatum/analyzer_factory_fwd.hpp"
 
 //Reporting

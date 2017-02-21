@@ -9,6 +9,7 @@
 
 //Analyzers
 #include "tatum/timing_analyzers.hpp"
+#include "tatum/graph_walkers.hpp"
 #include "tatum/analyzer_factory.hpp"
 
 //Reporting
