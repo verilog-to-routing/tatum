@@ -106,21 +106,26 @@ bool CommonAnalysisVisitor<AnalysisOps>::do_arrival_pre_traverse_node(const Timi
             DomainId launch_domain_id = tc.node_clock_domain(node_id);
             TATUM_ASSERT(launch_domain_id);
 
+            //Initialize a clock launch tag to any capture domain
+            //
+            //Note: we assume that edge counting has set the effective period constraint assuming a
+            //launch edge at time zero + source latency.  This means we don't need to do anything 
+            //special for clocks with rising edges after time zero.
+            float launch_source_latency = tc.source_latency(launch_domain_id);
+            TimingTag launch_tag = TimingTag(Time(launch_source_latency), 
+                                             launch_domain_id,
+                                             DomainId::INVALID(), //Any capture
+                                             NodeId::INVALID(), //Origin
+                                             TagType::CLOCK_LAUNCH);
+            //Add the launch tag
+            ops_.add_tag(node_id, launch_tag);
+
+            //Initialize the clock capture tags
+            //
+            //Note that we enumerate all pairs of valid launch/capture domains, 
+            //since each pair may have different constraints
             for(DomainId capture_domain_id : tc.clock_domains()) {
                 if(tc.should_analyze(launch_domain_id, capture_domain_id)) {
-                    //Initialize a clock launch tag
-                    //
-                    //Note: we assume that edge counting has set the effective period constraint assuming a
-                    //launch edge at time zero + source latency.  This means we don't need to do anything 
-                    //special for clocks with rising edges after time zero.
-                    float launch_source_latency = tc.source_latency(launch_domain_id);
-                    TimingTag launch_tag = TimingTag(Time(launch_source_latency), 
-                                                     launch_domain_id,
-                                                     capture_domain_id,
-                                                     NodeId::INVALID(), //Origin
-                                                     TagType::CLOCK_LAUNCH);
-                    //Add the launch tag
-                    ops_.add_tag(node_id, launch_tag);
 
                     //Initialize the clock capture tag with the constraint
                     //
@@ -208,7 +213,6 @@ bool CommonAnalysisVisitor<AnalysisOps>::do_required_pre_traverse_node(const Tim
         auto output_constraints = tc.output_constraints(node_id);
 
         if(!output_constraints.empty()) { //Some outputs may be unconstrained, so do not create tags for them
-            //TODO: support multi-domain constraints on a single input
             DomainId capture_domain_id = tc.node_clock_domain(node_id);
             TATUM_ASSERT(capture_domain_id);
 
@@ -218,7 +222,8 @@ bool CommonAnalysisVisitor<AnalysisOps>::do_required_pre_traverse_node(const Tim
                     //The capture clock may be delayed from it's true source
                     float capture_source_latency = tc.source_latency(capture_domain_id);
 
-                    //The capture clock usually falls one cycle after the launch clock
+                    //The capture clock usually falls one cycle after the launch clock, we assume launch 
+                    //is at time 0.
                     float clock_constraint = ops_.clock_constraint(tc, launch_domain_id, capture_domain_id);
                     TATUM_ASSERT(!isnan(clock_constraint));
 
@@ -282,13 +287,21 @@ bool CommonAnalysisVisitor<AnalysisOps>::do_required_pre_traverse_node(const Tim
                         output_constraint = 0.;
                     }
 
+                    Time req_time = node_clock_tag.time() + Time(clock_uncertainty) + Time(output_constraint);
                     //Update the required time. This will keep the most restrictive constraint.
-                    TimingTag node_data_req_tag(node_clock_tag.time() + Time(clock_uncertainty) + Time(output_constraint), 
+                    TimingTag node_data_req_tag(req_time, 
                                                 node_data_arr_tag.launch_clock_domain(), 
                                                 node_clock_tag.capture_clock_domain(), 
                                                 NodeId::INVALID(), //Origin
                                                 TagType::DATA_REQUIRED);
-                    ops_.add_tag(node_id, node_data_req_tag);
+                    //It is possible that the same domain pair may appear multiple times (e.g. due to
+                    //multiple capture clock tags with a common capture clock, and a single data arrival 
+                    //tag), which is why we use merge instead of add_tag
+                    ops_.merge_req_tags(node_id, 
+                                        req_time, 
+                                        NodeId::INVALID(), //Origin
+                                        node_data_req_tag, //Copy clock data
+                                        true);
                 }
             }
         }
