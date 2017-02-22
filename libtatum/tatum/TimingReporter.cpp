@@ -163,6 +163,7 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
         //Sanity check the arrival time calculated by this timing report (i.e. path) and the one calculated by
         //the analyzer (i.e. arr_time) agree
         if(!nearly_equal(arr_time, path)) {
+            os.flush();
             std::stringstream ss;
             ss << "Internal Error: analyzer arrival time (" << arr_time.value() << ")"
                << " differs from timing report path arrival time (" << path.value() << ")"
@@ -253,6 +254,7 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
 
         //Sanity check required time
         if(!nearly_equal(req_time, path)) {
+            os.flush();
             std::stringstream ss;
             ss << "Internal Error: analyzer required time (" << req_time.value() << ")"
                << " differs from report_timing path required time (" << path.value() << ")"
@@ -273,6 +275,7 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
         print_path_line(os, "slack (MET)", slack);
     }
     os << "\n";
+    os.flush();
 }
 
 void TimingReporter::print_path_line(std::ostream& os, std::string point, Time incr, Time path) const {
