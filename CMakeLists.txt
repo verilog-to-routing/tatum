@@ -27,11 +27,11 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
 add_subdirectory(libtatum)
-add_subdirectory(libtatumparse)
 
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
     #Only build the parser, test executable and docs if not a sub-project
     add_subdirectory(tatum_test)
+    add_subdirectory(libtatumparse)
     add_subdirectory(tatumparse_test)
     add_subdirectory(doc)
 endif()
