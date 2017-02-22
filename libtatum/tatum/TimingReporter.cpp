@@ -187,12 +187,16 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
                 TATUM_ASSERT(!path_elem.tag.origin_node());
                 TATUM_ASSERT(path_elem.tag.type() == TagType::CLOCK_CAPTURE);
 
-                Time latency = Time(timing_constraints_.source_latency(timing_path.launch_domain));
-                Time orig = path_elem.tag.time() - latency;
-                prev_path = orig;
+                Time constraint;
+                if(timing_path.type == TimingPathType::SETUP) {
+                    constraint = Time(timing_constraints_.setup_constraint(timing_path.launch_domain, timing_path.capture_domain));
+                } else {
+                    constraint = Time(timing_constraints_.hold_constraint(timing_path.launch_domain, timing_path.capture_domain));
+                }
 
                 std::string point = "clock " + timing_constraints_.clock_domain_name(timing_path.capture_domain) + " (rise edge)";
-                print_path_line(os, point, orig, orig);
+                print_path_line(os, point, constraint, constraint);
+                prev_path = constraint;
 
                 path = path_elem.tag.time();
                 Time incr = path - prev_path;
