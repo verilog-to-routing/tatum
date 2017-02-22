@@ -206,9 +206,15 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
                 TATUM_ASSERT(!path_elem.tag.origin_node());
                 TATUM_ASSERT(path_elem.tag.type() == TagType::DATA_REQUIRED);
                 
+                //Output constraint
+                Time output_constraint = -Time(timing_constraints_.output_constraint(path_elem.node, timing_path.capture_domain));
+                if(!std::isnan(output_constraint.value())) {
+                    path += output_constraint;
+                    print_path_line(os, "output external delay", output_constraint, path);
+                }
+
                 //Uncertainty
                 Time uncertainty;
-                
                 if(timing_path.type == TimingPathType::SETUP) {
                     uncertainty = -Time(timing_constraints_.setup_clock_uncertainty(timing_path.launch_domain, timing_path.capture_domain));
                 } else {
@@ -216,13 +222,6 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
                 }
                 path += uncertainty;
                 print_path_line(os, "clock uncertainty", uncertainty, path);
-
-                //Output constraint
-                Time output_constraint = -Time(timing_constraints_.output_constraint(path_elem.node, timing_path.capture_domain));
-                if(!std::isnan(output_constraint.value())) {
-                    path += output_constraint;
-                    print_path_line(os, "output external delay", output_constraint, path);
-                }
 
                 //Final arrival time
                 req_time = path_elem.tag.time();
