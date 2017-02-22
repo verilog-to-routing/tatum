@@ -78,8 +78,14 @@ void TimingReporter::report_timing(std::ostream& os,
 void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path) const {
     std::string divider = "--------------------------------------------------------------------------------";
 
-    os << "Startpoint: " << name_resolver_.node_name(timing_path.startpoint()) << " (" << name_resolver_.node_block_type_name(timing_path.startpoint()) << ")\n";
-    os << "Endpoint  : " << name_resolver_.node_name(timing_path.endpoint()) << " (" << name_resolver_.node_block_type_name(timing_path.endpoint()) << ")\n";
+    os << "Startpoint: " << name_resolver_.node_name(timing_path.startpoint()) 
+       << " (" << name_resolver_.node_block_type_name(timing_path.startpoint())
+        << " clocked by " << timing_constraints_.clock_domain_name(timing_path.launch_domain)
+        << ")\n";
+    os << "Endpoint  : " << name_resolver_.node_name(timing_path.endpoint()) 
+        << " (" << name_resolver_.node_block_type_name(timing_path.endpoint()) 
+        << " clocked by " << timing_constraints_.clock_domain_name(timing_path.capture_domain)
+        << ")\n";
 
     if(timing_path.type == TimingPathType::SETUP) {
         os << "Path Type : max [setup]" << "\n";
