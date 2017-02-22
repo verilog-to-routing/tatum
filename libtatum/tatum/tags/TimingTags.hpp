@@ -154,9 +154,9 @@ class TimingTags {
 
         std::pair<iterator,bool> find_matching_tag(const TimingTag& tag, bool arr_must_be_valid);
 
-        ///Finds a TimingTag in the current set that has clock domain id matching domain_id
+        ///Finds a TimingTag in the current set that matches the launch and capture clocks of tag
         ///\returns An iterator to the tag if found, or end(tag.type()) if not found
-        std::pair<iterator,bool> find_matching_tag(const TimingTag& tag);
+        iterator find_matching_tag(const TimingTag& tag);
 
         //Find a TimingTag matching the specified DATA_REQUIRED tag provided there is a valid associated
         //DATA_ARRIVAL tag

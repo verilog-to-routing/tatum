@@ -196,37 +196,28 @@ inline std::pair<TimingTags::iterator,bool> TimingTags::find_matching_tag(const 
     if(arr_must_be_valid) {
         return find_matching_tag_with_valid_arrival(tag);
     } else {
-        return find_matching_tag(tag);
+        return {find_matching_tag(tag),true};
     }
 }
 
-inline std::pair<TimingTags::iterator,bool> TimingTags::find_matching_tag(const TimingTag& tag) {
+inline TimingTags::iterator TimingTags::find_matching_tag(const TimingTag& tag) {
     //Linear search for matching tag
     auto b = begin(tag.type());
     auto e = end(tag.type());
     for(auto iter = b; iter != e; ++iter) {
-        if(tag.type() == TagType::CLOCK_LAUNCH || tag.type() == TagType::DATA_ARRIVAL) {
-            //Check only the launch clock
-            if(iter->launch_clock_domain() == tag.launch_clock_domain()) {
-                TATUM_ASSERT_SAFE(iter->type() == tag.type());
-                return {iter, true};
-            }
-        } else if (tag.type() == TagType::CLOCK_CAPTURE) {
-            //Check only the capture clock
-            if(iter->capture_clock_domain() == tag.capture_clock_domain()) {
-                TATUM_ASSERT_SAFE(iter->type() == tag.type());
-                return {iter, true};
-            }
-        } else {
-            TATUM_ASSERT_SAFE(tag.type() == TagType::SLACK);
-            //Check both clocks
-            if(iter->launch_clock_domain() == tag.launch_clock_domain()
-               && iter->capture_clock_domain() == tag.capture_clock_domain()) {
-                return {iter, true};
-            }
+        bool match_launch =    !tag.launch_clock_domain()   //Search wildcard
+                            || !iter->launch_clock_domain() //Match wildcard
+                            || tag.launch_clock_domain() == iter->launch_clock_domain(); //Exact match
+
+        bool match_capture =   !tag.capture_clock_domain()   //Search wildcard
+                            || !iter->capture_clock_domain() //Match wildcard
+                            || tag.capture_clock_domain() == iter->capture_clock_domain(); //Exact match
+
+        if(match_launch && match_capture) {
+            return iter;
         }
     }
-    return {e, true};
+    return e;
 }
 
 inline std::pair<TimingTags::iterator,bool> TimingTags::find_matching_tag_with_valid_arrival(const TimingTag& tag) {
