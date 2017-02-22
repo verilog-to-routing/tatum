@@ -273,6 +273,9 @@ class TimingGraph {
 
 };
 
+//Returns the set of nodes (Strongly Connected Components) that form loops in the timing graph
+std::vector<std::vector<NodeId>> identify_combinational_loops(const TimingGraph& tg);
+
 //Mappings from old to new IDs
 struct GraphIdMaps {
     GraphIdMaps(tatum::util::linear_map<NodeId,NodeId> node_map,
