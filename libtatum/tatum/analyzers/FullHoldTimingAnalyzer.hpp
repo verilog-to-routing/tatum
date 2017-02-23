@@ -40,7 +40,7 @@ class FullHoldTimingAnalyzer : public HoldTimingAnalyzer {
             graph_walker_.do_arrival_pre_traversal(timing_graph_, timing_constraints_, hold_visitor_);            
             graph_walker_.do_arrival_traversal(timing_graph_, timing_constraints_, delay_calculator_, hold_visitor_);            
 
-            graph_walker_.do_required_pre_traversal(timing_graph_, timing_constraints_, delay_calculator_, hold_visitor_);            
+            graph_walker_.do_required_pre_traversal(timing_graph_, timing_constraints_, hold_visitor_);            
             graph_walker_.do_required_traversal(timing_graph_, timing_constraints_, delay_calculator_, hold_visitor_);            
 
             graph_walker_.do_update_slack(timing_graph_, delay_calculator_, hold_visitor_);

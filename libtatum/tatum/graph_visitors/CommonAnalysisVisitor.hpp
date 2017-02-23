@@ -5,12 +5,6 @@
 #include "tatum/TimingConstraints.hpp"
 #include "tatum/tags/TimingTags.hpp"
 
-//#define LOG_TRAVERSAL_ORDER
-
-#ifdef LOG_TRAVERSAL_ORDER
-# include <iostream>
-#endif
-
 namespace tatum { namespace detail {
 
 /** \file
@@ -40,8 +34,7 @@ class CommonAnalysisVisitor {
 
         bool do_arrival_pre_traverse_node(const TimingGraph& tg, const TimingConstraints& tc, const NodeId node_id);
 
-        template<class DelayCalc>
-        bool do_required_pre_traverse_node(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalc& dc, const NodeId node_id);
+        bool do_required_pre_traverse_node(const TimingGraph& tg, const TimingConstraints& tc, const NodeId node_id);
 
         template<class DelayCalc>
         void do_arrival_traverse_node(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalc& dc, const NodeId node_id);
@@ -64,6 +57,9 @@ class CommonAnalysisVisitor {
 
         template<class DelayCalc>
         void do_slack_traverse_edge(const TimingGraph& tg, const DelayCalc& dc, const EdgeId edge);
+
+        template<class DelayCalc>
+        void mark_sink_required_times(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalc& dc, const NodeId node);
 
         bool should_propagate_clocks(const TimingGraph& tg, const TimingConstraints& tc, const EdgeId edge_id) const;
         bool should_propagate_clock_launch_tags(const TimingGraph& tg, const EdgeId edge_id) const;
@@ -181,137 +177,14 @@ bool CommonAnalysisVisitor<AnalysisOps>::do_arrival_pre_traverse_node(const Timi
 }
 
 template<class AnalysisOps>
-template<class DelayCalc>
-bool CommonAnalysisVisitor<AnalysisOps>::do_required_pre_traverse_node(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalc& dc, const NodeId node_id) {
-
-    /*
-     * Calculate required times
-     */
+bool CommonAnalysisVisitor<AnalysisOps>::do_required_pre_traverse_node(const TimingGraph& tg, const TimingConstraints& /*tc*/, const NodeId node_id) {
 
     TATUM_ASSERT(tg.node_type(node_id) == NodeType::SINK);
 
-    bool node_constrained = false;
+    auto data_req_tags = ops_.get_tags(node_id, TagType::DATA_REQUIRED);
 
-    EdgeId clock_capture_edge = tg.find_clock_capture_edge(node_id);
-
-    if(clock_capture_edge) {
-        //Required time at sink FF
-        NodeId src_node_id = tg.edge_src_node(clock_capture_edge);
-        TimingTags::tag_range src_capture_clk_tags = ops_.get_tags(src_node_id, TagType::CLOCK_CAPTURE);
-
-        //Note: since we add tags at the current node (and the tags are all stored together),
-        //we must *copy* the data arrival tags before adding any new tags (since adding new 
-        //tags may invalidate the old tag references)
-        auto data_arr_range = ops_.get_tags(node_id, TagType::DATA_ARRIVAL);
-        std::vector<TimingTag> node_data_arr_tags(data_arr_range.begin(), data_arr_range.end());
-
-        const Time capture_edge_delay = ops_.capture_clock_edge_delay(dc, tg, clock_capture_edge);
-
-        for(const TimingTag& node_data_arr_tag : node_data_arr_tags) {
-            for(const TimingTag& src_capture_clk_tag : src_capture_clk_tags) {
-
-                //We produce a fully specified capture clock tags (both launch and capture) so we only want 
-                //to consider the capture clock tag which matches the data launch domain
-                bool same_launch_domain = (node_data_arr_tag.launch_clock_domain() == src_capture_clk_tag.launch_clock_domain());
-
-                //We only want to analyze paths between domains where a valid constraint has been specified
-                bool valid_launch_capture_pair = tc.should_analyze(node_data_arr_tag.launch_clock_domain(), 
-                                                                   src_capture_clk_tag.capture_clock_domain());
-
-                if(same_launch_domain && valid_launch_capture_pair) {
-
-                    //We only set a required time if the source domain actually reaches this sink
-                    //domain.  This is indicated by the presence of an arrival tag (which should have
-                    //a valid arrival time).
-                    TATUM_ASSERT(node_data_arr_tag.time().valid());
-
-                    //We apply the clock uncertainty to the generated required time tag
-                    float clock_uncertainty = ops_.clock_uncertainty(tc, 
-                                                                     node_data_arr_tag.launch_clock_domain(), 
-                                                                     src_capture_clk_tag.capture_clock_domain());
-
-                    Time req_time =   src_capture_clk_tag.time() //Period + latency + propagated clock network delay to CPIN
-                                    + capture_edge_delay         //CPIN to sink delay (Thld, or Tsu)
-                                    + Time(clock_uncertainty);   //Clock period uncertainty
-
-                    TimingTag node_data_req_tag(req_time, 
-                                                node_data_arr_tag.launch_clock_domain(), 
-                                                src_capture_clk_tag.capture_clock_domain(), 
-                                                NodeId::INVALID(), //Origin
-                                                TagType::DATA_REQUIRED);
-
-                    ops_.add_tag(node_id, node_data_req_tag);
-                    node_constrained = true;
-                }
-            }
-        }
-    } else {
-        //Must be a primary-output sink, need to set required tags based on output constraints
-
-        DomainId capture_domain = tc.node_clock_domain(node_id);
-
-        //Any constrained primary outputs should have a specified clock domain
-        // Note that some outputs may not be constrained and hence should not get required times
-        if(capture_domain) {
-
-            //An output constraint means there is output_constraint delay outside the chip,
-            //as a result signals need to reach the primary-output at least output_constraint
-            //before the capture clock.
-            //
-            //Hence we use a negative output constraint value to subtract the output constraint 
-            //from the target clock constraint
-            float output_constraint = -tc.output_constraint(node_id, 
-                                                            capture_domain);
-            TATUM_ASSERT(!std::isnan(output_constraint));
-
-            //Since there is 
-            float capture_clock_source_latency = tc.source_latency(capture_domain);
-
-            //Note: since we add tags at the current node (and the tags are all stored together),
-            //we must *copy* the data arrival tags before adding any new tags (since adding new 
-            //tags may invalidate the old tag references)
-            auto data_arr_range = ops_.get_tags(node_id, TagType::DATA_ARRIVAL);
-            std::vector<TimingTag> node_data_arr_tags(data_arr_range.begin(), data_arr_range.end());
-
-            for(const TimingTag& node_data_arr_tag : node_data_arr_tags) {
-
-                //Should we be analyzing paths between these two domains?
-                if(tc.should_analyze(node_data_arr_tag.launch_clock_domain(), capture_domain)) {
-
-                    //We only set a required time if the source domain actually reaches this sink
-                    //domain.  This is indicated by the presence of an arrival tag (which should have
-                    //a valid arrival time).
-                    TATUM_ASSERT(node_data_arr_tag.time().valid());
-
-                    //We apply the clock uncertainty to the generated required time tag
-                    float constraint = ops_.clock_constraint(tc, 
-                                                             node_data_arr_tag.launch_clock_domain(), 
-                                                             capture_domain);
-
-                    //We apply the clock uncertainty to the generated required time tag
-                    float clock_uncertainty = ops_.clock_uncertainty(tc, 
-                                                                     node_data_arr_tag.launch_clock_domain(), 
-                                                                     capture_domain);
-
-                    //Calulate the required time
-                    Time req_time =   Time(constraint)                   //Period constraint
-                                    + Time(capture_clock_source_latency) //Latency from true clock source to def'n
-                                    + Time(output_constraint)            //Output delay
-                                    + Time(clock_uncertainty);           //Clock period uncertainty
-
-                    TimingTag node_data_req_tag(req_time, 
-                                                node_data_arr_tag.launch_clock_domain(), 
-                                                capture_domain, 
-                                                NodeId::INVALID(), //Origin
-                                                TagType::DATA_REQUIRED);
-
-                    ops_.add_tag(node_id, node_data_req_tag);
-
-                    node_constrained = true;
-                }
-            }
-        }
-    }
+    //Constrained nodes should have required times
+    bool node_constrained = !data_req_tags.empty();
 
     return node_constrained;
 }
@@ -324,20 +197,16 @@ template<class AnalysisOps>
 template<class DelayCalc>
 void CommonAnalysisVisitor<AnalysisOps>::do_arrival_traverse_node(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalc& dc, NodeId node_id) {
 
-#ifdef LOG_TRAVERSAL_ORDER
-    std::cout << "Arrival Traverse " << node_id << "\n";
-#endif
-
     //Pull from upstream sources to current node
     for(EdgeId edge_id : tg.node_in_edges(node_id)) {
 
         if(tg.edge_disabled(edge_id)) continue;
 
-#ifdef LOG_TRAVERSAL_ORDER
-        std::cout << "Arrival Traverse " << edge_id << "\n";
-#endif
-
         do_arrival_traverse_edge(tg, tc, dc, node_id, edge_id);
+    }
+
+    if(tg.node_type(node_id) == NodeType::SINK) {
+        mark_sink_required_times(tg, tc, dc, node_id);
     }
 }
 
@@ -431,6 +300,16 @@ void CommonAnalysisVisitor<AnalysisOps>::do_arrival_traverse_edge(const TimingGr
             }
         }
     }
+
+    //NOTE: we do not handle clock caputure edges (which create required times) here, but in
+    //      mark_sink_reqquired_times(), after all edges have been processed (i.e. all arrival times
+    //      set)
+    //
+    //To calulate the required times at a node we must know all the arrival times at the node.
+    //Since we don't know the order the incomming edges are processed, we don't know whether all
+    //arrival times have been set until *after* all edges have been processed. 
+    //
+    //As a result we set the required times only after all the edges have been processed
 }
 
 /*
@@ -441,10 +320,6 @@ void CommonAnalysisVisitor<AnalysisOps>::do_arrival_traverse_edge(const TimingGr
 template<class AnalysisOps>
 template<class DelayCalc>
 void CommonAnalysisVisitor<AnalysisOps>::do_required_traverse_node(const TimingGraph& tg, const TimingConstraints& /*tc*/, const DelayCalc& dc, const NodeId node_id) {
-#ifdef LOG_TRAVERSAL_ORDER
-    std::cout << "Required Traverse " << node_id << "\n";
-#endif
-
     //Don't propagate required times through the clock network
     if(tg.node_type(node_id) == NodeType::CPIN) return;
 
@@ -453,10 +328,6 @@ void CommonAnalysisVisitor<AnalysisOps>::do_required_traverse_node(const TimingG
     for(EdgeId edge_id : tg.node_out_edges(node_id)) {
 
         if(tg.edge_disabled(edge_id)) continue;
-
-#ifdef LOG_TRAVERSAL_ORDER
-        std::cout << "Required Traverse " << edge_id << "\n";
-#endif
 
         do_required_traverse_edge(tg, dc, node_id, edge_id);
     }
@@ -528,6 +399,126 @@ void CommonAnalysisVisitor<AnalysisOps>::do_slack_traverse_edge(const TimingGrap
             Time slack_value = sink_req_tag.time() - src_arr_tag.time() - edge_delay;
 
             ops_.merge_slack_tags(edge, slack_value, sink_req_tag);
+        }
+    }
+}
+
+template<class AnalysisOps>
+template<class DelayCalc>
+void CommonAnalysisVisitor<AnalysisOps>::mark_sink_required_times(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalc& dc, const NodeId node_id) {
+    //Mark the required times of the current sink node
+    TATUM_ASSERT(tg.node_type(node_id) == NodeType::SINK);
+
+    //Note: since we add tags at the current node (and the tags are all stored together),
+    //we must *copy* the data arrival tags before adding any new tags (since adding new 
+    //tags may invalidate the old tag references)
+    auto data_arr_range = ops_.get_tags(node_id, TagType::DATA_ARRIVAL);
+    std::vector<TimingTag> node_data_arr_tags(data_arr_range.begin(), data_arr_range.end());
+
+    EdgeId clock_capture_edge = tg.find_clock_capture_edge(node_id);
+
+    if(clock_capture_edge) {
+        //Required time at sink FF
+        NodeId src_node_id = tg.edge_src_node(clock_capture_edge);
+        TimingTags::tag_range src_capture_clk_tags = ops_.get_tags(src_node_id, TagType::CLOCK_CAPTURE);
+
+        const Time capture_edge_delay = ops_.capture_clock_edge_delay(dc, tg, clock_capture_edge);
+
+        for(const TimingTag& src_capture_clk_tag : src_capture_clk_tags) {
+            for(const TimingTag& node_data_arr_tag : node_data_arr_tags) {
+
+                //We produce a fully specified capture clock tags (both launch and capture) so we only want 
+                //to consider the capture clock tag which matches the data launch domain
+                bool same_launch_domain = (node_data_arr_tag.launch_clock_domain() == src_capture_clk_tag.launch_clock_domain());
+
+                //We only want to analyze paths between domains where a valid constraint has been specified
+                bool valid_launch_capture_pair = tc.should_analyze(node_data_arr_tag.launch_clock_domain(), 
+                                                                   src_capture_clk_tag.capture_clock_domain());
+
+                if(same_launch_domain && valid_launch_capture_pair) {
+
+                    //We only set a required time if the source domain actually reaches this sink
+                    //domain.  This is indicated by the presence of an arrival tag (which should have
+                    //a valid arrival time).
+                    TATUM_ASSERT(node_data_arr_tag.time().valid());
+
+                    //We apply the clock uncertainty to the generated required time tag
+                    float clock_uncertainty = ops_.clock_uncertainty(tc, 
+                                                                     node_data_arr_tag.launch_clock_domain(), 
+                                                                     src_capture_clk_tag.capture_clock_domain());
+
+                    Time req_time =   src_capture_clk_tag.time() //Period + latency + propagated clock network delay to CPIN
+                                    + capture_edge_delay         //CPIN to sink delay (Thld, or Tsu)
+                                    + Time(clock_uncertainty);   //Clock period uncertainty
+
+                    TimingTag node_data_req_tag(req_time, 
+                                                node_data_arr_tag.launch_clock_domain(), 
+                                                src_capture_clk_tag.capture_clock_domain(), 
+                                                NodeId::INVALID(), //Origin
+                                                TagType::DATA_REQUIRED);
+
+                    ops_.add_tag(node_id, node_data_req_tag);
+                }
+            }
+        }
+    } else {
+        //Must be a primary-output sink, need to set required tags based on output constraints
+
+        DomainId capture_domain = tc.node_clock_domain(node_id);
+
+        //Any constrained primary outputs should have a specified clock domain
+        // Note that some outputs may not be constrained and hence should not get required times
+        if(capture_domain) {
+
+            //An output constraint means there is output_constraint delay outside the chip,
+            //as a result signals need to reach the primary-output at least output_constraint
+            //before the capture clock.
+            //
+            //Hence we use a negative output constraint value to subtract the output constraint 
+            //from the target clock constraint
+            float output_constraint = -tc.output_constraint(node_id, 
+                                                            capture_domain);
+            TATUM_ASSERT(!std::isnan(output_constraint));
+
+            //Since there is no propagated clock tag to primary outputs, we need to account for
+            //the capture source clock latency
+            float capture_clock_source_latency = tc.source_latency(capture_domain);
+
+            for(const TimingTag& node_data_arr_tag : node_data_arr_tags) {
+
+                //Should we be analyzing paths between these two domains?
+                if(tc.should_analyze(node_data_arr_tag.launch_clock_domain(), capture_domain)) {
+
+                    //We only set a required time if the source domain actually reaches this sink
+                    //domain.  This is indicated by the presence of an arrival tag (which should have
+                    //a valid arrival time).
+                    TATUM_ASSERT(node_data_arr_tag.time().valid());
+
+                    //We apply the clock uncertainty to the generated required time tag
+                    float constraint = ops_.clock_constraint(tc, 
+                                                             node_data_arr_tag.launch_clock_domain(), 
+                                                             capture_domain);
+
+                    //We apply the clock uncertainty to the generated required time tag
+                    float clock_uncertainty = ops_.clock_uncertainty(tc, 
+                                                                     node_data_arr_tag.launch_clock_domain(), 
+                                                                     capture_domain);
+
+                    //Calulate the required time
+                    Time req_time =   Time(constraint)                   //Period constraint
+                                    + Time(capture_clock_source_latency) //Latency from true clock source to def'n point
+                                    + Time(output_constraint)            //Output delay
+                                    + Time(clock_uncertainty);           //Clock period uncertainty
+
+                    TimingTag node_data_req_tag(req_time, 
+                                                node_data_arr_tag.launch_clock_domain(), 
+                                                capture_domain, 
+                                                NodeId::INVALID(), //Origin
+                                                TagType::DATA_REQUIRED);
+
+                    ops_.add_tag(node_id, node_data_req_tag);
+                }
+            }
         }
     }
 }
