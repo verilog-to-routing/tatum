@@ -38,8 +38,6 @@ class TimingReporter {
 
         std::vector<TimingPath> collect_worst_paths(const detail::TagRetriever& tag_retriever, size_t npaths) const;
 
-        TimingPath trace_path(const detail::TagRetriever& tag_retriever, const tatum::TimingTag& sink_tag, const tatum::NodeId sink_node) const;
-
         float convert_to_printable_units(float) const;
 
         std::string to_printable_string(tatum::Time val) const;
