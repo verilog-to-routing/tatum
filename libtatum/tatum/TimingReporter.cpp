@@ -158,9 +158,12 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
 
         {
             //Final arrival time
-            const auto& last_tag = timing_path.data_arrival_elements[timing_path.data_arrival_elements.size() - 1].tag;
-            TATUM_ASSERT(last_tag.type() == TagType::DATA_ARRIVAL);
-            arr_time = last_tag.time();
+            const TimingPathElem& path_elem = timing_path.data_arrival_elements[timing_path.data_arrival_elements.size() - 1];
+
+            TATUM_ASSERT(timing_graph_.node_type(path_elem.node) == NodeType::SINK);
+
+            TATUM_ASSERT(path_elem.tag.type() == TagType::DATA_ARRIVAL);
+            arr_time = path_elem.tag.time();
             update_print_path_no_incr(os, "data arrival time", arr_time);
             os << "\n";
         }
@@ -222,6 +225,9 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
         //Data required
         {
             const TimingPathElem& path_elem = timing_path.data_required_element;
+
+            TATUM_ASSERT(timing_graph_.node_type(path_elem.node) == NodeType::SINK);
+
             if(path_elem.incomming_edge && timing_graph_.edge_type(path_elem.incomming_edge) == EdgeType::PRIMITIVE_CLOCK_CAPTURE) {
                 std::string point;
                 if(timing_path.type == TimingPathType::SETUP) {
@@ -235,9 +241,9 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
             }
 
             //Output constraint
-            Time output_constraint = -Time(timing_constraints_.output_constraint(path_elem.node, timing_path.capture_domain));
-            if(!std::isnan(output_constraint.value())) {
-                req_path += output_constraint;
+            float output_constraint = timing_constraints_.output_constraint(path_elem.node, timing_path.capture_domain);
+            if(!std::isnan(output_constraint)) {
+                req_path += -Time(output_constraint);
                 update_print_path(os, "output external delay", req_path);
             }
 
@@ -454,7 +460,7 @@ TimingPath TimingReporter::trace_path(const detail::TagRetriever& tag_retriever,
     auto required_tags = tag_retriever.tags(sink_node, TagType::DATA_REQUIRED);
     auto req_iter = find_tag(required_tags, path.launch_domain, path.capture_domain);
     TATUM_ASSERT(req_iter != required_tags.end());
-    path.data_required_element = TimingPathElem(*req_iter, curr_node, EdgeId::INVALID());
+    path.data_required_element = TimingPathElem(*req_iter, sink_node, EdgeId::INVALID());
 
     EdgeId clock_capture_edge = timing_graph_.node_clock_capture_edge(sink_node);
 
