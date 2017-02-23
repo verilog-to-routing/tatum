@@ -17,6 +17,7 @@
 #include "tatum/TimingConstraints.hpp"
 #include "tatum/TimingReporter.hpp"
 #include "tatum/report/NodeNumNameResolver.hpp"
+#include "tatum/timing_paths.hpp"
 
 #include "tatum/delay_calc/FixedDelayCalculator.hpp"
 
@@ -64,6 +65,8 @@ int main(int argc, char** argv) {
         cout << "Usage: " << argv[0] << " tg_echo_file" << endl;
         return 1;
     }
+
+    int exit_code = 0;
 
     struct timespec prog_start, load_start, verify_start;
     struct timespec prog_end, load_end, verify_end;
@@ -217,7 +220,7 @@ int main(int argc, char** argv) {
 
         if(!res.second) {
             cout << "Verification failed!\n";
-            //std::exit(1);
+            exit_code = 1;
         }
 
         clock_gettime(CLOCK_MONOTONIC, &verify_end);
@@ -294,7 +297,7 @@ int main(int argc, char** argv) {
 
         if(!res.second) {
             cout << "Verification failed!\n";
-            std::exit(1);
+            exit_code = 1;
         }
 
         clock_gettime(CLOCK_MONOTONIC, &verify_end);
@@ -361,11 +364,18 @@ int main(int argc, char** argv) {
         print_hold_tags_histogram(*timing_graph, *serial_hold_analyzer);
     }
 
+    //Critical paths
+    cout << "\nCritical Paths:\n";
+    auto cpds = find_critical_paths(*timing_graph, *timing_constraints, *serial_setup_analyzer); 
+    for(auto cpd : cpds) {
+        cout << "  " << cpd.launch_domain() << " -> " << cpd.capture_domain() << ": " << std::scientific << cpd.delay() << "\n";
+    }
+
     clock_gettime(CLOCK_MONOTONIC, &prog_end);
 
     cout << endl << "Total time: " << tatum::time_sec(prog_start, prog_end) << " sec" << endl;
 
-    return 0;
+    return exit_code;
 }
 
 double median(std::vector<double> values) {
