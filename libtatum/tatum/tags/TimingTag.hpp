@@ -1,5 +1,6 @@
 #pragma once
 #include <iosfwd>
+#include <limits>
 
 #include "tatum/Time.hpp"
 #include "tatum/TimingGraphFwd.hpp"
@@ -15,7 +16,11 @@ enum class TagType : unsigned char {
     UNKOWN
 };
 
+class TimingTag;
+
 std::ostream& operator<<(std::ostream& os, TagType type);
+
+bool is_const_gen_tag(const TimingTag& tag);
 
 //Track the origin node that is the determinant of a tag
 // This can be disabled to reduce the size of the TimingTag object.
@@ -40,10 +45,16 @@ std::ostream& operator<<(std::ostream& os, TagType type);
  *       This is modelled by the separate 'TimingTags' class.
  */
 class TimingTag {
-    public:
-        /*
-         * Constructors
-         */
+    public: //Static
+        //Returns a tag suitable for use at a constant generator
+        static TimingTag CONST_GEN_TAG() {
+            return TimingTag(Time(-std::numeric_limits<float>::infinity()),
+                             DomainId::INVALID(),
+                             DomainId::INVALID(),
+                             NodeId::INVALID(),
+                             TagType::DATA_ARRIVAL);
+        }
+    public: //Constructors
         TimingTag();
 
         ///\param arr_time_val The tagged arrival time
@@ -58,9 +69,8 @@ class TimingTag {
         ///\param base_tag The tag from which to copy auxilary meta-data (e.g. domain, launch node)
         TimingTag(const Time& time_val, NodeId origin, const TimingTag& base_tag);
 
-        /*
-         * Getters
-         */
+
+    public: //Accessors
         ///\returns This tag's arrival time
         const Time& time() const { return time_; }
 
@@ -77,9 +87,7 @@ class TimingTag {
 
         TagType type() const { return type_; }
 
-        /*
-         * Setters
-         */
+    public: //Mutators
         ///\param new_time The new value set as the tag's time
         void set_time(const Time& new_time) { time_ = new_time; }
 
@@ -131,6 +139,7 @@ class TimingTag {
         DomainId capture_clock_domain_; //Clock domain for arr/req times
         TagType type_;
 };
+
 
 //For comparing the values of two timing tags
 struct TimingTagValueComp {

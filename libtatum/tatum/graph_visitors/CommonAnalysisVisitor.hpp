@@ -69,8 +69,6 @@ class CommonAnalysisVisitor {
 
         bool is_clock_data_launch_edge(const TimingGraph& tg, const EdgeId edge_id) const;
         bool is_clock_data_capture_edge(const TimingGraph& tg, const EdgeId edge_id) const;
-
-        bool is_const_gen_tag(const TimingTag& tag) const;
 };
 
 /*
@@ -94,13 +92,7 @@ bool CommonAnalysisVisitor<AnalysisOps>::do_arrival_pre_traverse_node(const Timi
         //the dynamic timing behaviour of the system.  Similarily we leave the
         //launch/capture clocks unspecified so they should match any domain
 
-        Time arr_time = -Time(std::numeric_limits<float>::infinity());
-        TimingTag const_gen_tag = TimingTag(arr_time,
-                                            DomainId::INVALID(), //Any launch
-                                            DomainId::INVALID(), //Any capture
-                                            NodeId::INVALID(),   //Origin
-                                            TagType::DATA_ARRIVAL);
-        ops_.add_tag(node_id, const_gen_tag);
+        ops_.add_tag(node_id, TimingTag::CONST_GEN_TAG());
 
         node_constrained = true;
     } else {
@@ -620,14 +612,6 @@ bool CommonAnalysisVisitor<AnalysisOps>::should_calculate_slack(const TimingTag&
 
     return src_tag.launch_clock_domain() == sink_tag.launch_clock_domain();
 
-}
-
-template<class AnalysisOps>
-bool CommonAnalysisVisitor<AnalysisOps>::is_const_gen_tag(const TimingTag& tag) const {
-    return    !tag.launch_clock_domain()        //Wildcard launch
-           && !tag.capture_clock_domain()       //Wildcard capture
-           && std::signbit(tag.time().value())  //-inf arrival
-           && std::isinf(tag.time().value());
 }
 
 }} //namepsace
