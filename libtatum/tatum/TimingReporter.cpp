@@ -392,6 +392,10 @@ TimingPath TimingReporter::trace_path(const detail::TagRetriever& tag_retriever,
         while(curr_node) {
             auto launch_tags = tag_retriever.tags(curr_node, TagType::CLOCK_LAUNCH);
             auto iter = find_tag(launch_tags, path.launch_domain, path.capture_domain);
+            if(iter == launch_tags.end()) {
+                //Then look for incompletely specified (i.e. wildcard) capture clocks
+                iter = find_tag(launch_tags, path.launch_domain, DomainId::INVALID());
+            }
             TATUM_ASSERT(iter != launch_tags.end());
 
             EdgeId edge;
