@@ -3,7 +3,6 @@
 #include <cmath>
 #include <array>
 #include <iosfwd>
-#include <x86intrin.h>
 
 #ifndef TIME_VEC_WIDTH
 #define TIME_VEC_WIDTH 1
@@ -14,13 +13,17 @@
  */
 #if TIME_VEC_WIDTH > 8
 //Required for aligned access with AVX
-#define TIME_MEM_ALIGN 8*sizeof(float)
+# define TIME_MEM_ALIGN 8*sizeof(float)
 
 #elif TIME_VEC_WIDTH >= 4
 //Required for aligned access with SSE
-#define TIME_MEM_ALIGN 4*sizeof(float)
+# define TIME_MEM_ALIGN 4*sizeof(float)
 
 #endif //TIME_VEC_WIDTH
+
+#if TIME_VEC_WIDTH > 1
+# include <x86intrin.h>
+#endif
 
 namespace tatum {
 
