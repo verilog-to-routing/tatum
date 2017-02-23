@@ -69,6 +69,8 @@ class CommonAnalysisVisitor {
 
         bool is_clock_data_launch_edge(const TimingGraph& tg, const EdgeId edge_id) const;
         bool is_clock_data_capture_edge(const TimingGraph& tg, const EdgeId edge_id) const;
+
+        bool is_const_gen_tag(const TimingTag& tag) const;
 };
 
 /*
@@ -85,9 +87,21 @@ bool CommonAnalysisVisitor<AnalysisOps>::do_arrival_pre_traverse_node(const Timi
     bool node_constrained = false;
 
     if(tc.node_is_constant_generator(node_id)) {
-        //We don't propagate any tags from constant generators,
-        //since they do not effect the dynamic timing behaviour of the
-        //system
+        //We progpagate the tags from constant generators to ensure any sinks driven 
+        //only by constant generators are recorded as constrained.
+        //
+        //We set the arrival time to -inf, since constant generators do not effect
+        //the dynamic timing behaviour of the system.  Similarily we leave the
+        //launch/capture clocks unspecified so they should match any domain
+
+        Time arr_time = -Time(std::numeric_limits<float>::infinity());
+        TimingTag const_gen_tag = TimingTag(arr_time,
+                                            DomainId::INVALID(), //Any launch
+                                            DomainId::INVALID(), //Any capture
+                                            NodeId::INVALID(),   //Origin
+                                            TagType::DATA_ARRIVAL);
+        ops_.add_tag(node_id, const_gen_tag);
+
         node_constrained = true;
     } else {
 
@@ -425,15 +439,23 @@ void CommonAnalysisVisitor<AnalysisOps>::mark_sink_required_times(const TimingGr
         const Time capture_edge_delay = ops_.capture_clock_edge_delay(dc, tg, clock_capture_edge);
 
         for(const TimingTag& src_capture_clk_tag : src_capture_clk_tags) {
+            DomainId capture_domain = src_capture_clk_tag.capture_clock_domain();
             for(const TimingTag& node_data_arr_tag : node_data_arr_tags) {
+                DomainId launch_domain = node_data_arr_tag.launch_clock_domain();
+
+                if(is_const_gen_tag(node_data_arr_tag)) {
+                    //A constant generator tag. Reqquired time is not terribly well defined,
+                    //so just use the capture clock tag values since we nevery look at these
+                    //tags except to check that any downstream nodes have been constrained
+                    launch_domain = src_capture_clk_tag.capture_clock_domain();
+                }
 
                 //We produce a fully specified capture clock tags (both launch and capture) so we only want 
                 //to consider the capture clock tag which matches the data launch domain
-                bool same_launch_domain = (node_data_arr_tag.launch_clock_domain() == src_capture_clk_tag.launch_clock_domain());
+                bool same_launch_domain = (launch_domain == capture_domain);
 
                 //We only want to analyze paths between domains where a valid constraint has been specified
-                bool valid_launch_capture_pair = tc.should_analyze(node_data_arr_tag.launch_clock_domain(), 
-                                                                   src_capture_clk_tag.capture_clock_domain());
+                bool valid_launch_capture_pair = tc.should_analyze(launch_domain, capture_domain);
 
                 if(same_launch_domain && valid_launch_capture_pair) {
 
@@ -443,17 +465,15 @@ void CommonAnalysisVisitor<AnalysisOps>::mark_sink_required_times(const TimingGr
                     TATUM_ASSERT(node_data_arr_tag.time().valid());
 
                     //We apply the clock uncertainty to the generated required time tag
-                    float clock_uncertainty = ops_.clock_uncertainty(tc, 
-                                                                     node_data_arr_tag.launch_clock_domain(), 
-                                                                     src_capture_clk_tag.capture_clock_domain());
+                    float clock_uncertainty = ops_.clock_uncertainty(tc, launch_domain, capture_domain);
 
                     Time req_time =   src_capture_clk_tag.time() //Period + latency + propagated clock network delay to CPIN
                                     + capture_edge_delay         //CPIN to sink delay (Thld, or Tsu)
                                     + Time(clock_uncertainty);   //Clock period uncertainty
 
                     TimingTag node_data_req_tag(req_time, 
-                                                node_data_arr_tag.launch_clock_domain(), 
-                                                src_capture_clk_tag.capture_clock_domain(), 
+                                                launch_domain, 
+                                                capture_domain, 
                                                 NodeId::INVALID(), //Origin
                                                 TagType::DATA_REQUIRED);
 
@@ -485,24 +505,27 @@ void CommonAnalysisVisitor<AnalysisOps>::mark_sink_required_times(const TimingGr
             float capture_clock_source_latency = tc.source_latency(capture_domain);
 
             for(const TimingTag& node_data_arr_tag : node_data_arr_tags) {
+                DomainId launch_domain = node_data_arr_tag.launch_clock_domain();
 
                 //Should we be analyzing paths between these two domains?
-                if(tc.should_analyze(node_data_arr_tag.launch_clock_domain(), capture_domain)) {
+                if(tc.should_analyze(launch_domain, capture_domain)) {
 
                     //We only set a required time if the source domain actually reaches this sink
                     //domain.  This is indicated by the presence of an arrival tag (which should have
                     //a valid arrival time).
                     TATUM_ASSERT(node_data_arr_tag.time().valid());
 
-                    //We apply the clock uncertainty to the generated required time tag
-                    float constraint = ops_.clock_constraint(tc, 
-                                                             node_data_arr_tag.launch_clock_domain(), 
-                                                             capture_domain);
+                    if(is_const_gen_tag(node_data_arr_tag)) {
+                        //A constant generator tag. Reqquired time is not terribly well defined,
+                        //so just use the inter-domain values since we nevery look at these
+                        //tags except to check that any downstream nodes have been constrained
 
-                    //We apply the clock uncertainty to the generated required time tag
-                    float clock_uncertainty = ops_.clock_uncertainty(tc, 
-                                                                     node_data_arr_tag.launch_clock_domain(), 
-                                                                     capture_domain);
+                        launch_domain = capture_domain;
+                    }
+
+                    float constraint = ops_.clock_constraint(tc, launch_domain, capture_domain);
+
+                    float clock_uncertainty = ops_.clock_uncertainty(tc, capture_domain, capture_domain);
 
                     //Calulate the required time
                     Time req_time =   Time(constraint)                   //Period constraint
@@ -511,7 +534,7 @@ void CommonAnalysisVisitor<AnalysisOps>::mark_sink_required_times(const TimingGr
                                     + Time(clock_uncertainty);           //Clock period uncertainty
 
                     TimingTag node_data_req_tag(req_time, 
-                                                node_data_arr_tag.launch_clock_domain(), 
+                                                launch_domain, 
                                                 capture_domain, 
                                                 NodeId::INVALID(), //Origin
                                                 TagType::DATA_REQUIRED);
@@ -597,6 +620,14 @@ bool CommonAnalysisVisitor<AnalysisOps>::should_calculate_slack(const TimingTag&
 
     return src_tag.launch_clock_domain() == sink_tag.launch_clock_domain();
 
+}
+
+template<class AnalysisOps>
+bool CommonAnalysisVisitor<AnalysisOps>::is_const_gen_tag(const TimingTag& tag) const {
+    return    !tag.launch_clock_domain()
+           && !tag.capture_clock_domain()
+           && std::signbit(tag.time())
+           && std::isinf(tag.time());
 }
 
 }} //namepsace

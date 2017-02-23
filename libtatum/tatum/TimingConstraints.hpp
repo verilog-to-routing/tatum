@@ -36,7 +36,7 @@ class TimingConstraints {
         domain_range clock_domains() const;
 
         ///\returns The name of a clock domain
-        const std::string& clock_domain_name(const DomainId id) const;
+        std::string clock_domain_name(const DomainId id) const;
 
         ///\returns The source NodeId of the specified domain
         NodeId clock_domain_source_node(const DomainId id) const;

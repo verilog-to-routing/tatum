@@ -13,7 +13,10 @@ TimingConstraints::domain_range TimingConstraints::clock_domains() const {
     return tatum::util::make_range(domain_ids_.begin(), domain_ids_.end());
 }
 
-const std::string& TimingConstraints::clock_domain_name(const DomainId id) const {
+std::string TimingConstraints::clock_domain_name(const DomainId id) const {
+    if(!id) {
+        return std::string("*");
+    }
     return domain_names_[id];
 }
 
@@ -91,6 +94,13 @@ DomainId TimingConstraints::find_clock_domain(const std::string& name) const {
 }
 
 bool TimingConstraints::should_analyze(const DomainId src_domain, const DomainId sink_domain) const {
+    if(!src_domain && sink_domain) {
+        return true; //Wildcard match
+    } else if (src_domain && !sink_domain) {
+        return true; //Wildcard match
+    }
+
+    //Exact match
     return setup_constraints_.count(DomainPair(src_domain, sink_domain)) 
            || hold_constraints_.count(DomainPair(src_domain, sink_domain));
 }
