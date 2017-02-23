@@ -100,86 +100,78 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
 
     //Launch path
     Time arr_time;
+    Time arr_path;
     {
-        Time prev_path = Time(0.);
-        Time path = Time(0.);
+        reset_path();
 
         {
             //Launch clock origin
-            Time incr = path - prev_path;
+            arr_path = Time(0.);
             std::string point = "clock " + timing_constraints_.clock_domain_name(timing_path.launch_domain) + " (rise edge)";
-            print_path_line(os, point, incr, path);
-            prev_path = path;
+            update_print_path(os, point, arr_path);
         }
 
         {
             //Launch clock latency
             Time latency = Time(timing_constraints_.source_latency(timing_path.launch_domain));
-            path += latency;
-            Time incr = path - prev_path;
+            arr_path += latency;
             std::string point = "clock source latency";
-            print_path_line(os, point, incr, path);
-            prev_path = path;
+            update_print_path(os, point, arr_path);
         }
 
         //Launch clock path
         for(TimingPathElem path_elem : timing_path.clock_launch_elements) {
-            std::string point;
-            point = name_resolver_.node_name(path_elem.node) + " (" + name_resolver_.node_block_type_name(path_elem.node) + ")";
-            path = path_elem.tag.time();
-            Time incr = path - prev_path;
+            std::string point = name_resolver_.node_name(path_elem.node) + " (" + name_resolver_.node_block_type_name(path_elem.node) + ")";
+            arr_path = path_elem.tag.time();
 
-            print_path_line(os, point, incr, path);
+            update_print_path(os, point, arr_path);
+        }
 
-            prev_path = path;
+        {
+            //Input constraint
+            TATUM_ASSERT(timing_path.data_arrival_elements.size() > 0);
+            const TimingPathElem& path_elem = timing_path.data_arrival_elements[0];
+
+            float input_constraint = timing_constraints_.input_constraint(path_elem.node, timing_path.capture_domain);
+            if(!std::isnan(input_constraint)) {
+                arr_path += Time(input_constraint);
+
+                update_print_path(os, "input external delay", arr_path);
+            }
         }
 
         //Launch data
         for(size_t ielem = 0; ielem < timing_path.data_arrival_elements.size(); ++ielem) {
             const TimingPathElem& path_elem = timing_path.data_arrival_elements[ielem];
 
-            if(ielem == 0) {
-                //Start
-
-                //Input constraint
-                float input_constraint = timing_constraints_.input_constraint(path_elem.node, timing_path.capture_domain);
-                if(!std::isnan(input_constraint)) {
-                    path += Time(input_constraint);
-
-                    print_path_line(os, "input external delay", Time(input_constraint), path);
-
-                    prev_path = path;
-                }
-            }
-
             std::string point = name_resolver_.node_name(path_elem.node) + " (" + name_resolver_.node_block_type_name(path_elem.node) + ")";
-            path = path_elem.tag.time();
-            Time incr = path - prev_path;
 
             if(path_elem.incomming_edge 
                && timing_graph_.edge_type(path_elem.incomming_edge) == EdgeType::PRIMITIVE_CLOCK_LAUNCH) {
                     point += " [clk-to-q]";
             }
 
-            print_path_line(os, point, incr, path);
+            arr_path = path_elem.tag.time();
 
-            prev_path = path;
+            update_print_path(os, point, arr_path);
         }
 
-        //The last tag is the final arrival time
-        const auto& last_tag = timing_path.data_arrival_elements[timing_path.data_arrival_elements.size() - 1].tag;
-        TATUM_ASSERT(last_tag.type() == TagType::DATA_ARRIVAL);
-        arr_time = last_tag.time();
-        print_path_line(os, "data arrival time", arr_time);
-        os << "\n";
+        {
+            //Final arrival time
+            const auto& last_tag = timing_path.data_arrival_elements[timing_path.data_arrival_elements.size() - 1].tag;
+            TATUM_ASSERT(last_tag.type() == TagType::DATA_ARRIVAL);
+            arr_time = last_tag.time();
+            update_print_path_no_incr(os, "data arrival time", arr_time);
+            os << "\n";
+        }
 
         //Sanity check the arrival time calculated by this timing report (i.e. path) and the one calculated by
         //the analyzer (i.e. arr_time) agree
-        if(!nearly_equal(arr_time, path)) {
+        if(!nearly_equal(arr_time, arr_path)) {
             os.flush();
             std::stringstream ss;
             ss << "Internal Error: analyzer arrival time (" << arr_time.value() << ")"
-               << " differs from timing report path arrival time (" << path.value() << ")"
+               << " differs from timing report path arrival time (" << arr_path.value() << ")"
                << " beyond tolerance";
             throw tatum::Error(ss.str());
         }
@@ -188,12 +180,14 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
 
     //Capture path (required time)
     Time req_time;
+    Time req_path;
     {
-        Time prev_path = Time(0.);
-        Time path = Time(0.);
+        reset_path();
 
         {
             //Capture clock origin
+            req_path = Time(0.);
+
             Time constraint;
             if(timing_path.type == TimingPathType::SETUP) {
                 constraint = Time(timing_constraints_.setup_constraint(timing_path.launch_domain, timing_path.capture_domain));
@@ -201,37 +195,28 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
                 constraint = Time(timing_constraints_.hold_constraint(timing_path.launch_domain, timing_path.capture_domain));
             }
 
-            Time incr = path - prev_path;
-            path += constraint;
+            req_path += constraint;
             std::string point = "clock " + timing_constraints_.clock_domain_name(timing_path.capture_domain) + " (rise edge)";
-            print_path_line(os, point, incr, path);
-            prev_path = path;
-
+            update_print_path(os, point, req_path);
         }
 
         {
-            //Capture clock surce latency
+            //Capture clock source latency
             Time latency = Time(timing_constraints_.source_latency(timing_path.capture_domain));
-            path += latency;
-            Time incr = path - prev_path;
+            req_path += latency;
             std::string point = "clock source latency";
-            print_path_line(os, point, incr, path);
-            prev_path = path;
-
+            update_print_path(os, point, req_path);
         }
 
+        //Clock capture path
         for(size_t ielem = 0; ielem < timing_path.clock_capture_elements.size(); ++ielem) {
             const TimingPathElem& path_elem = timing_path.clock_capture_elements[ielem];
 
             TATUM_ASSERT(path_elem.tag.type() == TagType::CLOCK_CAPTURE);
 
-                //Regular node
-            path = path_elem.tag.time();
-            Time incr = path - prev_path;
+            req_path = path_elem.tag.time();
             std::string point = name_resolver_.node_name(path_elem.node) + " (" + name_resolver_.node_block_type_name(path_elem.node) + ")";
-            print_path_line(os, point, incr, path);
-
-            prev_path = path;
+            update_print_path(os, point, req_path);
         }
 
         //Data required
@@ -245,18 +230,15 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
                     TATUM_ASSERT_MSG(timing_path.type == TimingPathType::HOLD, "Expected path type SETUP or HOLD");
                     point = "cell hold time";
                 }
-                path = path_elem.tag.time();
-                Time incr = path - prev_path;
-                print_path_line(os, point, incr, path);
-
-                prev_path = path;
+                req_path = path_elem.tag.time();
+                update_print_path(os, point, req_path);
             }
 
             //Output constraint
             Time output_constraint = -Time(timing_constraints_.output_constraint(path_elem.node, timing_path.capture_domain));
             if(!std::isnan(output_constraint.value())) {
-                path += output_constraint;
-                print_path_line(os, "output external delay", output_constraint, path);
+                req_path += output_constraint;
+                update_print_path(os, "output external delay", req_path);
             }
 
             //Uncertainty
@@ -266,21 +248,21 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
             } else {
                 uncertainty = Time(timing_constraints_.hold_clock_uncertainty(timing_path.launch_domain, timing_path.capture_domain));
             }
-            path += uncertainty;
-            print_path_line(os, "clock uncertainty", uncertainty, path);
+            req_path += uncertainty;
+            update_print_path(os, "clock uncertainty", req_path);
 
             //Final arrival time
             req_time = path_elem.tag.time();
-            print_path_line(os, "data required time", req_time);
+            update_print_path_no_incr(os, "data required time", req_time);
         }
 
 
         //Sanity check required time
-        if(!nearly_equal(req_time, path)) {
+        if(!nearly_equal(req_time, req_path)) {
             os.flush();
             std::stringstream ss;
             ss << "Internal Error: analyzer required time (" << req_time.value() << ")"
-               << " differs from report_timing path required time (" << path.value() << ")"
+               << " differs from report_timing path required time (" << req_path.value() << ")"
                << " beyond tolerance";
             throw tatum::Error(ss.str());
         }
@@ -288,25 +270,52 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
 
     //Summary and slack
     os << divider << "\n";
-    print_path_line(os, "data required time", req_time);
-    print_path_line(os, "data arrival time", -arr_time);
+    print_path_line_no_incr(os, "data required time", req_time);
+    print_path_line_no_incr(os, "data arrival time", -arr_time);
     os << divider << "\n";
     Time slack = timing_path.slack_tag.time();
     if(slack.value() < 0. || std::signbit(slack.value())) {
-        print_path_line(os, "slack (VIOLATED)", slack);
+        print_path_line_no_incr(os, "slack (VIOLATED)", slack);
     } else {
-        print_path_line(os, "slack (MET)", slack);
+        print_path_line_no_incr(os, "slack (MET)", slack);
     }
     os << "\n";
     os.flush();
+
+    //Sanity check slack
+    Time path_slack = req_path - arr_path;
+    if(!nearly_equal(slack, path_slack)) {
+        os.flush();
+        std::stringstream ss;
+        ss << "Internal Error: analyzer slack (" << slack << ")"
+           << " differs from report_timing path slack (" << path_slack << ")"
+           << " beyond tolerance";
+        throw tatum::Error(ss.str());
+    }
 }
 
-void TimingReporter::print_path_line(std::ostream& os, std::string point, Time incr, Time path) const {
+void TimingReporter::update_print_path(std::ostream& os, std::string point, Time path) const {
+
+    Time incr = path - prev_path_;
 
     print_path_line(os, point, to_printable_string(incr), to_printable_string(path));
+
+    prev_path_ = path;
 }
 
-void TimingReporter::print_path_line(std::ostream& os, std::string point, Time path) const {
+void TimingReporter::update_print_path_no_incr(std::ostream& os, std::string point, Time path) const {
+    TATUM_ASSERT(nearly_equal(path, prev_path_));
+
+    print_path_line(os, point, "", to_printable_string(path));
+
+    prev_path_ = path;
+}
+
+void TimingReporter::reset_path() const {
+    prev_path_ = Time(0.);
+}
+
+void TimingReporter::print_path_line_no_incr(std::ostream& os, std::string point, Time path) const {
     print_path_line(os, point, "", to_printable_string(path));
 }
 
