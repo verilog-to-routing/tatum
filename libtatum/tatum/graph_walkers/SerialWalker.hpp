@@ -35,13 +35,13 @@ class SerialWalker : public TimingGraphWalker<Visitor, DelayCalc> {
             }
         }
 
-        void do_required_pre_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, Visitor& visitor) override {
+        void do_required_pre_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalc& dc, Visitor& visitor) override {
 #ifdef LOG_TRAVERSAL_LEVELS
             std::cout << "Required Pre-traversal\n";
 #endif
             size_t num_unconstrained = 0;
             for(NodeId node_id : tg.logical_outputs()) {
-                bool constrained = visitor.do_required_pre_traverse_node(tg, tc, node_id);
+                bool constrained = visitor.do_required_pre_traverse_node(tg, tc, dc, node_id);
 
                 if(!constrained) ++num_unconstrained;
             }
