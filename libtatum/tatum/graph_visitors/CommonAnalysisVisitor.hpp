@@ -73,8 +73,6 @@ class CommonAnalysisVisitor {
 
         bool is_clock_data_launch_edge(const TimingGraph& tg, const EdgeId edge_id) const;
         bool is_clock_data_capture_edge(const TimingGraph& tg, const EdgeId edge_id) const;
-
-        EdgeId find_clock_capture_clock_edge(const TimingGraph& tg, const NodeId node) const;
 };
 
 /*
@@ -194,7 +192,7 @@ bool CommonAnalysisVisitor<AnalysisOps>::do_required_pre_traverse_node(const Tim
 
     bool node_constrained = false;
 
-    EdgeId clock_capture_edge = find_clock_capture_clock_edge(tg, node_id);
+    EdgeId clock_capture_edge = tg.find_clock_capture_edge(node_id);
 
     if(clock_capture_edge) {
         //Required time at sink FF
@@ -608,24 +606,6 @@ bool CommonAnalysisVisitor<AnalysisOps>::should_calculate_slack(const TimingTag&
 
     return src_tag.launch_clock_domain() == sink_tag.launch_clock_domain();
 
-}
-
-template<class AnalysisOps>
-EdgeId CommonAnalysisVisitor<AnalysisOps>::find_clock_capture_clock_edge(const TimingGraph& tg, const NodeId node) const {
-    EdgeId clk_capture_edge;
-
-    if(tg.node_type(node) == NodeType::SINK) {
-        //Only sinks can have clock capture edges
-
-        //Look through the edges for the incoming clock edge
-        for(EdgeId edge : tg.node_in_edges(node)) {
-            if(is_clock_data_capture_edge(tg, edge)) {
-                clk_capture_edge = edge;
-                break;
-            }
-        }
-    }
-    return clk_capture_edge;
 }
 
 }} //namepsace
