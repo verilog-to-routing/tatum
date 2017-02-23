@@ -15,9 +15,9 @@ TimingPath trace_path(const TimingGraph& timing_graph,
                       const NodeId sink_node);
 
 
-std::vector<TimingPathInfo> find_critical_path_delays(const TimingGraph& timing_graph, 
-                                                      const TimingConstraints& timing_constraints, 
-                                                      const SetupTimingAnalyzer& setup_analyzer) {
+std::vector<TimingPathInfo> find_critical_paths(const TimingGraph& timing_graph, 
+                                                const TimingConstraints& timing_constraints, 
+                                                const SetupTimingAnalyzer& setup_analyzer) {
     std::vector<TimingPathInfo> cpds;
 
     //We calculate the critical path delay (CPD) for each pair of clock domains (which are connected to each other)

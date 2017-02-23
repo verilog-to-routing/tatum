@@ -9,9 +9,9 @@
 
 namespace tatum {
 
-std::vector<TimingPathInfo> find_critical_path_delays(const TimingGraph& timing_graph, 
-                                                      const TimingConstraints& timing_constraints, 
-                                                      const SetupTimingAnalyzer& setup_analyzer);
+std::vector<TimingPathInfo> find_critical_paths(const TimingGraph& timing_graph, 
+                                                const TimingConstraints& timing_constraints, 
+                                                const SetupTimingAnalyzer& setup_analyzer);
 
 TimingPath trace_setup_path(const TimingGraph& timing_graph, 
                             const SetupTimingAnalyzer& setup_analyzer,
