@@ -39,18 +39,18 @@ class TimingPath {
         tatum::DomainId capture_domain;
 
         tatum::NodeId endpoint() const { 
-            TATUM_ASSERT(data_launch.size() > 0);
-            return data_launch[data_launch.size()-1].node;
+            TATUM_ASSERT(data_arrival_elements.size() > 0);
+            return data_arrival_elements[data_arrival_elements.size()-1].node;
         }
         tatum::NodeId startpoint() const { 
-            TATUM_ASSERT(data_launch.size() > 0);
-            return data_launch[0].node; 
+            TATUM_ASSERT(data_arrival_elements.size() > 0);
+            return data_arrival_elements[0].node; 
         }
 
-        std::vector<TimingPathElem> clock_launch;
-        std::vector<TimingPathElem> data_launch;
-        std::vector<TimingPathElem> clock_capture;
-        TimingPathElem data_required;
+        std::vector<TimingPathElem> clock_launch_elements;
+        std::vector<TimingPathElem> data_arrival_elements;
+        std::vector<TimingPathElem> clock_capture_elements;
+        TimingPathElem data_required_element;
 
         tatum::TimingTag slack_tag;
         TimingPathType type;
