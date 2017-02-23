@@ -93,8 +93,12 @@ class TimingGraph {
 
 
         ///\param id The node id
-        ///\returns The edge id corresponding to the incoming clock capture edge (or EdgeId::INVALID() if none)
-        EdgeId find_clock_capture_edge(const NodeId id) const;
+        ///\returns The edge id corresponding to the incoming clock capture edge, or EdgeId::INVALID() if none
+        EdgeId node_clock_capture_edge(const NodeId id) const;
+
+        ///\param id The node id
+        ///\returns The edge id corresponding to the incoming clock launch edge, or EdgeId::INVALID() if none
+        EdgeId node_clock_launch_edge(const NodeId id) const;
 
         /*
          * Edge accessors

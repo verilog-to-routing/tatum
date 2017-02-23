@@ -415,7 +415,7 @@ void CommonAnalysisVisitor<AnalysisOps>::mark_sink_required_times(const TimingGr
     auto data_arr_range = ops_.get_tags(node_id, TagType::DATA_ARRIVAL);
     std::vector<TimingTag> node_data_arr_tags(data_arr_range.begin(), data_arr_range.end());
 
-    EdgeId clock_capture_edge = tg.find_clock_capture_edge(node_id);
+    EdgeId clock_capture_edge = tg.node_clock_capture_edge(node_id);
 
     if(clock_capture_edge) {
         //Required time at sink FF

@@ -8,6 +8,7 @@ namespace tatum {
 //A component/point along a timing path
 class TimingPathElem {
     public:
+        TimingPathElem() = default;
         TimingPathElem(tatum::TimingTag tag_v,
                        tatum::NodeId node_v,
                        tatum::EdgeId incomming_edge_v)
@@ -49,6 +50,8 @@ class TimingPath {
         std::vector<TimingPathElem> clock_launch;
         std::vector<TimingPathElem> data_launch;
         std::vector<TimingPathElem> clock_capture;
+        TimingPathElem data_required;
+
         tatum::TimingTag slack_tag;
         TimingPathType type;
 };
