@@ -132,7 +132,7 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
             TATUM_ASSERT(timing_path.data_arrival_elements.size() > 0);
             const TimingPathElem& path_elem = timing_path.data_arrival_elements[0];
 
-            float input_constraint = timing_constraints_.input_constraint(path_elem.node, timing_path.capture_domain);
+            float input_constraint = timing_constraints_.input_constraint(path_elem.node, timing_path.launch_domain);
             if(!std::isnan(input_constraint)) {
                 arr_path += Time(input_constraint);
 
