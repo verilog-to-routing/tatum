@@ -37,6 +37,9 @@ class Time {
         ///The current time value
         scalar_type value() const;
 
+        ///Allow conversions to float
+        operator float() const { return value(); }
+
         ///Set the current time value to time
         void set_value(scalar_type time);
 
