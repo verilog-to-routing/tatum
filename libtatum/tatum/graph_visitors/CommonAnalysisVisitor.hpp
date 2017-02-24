@@ -187,10 +187,17 @@ bool CommonAnalysisVisitor<AnalysisOps>::do_required_pre_traverse_node(const Tim
 
     TATUM_ASSERT(tg.node_type(node_id) == NodeType::SINK);
 
-    auto data_req_tags = ops_.get_tags(node_id, TagType::DATA_REQUIRED);
 
-    //Constrained nodes should have required times
-    bool node_constrained = !data_req_tags.empty();
+    //Constrained data nodes should have required times
+    auto data_req_tags = ops_.get_tags(node_id, TagType::DATA_REQUIRED);
+    bool has_data_required = !data_req_tags.empty();
+
+    //If a clock is generated on-chip (e.g. PLL) it may be driven off-chip
+    //so a primary-output sink may have only clock launch tags
+    auto clock_launch_tags = ops_.get_tags(node_id, TagType::CLOCK_LAUNCH);
+    bool has_clock_launch = !clock_launch_tags.empty();
+
+    bool node_constrained = has_data_required || has_clock_launch;
 
     return node_constrained;
 }
