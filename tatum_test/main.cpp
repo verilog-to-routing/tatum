@@ -204,7 +204,7 @@ int main(int argc, char** argv) {
         }
 
         std::vector<NodeId> nodes;
-        nodes = find_transitively_connected_nodes(*timing_graph, {NodeId(6768)});
+        //nodes = find_transitively_connected_nodes(*timing_graph, {NodeId(6768)});
 
         tatum::NodeNumResolver name_resolver(*timing_graph);
         tatum::TimingReporter timing_reporter(name_resolver, *timing_graph, *timing_constraints);
