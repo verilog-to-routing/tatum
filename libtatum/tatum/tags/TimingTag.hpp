@@ -39,9 +39,28 @@ bool is_const_gen_tag(const TimingTag& tag);
  */
 class TimingTag {
     public: //Static
-        //Returns a tag suitable for use at a constant generator
-        static TimingTag CONST_GEN_TAG() {
+        //Returns a tag suitable for use at a constant generator, during 
+        //setup analysis.
+        //
+        ///In particular it's domains are left invalid (i.e. wildcards),
+        //and it's arrival time set to -inf (so it will be maxed out by
+        //any non-constant tag)
+        static TimingTag CONST_GEN_TAG_SETUP() {
             return TimingTag(Time(-std::numeric_limits<float>::infinity()),
+                             DomainId::INVALID(),
+                             DomainId::INVALID(),
+                             NodeId::INVALID(),
+                             TagType::DATA_ARRIVAL);
+        }
+
+        //Returns a tag suitable for use at a constant generator, during 
+        //hold analysis.
+        //
+        ///In particular it's domains are left invalid (i.e. wildcards),
+        //and it's arrival time set to +inf (so it will be minned out by
+        //any non-constant tag)
+        static TimingTag CONST_GEN_TAG_HOLD() {
+            return TimingTag(Time(+std::numeric_limits<float>::infinity()),
                              DomainId::INVALID(),
                              DomainId::INVALID(),
                              NodeId::INVALID(),

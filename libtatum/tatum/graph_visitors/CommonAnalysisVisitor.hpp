@@ -88,11 +88,11 @@ bool CommonAnalysisVisitor<AnalysisOps>::do_arrival_pre_traverse_node(const Timi
         //We progpagate the tags from constant generators to ensure any sinks driven 
         //only by constant generators are recorded as constrained.
         //
-        //We set the arrival time to -inf, since constant generators do not effect
-        //the dynamic timing behaviour of the system.  Similarily we leave the
-        //launch/capture clocks unspecified so they should match any domain
+        //We use a special tag to initialize constant generators which gets overritten
+        //by any non-constant tag at downstream nodes
 
-        ops_.add_tag(node_id, TimingTag::CONST_GEN_TAG());
+        TimingTag const_gen_tag = ops_.const_gen_tag();
+        ops_.add_tag(node_id, const_gen_tag);
 
         node_constrained = true;
     } else {

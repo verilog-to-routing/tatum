@@ -92,8 +92,7 @@ inline std::ostream& operator<<(std::ostream& os, TagType type) {
 inline bool is_const_gen_tag(const TimingTag& tag) { 
     return    !tag.launch_clock_domain()        //Wildcard launch
            && !tag.capture_clock_domain()       //Wildcard capture
-           && std::signbit(tag.time().value())  //-inf arrival
-           && std::isinf(tag.time().value());
+           && std::isinf(tag.time().value());   //inf arrival, we allow +/- inf since different values may be used for setup/hold
 }
 
 
