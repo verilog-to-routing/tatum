@@ -196,6 +196,13 @@ int main(int argc, char** argv) {
 
         cout << "\n";
 
+        if(serial_analyzer->num_unconstrained_startpoints() > 0) {
+            cout << "Warning: " << serial_analyzer->num_unconstrained_startpoints() << " sources are unconstrained\n";
+        }
+        if(serial_analyzer->num_unconstrained_endpoints() > 0) {
+            cout << "Warning: " << serial_analyzer->num_unconstrained_endpoints() << " sinks are unconstrained\n";
+        }
+
         std::vector<NodeId> nodes;
         //nodes = find_transitively_connected_nodes(*timing_graph, {NodeId(33296)});
 
