@@ -32,8 +32,8 @@
 #include "util.hpp"
 #include "profile.hpp"
 
-#define NUM_SERIAL_RUNS 10
-#define NUM_PARALLEL_RUNS (1*NUM_SERIAL_RUNS)
+#define NUM_SERIAL_RUNS 1
+#define NUM_PARALLEL_RUNS (0*NUM_SERIAL_RUNS)
 
 //Should we optimize the timing graph memory layout?
 //#define OPTIMIZE_GRAPH_LAYOUT
@@ -197,7 +197,7 @@ int main(int argc, char** argv) {
         cout << "\n";
 
         std::vector<NodeId> nodes;
-        //nodes = find_transitively_connected_nodes(*timing_graph, {NodeId(496)});
+        //nodes = find_transitively_connected_nodes(*timing_graph, {NodeId(33296)});
 
         tatum::NodeNumResolver name_resolver(*timing_graph);
         tatum::TimingReporter timing_reporter(name_resolver, *timing_graph, *timing_constraints);
