@@ -450,7 +450,7 @@ void TimingReporter::report_unconstrained_endpoints(std::ostream& os, const deta
     os << "\n";
 
     for(NodeId node : timing_graph_.nodes()) {
-        node_type = timing_graph_.node_type(node);
+        NodeType node_type = timing_graph_.node_type(node);
         if(node_type == NodeType::SINK) {
             //An endpoint
             auto tags = tag_retriever.tags(node);
