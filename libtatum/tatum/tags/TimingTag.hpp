@@ -22,13 +22,6 @@ std::ostream& operator<<(std::ostream& os, TagType type);
 
 bool is_const_gen_tag(const TimingTag& tag);
 
-//Track the origin node that is the determinant of a tag
-// This can be disabled to reduce the size of the TimingTag object.
-// If origin node tracking is disabled, the origin_node() accessors 
-// will always return an invalid node id and constructors/set_origin_node()
-// will ignore the passed node id
-#define TATUM_TRACK_ORIGIN_NODE
-
 /**
  * The 'TimingTag' class represents an individual timing tag: the information associated
  * with a node's arrival/required times.
@@ -79,11 +72,7 @@ class TimingTag {
         DomainId capture_clock_domain() const { return capture_clock_domain_; }
 
         ///\returns This tag's launching node's id
-#ifdef TATUM_TRACK_ORIGIN_NODE
         NodeId origin_node() const { return origin_node_; }
-#else
-        NodeId origin_node() const { return NodeId::INVALID(); }
-#endif
 
         TagType type() const { return type_; }
 
@@ -98,11 +87,7 @@ class TimingTag {
         void set_capture_clock_domain(const DomainId new_clock_domain) { capture_clock_domain_ = new_clock_domain; }
 
         ///\param new_launch_node The new value set as the tag's launching node
-#ifdef TATUM_TRACK_ORIGIN_NODE
         void set_origin_node(const NodeId new_origin_node) { origin_node_ = new_origin_node; }
-#else
-        void set_origin_node(const NodeId /*new_origin_node*/) { }
-#endif
 
         void set_type(const TagType new_type) { type_ = new_type; }
 
@@ -132,9 +117,7 @@ class TimingTag {
          * Data
          */
         Time time_; //Required time
-#ifdef TATUM_TRACK_ORIGIN_NODE
         NodeId origin_node_; //Node which launched this arrival time
-#endif
         DomainId launch_clock_domain_; //Clock domain for arr/req times
         DomainId capture_clock_domain_; //Clock domain for arr/req times
         TagType type_;

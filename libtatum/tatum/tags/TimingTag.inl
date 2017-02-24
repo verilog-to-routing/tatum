@@ -8,9 +8,7 @@ namespace tatum {
 
 inline TimingTag::TimingTag()
     : time_(NAN)
-#ifdef TATUM_TRACK_ORIGIN_NODE
     , origin_node_(NodeId::INVALID())
-#endif
     , launch_clock_domain_(DomainId::INVALID())
     , capture_clock_domain_(DomainId::INVALID())
     , type_(TagType::UNKOWN)
@@ -19,16 +17,10 @@ inline TimingTag::TimingTag()
 inline TimingTag::TimingTag(const Time& time_val, 
                             const DomainId launch_domain, 
                             const DomainId capture_domain, 
-#ifdef TATUM_TRACK_ORIGIN_NODE
                             const NodeId node, 
-#else
-                            const NodeId /*node*/,
-#endif
                             const TagType new_type)
     : time_(time_val)
-#ifdef TATUM_TRACK_ORIGIN_NODE
     , origin_node_(node)
-#endif
     , launch_clock_domain_(launch_domain)
     , capture_clock_domain_(capture_domain)
     , type_(new_type)
@@ -36,9 +28,7 @@ inline TimingTag::TimingTag(const Time& time_val,
 
 inline TimingTag::TimingTag(const Time& time_val, NodeId origin, const TimingTag& base_tag)
     : time_(time_val)
-#ifdef TATUM_TRACK_ORIGIN_NODE
     , origin_node_(origin)
-#endif
     , launch_clock_domain_(base_tag.launch_clock_domain())
     , capture_clock_domain_(base_tag.capture_clock_domain())
     , type_(base_tag.type())
