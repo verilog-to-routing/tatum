@@ -199,10 +199,10 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
         << ")\n";
 
     if(path_info.type() == TimingPathType::SETUP) {
-        os << "Path Type : max [setup]" << "\n";
+        os << "Path Type : setup" << "\n";
     } else {
         TATUM_ASSERT_MSG(path_info.type() == TimingPathType::HOLD, "Expected path type SETUP or HOLD");
-        os << "Path Type : min [hold]" << "\n";
+        os << "Path Type : hold" << "\n";
     }
 
     os << "\n";
