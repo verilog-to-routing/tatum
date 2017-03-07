@@ -682,9 +682,10 @@ bool TimingGraph::validate_structure() const {
             if (src_type == NodeType::SOURCE) {
 
                 if(   sink_type != NodeType::IPIN
+                   && sink_type != NodeType::OPIN
                    && sink_type != NodeType::CPIN
                    && sink_type != NodeType::SINK) {
-                    throw tatum::Error("SOURCE nodes should only drive IPIN, CPIN or SINK nodes");
+                    throw tatum::Error("SOURCE nodes should only drive IPIN, OPIN, CPIN or SINK nodes");
                 }
 
                 if(sink_type == NodeType::SINK) {
@@ -693,6 +694,10 @@ bool TimingGraph::validate_structure() const {
                         throw tatum::Error("SOURCE to SINK edges should always be either INTERCONNECT or PRIMTIIVE_COMBINATIONAL type edges");
                     }
                     
+                } else if (sink_type == NodeType::OPIN) {
+                    if(out_edge_type != EdgeType::PRIMITIVE_COMBINATIONAL) {
+                        throw tatum::Error("SOURCE to OPIN edges should always be PRIMITIVE_COMBINATIONAL type edges");
+                    }
                 } else {
                     TATUM_ASSERT(sink_type == NodeType::IPIN || sink_type == NodeType::CPIN);
                     if(out_edge_type != EdgeType::INTERCONNECT) {
