@@ -50,6 +50,7 @@ template<class DelayCalc>
 void GraphvizDotWriter<DelayCalc>::write_dot_file(std::ostream& os, const TimingAnalyzer& analyzer) {
     std::map<NodeId,std::vector<TimingTag>> node_tags;
     std::map<NodeId,std::vector<TimingTag>> node_slacks;
+    TimingType timing_type = TimingType::UNKOWN;
 
     //This is ugly, but makes it transparent to the user who just passes thier analyzer
     const SetupTimingAnalyzer* setup_analyzer = dynamic_cast<const SetupTimingAnalyzer*>(&analyzer);
@@ -62,6 +63,8 @@ void GraphvizDotWriter<DelayCalc>::write_dot_file(std::ostream& os, const Timing
 
             auto slacks = setup_analyzer->setup_slacks(node);
             std::copy(slacks.begin(), slacks.end(), std::back_inserter(node_slacks[node]));
+
+            timing_type = TimingType::SETUP;
         } else {
             TATUM_ASSERT(hold_analyzer);
 
@@ -70,17 +73,21 @@ void GraphvizDotWriter<DelayCalc>::write_dot_file(std::ostream& os, const Timing
 
             auto slacks = hold_analyzer->hold_slacks(node);
             std::copy(slacks.begin(), slacks.end(), std::back_inserter(node_slacks[node]));
+
+            timing_type = TimingType::HOLD;
         }
     }
 
-    write_dot_format(os, node_tags, node_slacks);
+    write_dot_format(os, node_tags, node_slacks, timing_type);
 }
 
 
 template<class DelayCalc>
 void GraphvizDotWriter<DelayCalc>::write_dot_format(std::ostream& os, 
                                          const std::map<NodeId,std::vector<TimingTag>>& node_tags,
-                                         const std::map<NodeId,std::vector<TimingTag>>& node_slacks) {
+                                         const std::map<NodeId,std::vector<TimingTag>>& node_slacks,
+                                         TimingType timing_type) {
+    TATUM_ASSERT(timing_type == TimingType::SETUP || timing_type == TimingType::HOLD);
 
     os << "digraph G {" << std::endl;
     os << "\tnode[shape=record]" << std::endl;
@@ -100,7 +107,7 @@ void GraphvizDotWriter<DelayCalc>::write_dot_format(std::ostream& os,
     }
 
     for(const EdgeId edge : tg_.edges()) {
-        write_dot_edge(os, edge, TimingPathType::SETUP);
+        write_dot_edge(os, edge, timing_type);
     }
 
     os << "}" << std::endl;
@@ -152,7 +159,7 @@ void GraphvizDotWriter<DelayCalc>::write_dot_level(std::ostream& os, const Level
 }
 
 template<class DelayCalc>
-void GraphvizDotWriter<DelayCalc>::write_dot_edge(std::ostream& os, const EdgeId edge, const TimingPathType timing_type) {
+void GraphvizDotWriter<DelayCalc>::write_dot_edge(std::ostream& os, const EdgeId edge, const TimingType timing_type) {
     NodeId src_node = tg_.edge_src_node(edge);
     NodeId sink_node = tg_.edge_sink_node(edge);
 
@@ -166,11 +173,11 @@ void GraphvizDotWriter<DelayCalc>::write_dot_edge(std::ostream& os, const EdgeId
         os << " [ label=\"" << edge;
         if(edge_type == EdgeType::PRIMITIVE_CLOCK_CAPTURE) {
             color = CLOCK_CAPTURE_EDGE_COLOR;
-            if (timing_type == TimingPathType::SETUP) {
+            if (timing_type == TimingType::SETUP) {
                 os << "\\n"<< -delay_calc_.setup_time(tg_, edge) << " (-tsu)";
             } else {
                 //Hold
-                TATUM_ASSERT(timing_type == TimingPathType::HOLD);
+                TATUM_ASSERT(timing_type == TimingType::HOLD);
                 os << "\\n"<< delay_calc_.hold_time(tg_, edge) << " (thld)";
             }
         } else if(edge_type == EdgeType::PRIMITIVE_CLOCK_LAUNCH) {

@@ -46,7 +46,8 @@ class GraphvizDotWriter {
     private:
         void write_dot_format(std::ostream& os, 
                               const std::map<NodeId,std::vector<TimingTag>>& node_tags,
-                              const std::map<NodeId,std::vector<TimingTag>>& node_slacks);
+                              const std::map<NodeId,std::vector<TimingTag>>& node_slacks,
+                              const TimingType timing_type);
         void write_dot_node(std::ostream& os, 
                             const NodeId node, 
                             const std::vector<TimingTag>& tags, 
@@ -55,7 +56,7 @@ class GraphvizDotWriter {
                              const LevelId level);
         void write_dot_edge(std::ostream& os, 
                             const EdgeId edge,
-                            const TimingPathType timing_type);
+                            const TimingType timing_type);
         void tag_domain_from_to(std::ostream& os, const TimingTag& tag);
 
         std::string node_name(NodeId node);
