@@ -698,7 +698,7 @@ bool TimingGraph::validate_structure() const {
             } else if (src_type == NodeType::SINK) {
                 throw tatum::Error("SINK nodes should not have out-going edges");
             } else if (src_type == NodeType::IPIN) {
-                if(sink_type != NodeType::OPIN || sink_type != NodeType::SINK) {
+                if(sink_type != NodeType::OPIN && sink_type != NodeType::SINK) {
                     throw tatum::Error("IPIN nodes should only drive OPIN or SINK nodes");
                 }
 
