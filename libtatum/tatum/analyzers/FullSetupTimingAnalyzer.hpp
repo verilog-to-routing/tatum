@@ -13,11 +13,10 @@ namespace tatum { namespace detail {
  * re-analyzes the timing graph whenever update_timing_impl() is 
  * called.
  */
-template<class DelayCalc,
-         template<class V, class D> class GraphWalker=SerialWalker>
+template<template<class V> class GraphWalker=SerialWalker>
 class FullSetupTimingAnalyzer : public SetupTimingAnalyzer {
     public:
-        FullSetupTimingAnalyzer(const TimingGraph& timing_graph, const TimingConstraints& timing_constraints, const DelayCalc& delay_calculator)
+        FullSetupTimingAnalyzer(const TimingGraph& timing_graph, const TimingConstraints& timing_constraints, const DelayCalculator& delay_calculator)
             : SetupTimingAnalyzer()
             , timing_graph_(timing_graph)
             , timing_constraints_(timing_constraints)
@@ -69,9 +68,9 @@ class FullSetupTimingAnalyzer : public SetupTimingAnalyzer {
     private:
         const TimingGraph& timing_graph_;
         const TimingConstraints& timing_constraints_;
-        const DelayCalc& delay_calculator_;
+        const DelayCalculator& delay_calculator_;
         SetupAnalysis setup_visitor_;
-        GraphWalker<SetupAnalysis, DelayCalc> graph_walker_;
+        GraphWalker<SetupAnalysis> graph_walker_;
 
 
         typedef std::chrono::duration<double> dsec;

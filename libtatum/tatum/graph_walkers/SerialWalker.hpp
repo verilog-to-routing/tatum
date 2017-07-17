@@ -1,6 +1,7 @@
 #pragma once
 #include "tatum/graph_walkers/TimingGraphWalker.hpp"
 #include "tatum/TimingGraph.hpp"
+#include "tatum/delay_calc/DelayCalculator.hpp"
 
 namespace tatum {
 
@@ -9,10 +10,9 @@ namespace tatum {
  * manner.
  *
  * \tparam Visitor The visitor to apply during traversals
- * \tparam DelayCalc The delay calculator to use
  */
-template<class Visitor, class DelayCalc>
-class SerialWalker : public TimingGraphWalker<Visitor, DelayCalc> {
+template<class Visitor>
+class SerialWalker : public TimingGraphWalker<Visitor> {
     protected:
         void do_arrival_pre_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, Visitor& visitor) override {
             size_t num_unconstrained = 0;
@@ -43,7 +43,7 @@ class SerialWalker : public TimingGraphWalker<Visitor, DelayCalc> {
             num_unconstrained_endpoints_ = num_unconstrained;
         }
 
-        void do_arrival_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalc& dc, Visitor& visitor) override {
+        void do_arrival_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalculator& dc, Visitor& visitor) override {
             for(LevelId level_id : tg.levels()) {
                 for(NodeId node_id : tg.level_nodes(level_id)) {
                     visitor.do_arrival_traverse_node(tg, tc, dc, node_id);
@@ -51,7 +51,7 @@ class SerialWalker : public TimingGraphWalker<Visitor, DelayCalc> {
             }
         }
 
-        void do_required_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalc& dc, Visitor& visitor) override {
+        void do_required_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalculator& dc, Visitor& visitor) override {
             for(LevelId level_id : tg.reversed_levels()) {
                 for(NodeId node_id : tg.level_nodes(level_id)) {
                     visitor.do_required_traverse_node(tg, tc, dc, node_id);
@@ -59,7 +59,7 @@ class SerialWalker : public TimingGraphWalker<Visitor, DelayCalc> {
             }
         }
 
-        void do_update_slack_impl(const TimingGraph& tg, const DelayCalc& dc, Visitor& visitor) override {
+        void do_update_slack_impl(const TimingGraph& tg, const DelayCalculator& dc, Visitor& visitor) override {
             for(NodeId node : tg.nodes()) {
                 visitor.do_slack_traverse_node(tg, dc, node);
             }

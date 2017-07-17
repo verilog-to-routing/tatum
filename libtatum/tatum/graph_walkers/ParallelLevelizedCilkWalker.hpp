@@ -17,10 +17,9 @@ namespace tatum {
  * equivalent to the SerialWalker
  *
  * \tparam Visitor The visitor to apply during traversals
- * \tparam DelayCalc The delay calculator to use
  */
-template<class Visitor, class DelayCalc>
-class ParallelLevelizedCilkWalker : public TimingGraphWalker<Visitor, DelayCalc> {
+template<class Visitor>
+class ParallelLevelizedCilkWalker : public TimingGraphWalker<Visitor> {
     public:
         void do_arrival_pre_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, Visitor& visitor) override {
 #ifdef __cilk
@@ -72,7 +71,7 @@ class ParallelLevelizedCilkWalker : public TimingGraphWalker<Visitor, DelayCalc>
 #endif
         }
 
-        void do_arrival_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalc& dc, Visitor& visitor) override {
+        void do_arrival_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalculator& dc, Visitor& visitor) override {
             for(LevelId level_id : tg.levels()) {
                 auto level_nodes = tg.level_nodes(level_id);
                 cilk_for(auto iter = level_nodes.begin(); iter != level_nodes.end(); ++iter) {
@@ -81,7 +80,7 @@ class ParallelLevelizedCilkWalker : public TimingGraphWalker<Visitor, DelayCalc>
             }
         }
 
-        void do_required_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalc& dc, Visitor& visitor) override {
+        void do_required_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalculator& dc, Visitor& visitor) override {
             for(LevelId level_id : tg.reversed_levels()) {
                 auto level_nodes = tg.level_nodes(level_id);
                 cilk_for(auto iter = level_nodes.begin(); iter != level_nodes.end(); ++iter) {
@@ -90,7 +89,7 @@ class ParallelLevelizedCilkWalker : public TimingGraphWalker<Visitor, DelayCalc>
             }
         }
 
-        void do_update_slack_impl(const TimingGraph& tg, const DelayCalc& dc, Visitor& visitor) override {
+        void do_update_slack_impl(const TimingGraph& tg, const DelayCalculator& dc, Visitor& visitor) override {
             auto nodes = tg.nodes();
             cilk_for(auto iter = nodes.begin(); iter != nodes.end(); ++iter) {
                 visitor.do_slack_traverse_node(tg, dc, *iter);

@@ -2,15 +2,15 @@
 
 namespace tatum {
 
-template<class Visitor, class DelayCalc>
+template<class Visitor>
 class SerialWalker;
 
-template<class Visitor, class DelayCalc>
+template<class Visitor>
 class ParallelLevelizedCilkWalker;
 
 ///The default parallel graph walker
-template<class Visitor, class DelayCalc>
-using ParallelWalker = ParallelLevelizedCilkWalker<Visitor, DelayCalc>;
+template<class Visitor>
+using ParallelWalker = ParallelLevelizedCilkWalker<Visitor>;
 
 } //namespace
 

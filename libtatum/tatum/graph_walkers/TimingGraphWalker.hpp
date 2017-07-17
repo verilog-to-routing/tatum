@@ -1,6 +1,7 @@
 #pragma once
 #include "tatum/TimingGraphFwd.hpp"
 #include "tatum/TimingConstraintsFwd.hpp"
+#include "tatum/delay_calc/DelayCalculator.hpp"
 #include <chrono>
 #include <map>
 
@@ -16,13 +17,11 @@ namespace tatum {
  * and delegate to concrete sub-classes via the do_*_traversal_impl() virtual methods.
  *
  * \tparam Visitor The GraphVisitor to apply during traversals
- * \tparam DelayCalc The DelayCalculator used to calculate edge delays
  *
  * \see GraphVisitor
- * \see DelayCalculator
  * \see TimingAnalyzer
  */
-template<class Visitor, class DelayCalc>
+template<class Visitor>
 class TimingGraphWalker {
     public:
         virtual ~TimingGraphWalker() = default;
@@ -55,7 +54,7 @@ class TimingGraphWalker {
         ///\param tg The timing graph
         ///\param dc The edge delay calculator
         ///\param visitor The visitor to apply during the traversal
-        void do_arrival_traversal(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalc& dc, Visitor& visitor) {
+        void do_arrival_traversal(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalculator& dc, Visitor& visitor) {
             auto start_time = Clock::now();
 
             do_arrival_traversal_impl(tg, tc, dc, visitor);
@@ -67,7 +66,7 @@ class TimingGraphWalker {
         ///\param tg The timing graph
         ///\param dc The edge delay calculator
         ///\param visitor The visitor to apply during the traversal
-        void do_required_traversal(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalc& dc, Visitor& visitor) {
+        void do_required_traversal(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalculator& dc, Visitor& visitor) {
             auto start_time = Clock::now();
 
             do_required_traversal_impl(tg, tc, dc, visitor);
@@ -83,7 +82,7 @@ class TimingGraphWalker {
             profiling_data_["reset_sec"] = std::chrono::duration_cast<dsec>(Clock::now() - start_time).count();
         }
 
-        void do_update_slack(const TimingGraph& tg, const DelayCalc& dc, Visitor& visitor) {
+        void do_update_slack(const TimingGraph& tg, const DelayCalculator& dc, Visitor& visitor) {
             auto start_time = Clock::now();
 
             do_update_slack_impl(tg, dc, visitor);
@@ -129,20 +128,20 @@ class TimingGraphWalker {
         ///\param tg The timing graph
         ///\param dc The edge delay calculator
         ///\param visitor The visitor to apply during the traversal
-        virtual void do_arrival_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalc& dc, Visitor& visitor) = 0;
+        virtual void do_arrival_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalculator& dc, Visitor& visitor) = 0;
 
         ///Sub-class defined required time traversal
         ///Performs the required time traversal
         ///\param tg The timing graph
         ///\param dc The edge delay calculator
         ///\param visitor The visitor to apply during the traversal
-        virtual void do_required_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalc& dc, Visitor& visitor) = 0;
+        virtual void do_required_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalculator& dc, Visitor& visitor) = 0;
 
         ///Sub-class defined reset in preparation for a timing update
         virtual void do_reset_impl(const TimingGraph& tg, Visitor& visitor) = 0;
 
         ///Sub-class defined slack calculation
-        virtual void do_update_slack_impl(const TimingGraph& tg, const DelayCalc& dc, Visitor& visitor) = 0;
+        virtual void do_update_slack_impl(const TimingGraph& tg, const DelayCalculator& dc, Visitor& visitor) = 0;
 
         virtual size_t num_unconstrained_startpoints_impl() const = 0;
         virtual size_t num_unconstrained_endpoints_impl() const = 0;
