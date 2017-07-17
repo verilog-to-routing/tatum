@@ -13,7 +13,7 @@ namespace tatum { namespace detail {
  * re-analyzes the timing graph whenever update_timing_impl() is 
  * called.
  */
-template<template<class V> class GraphWalker=SerialWalker>
+template<class GraphWalker=SerialWalker>
 class FullHoldTimingAnalyzer : public HoldTimingAnalyzer {
     public:
         FullHoldTimingAnalyzer(const TimingGraph& timing_graph, const TimingConstraints& timing_constraints, const DelayCalculator& delay_calculator)
@@ -32,6 +32,10 @@ class FullHoldTimingAnalyzer : public HoldTimingAnalyzer {
 
     protected:
         virtual void update_timing_impl() override {
+            update_hold_timing();
+        }
+
+        virtual void update_hold_timing_impl() override {
             auto start_time = Clock::now();
 
             graph_walker_.do_reset(timing_graph_, hold_visitor_);
@@ -67,7 +71,7 @@ class FullHoldTimingAnalyzer : public HoldTimingAnalyzer {
         const TimingConstraints& timing_constraints_;
         const DelayCalculator& delay_calculator_;
         HoldAnalysis hold_visitor_;
-        GraphWalker<HoldAnalysis> graph_walker_;
+        GraphWalker graph_walker_;
 
         typedef std::chrono::duration<double> dsec;
         typedef std::chrono::high_resolution_clock Clock;

@@ -2,19 +2,17 @@
 #include "tatum/graph_walkers/TimingGraphWalker.hpp"
 #include "tatum/TimingGraph.hpp"
 #include "tatum/delay_calc/DelayCalculator.hpp"
+#include "tatum/graph_visitors/GraphVisitor.hpp"
 
 namespace tatum {
 
 /**
  * A simple serial graph walker which traverses the timing graph in a levelized
  * manner.
- *
- * \tparam Visitor The visitor to apply during traversals
  */
-template<class Visitor>
-class SerialWalker : public TimingGraphWalker<Visitor> {
+class SerialWalker : public TimingGraphWalker {
     protected:
-        void do_arrival_pre_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, Visitor& visitor) override {
+        void do_arrival_pre_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, GraphVisitor& visitor) override {
             size_t num_unconstrained = 0;
 
             LevelId first_level = *tg.levels().begin();
@@ -29,7 +27,7 @@ class SerialWalker : public TimingGraphWalker<Visitor> {
             num_unconstrained_startpoints_ = num_unconstrained;
         }
 
-        void do_required_pre_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, Visitor& visitor) override {
+        void do_required_pre_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, GraphVisitor& visitor) override {
             size_t num_unconstrained = 0;
 
             for(NodeId node_id : tg.logical_outputs()) {
@@ -43,7 +41,7 @@ class SerialWalker : public TimingGraphWalker<Visitor> {
             num_unconstrained_endpoints_ = num_unconstrained;
         }
 
-        void do_arrival_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalculator& dc, Visitor& visitor) override {
+        void do_arrival_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalculator& dc, GraphVisitor& visitor) override {
             for(LevelId level_id : tg.levels()) {
                 for(NodeId node_id : tg.level_nodes(level_id)) {
                     visitor.do_arrival_traverse_node(tg, tc, dc, node_id);
@@ -51,7 +49,7 @@ class SerialWalker : public TimingGraphWalker<Visitor> {
             }
         }
 
-        void do_required_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalculator& dc, Visitor& visitor) override {
+        void do_required_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalculator& dc, GraphVisitor& visitor) override {
             for(LevelId level_id : tg.reversed_levels()) {
                 for(NodeId node_id : tg.level_nodes(level_id)) {
                     visitor.do_required_traverse_node(tg, tc, dc, node_id);
@@ -59,13 +57,13 @@ class SerialWalker : public TimingGraphWalker<Visitor> {
             }
         }
 
-        void do_update_slack_impl(const TimingGraph& tg, const DelayCalculator& dc, Visitor& visitor) override {
+        void do_update_slack_impl(const TimingGraph& tg, const DelayCalculator& dc, GraphVisitor& visitor) override {
             for(NodeId node : tg.nodes()) {
                 visitor.do_slack_traverse_node(tg, dc, node);
             }
         }
 
-        void do_reset_impl(const TimingGraph& tg, Visitor& visitor) override {
+        void do_reset_impl(const TimingGraph& tg, GraphVisitor& visitor) override {
             for(NodeId node_id : tg.nodes()) {
                 visitor.do_reset_node(node_id);
             }

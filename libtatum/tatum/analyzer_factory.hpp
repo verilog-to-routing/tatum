@@ -56,7 +56,7 @@ namespace tatum {
 ///\tparam Visitor The analysis type visitor (e.g. SetupAnalysis)
 ///\tparam GraphWalker The graph walker to use (defaults to serial traversals)
 template<class Visitor,
-         template<class V> class GraphWalker>
+         class GraphWalker>
 struct AnalyzerFactory {
 
     //We use the dependent_false template to detect if the un-specialized AnalyzerFactor 
@@ -85,7 +85,7 @@ struct AnalyzerFactory {
 };
 
 //Specialize for setup
-template<template<class V> class GraphWalker>
+template<class GraphWalker>
 struct AnalyzerFactory<SetupAnalysis,GraphWalker> {
 
     static std::unique_ptr<SetupTimingAnalyzer> make(const TimingGraph& timing_graph,
@@ -100,7 +100,7 @@ struct AnalyzerFactory<SetupAnalysis,GraphWalker> {
 };
 
 //Specialize for hold
-template<template<class V> class GraphWalker>
+template<class GraphWalker>
 struct AnalyzerFactory<HoldAnalysis,GraphWalker> {
 
     static std::unique_ptr<HoldTimingAnalyzer> make(const TimingGraph& timing_graph,
@@ -115,7 +115,7 @@ struct AnalyzerFactory<HoldAnalysis,GraphWalker> {
 };
 
 //Specialize for combined setup and hold
-template<template<class V> class GraphWalker>
+template<class GraphWalker>
 struct AnalyzerFactory<SetupHoldAnalysis,GraphWalker> {
 
     static std::unique_ptr<SetupHoldTimingAnalyzer> make(const TimingGraph& timing_graph,

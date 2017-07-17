@@ -5,6 +5,7 @@
 #include "tatum/TimingConstraints.hpp"
 #include "tatum/tags/TimingTags.hpp"
 #include "tatum/delay_calc/DelayCalculator.hpp"
+#include "tatum/graph_visitors/GraphVisitor.hpp"
 
 namespace tatum { namespace detail {
 
@@ -25,23 +26,23 @@ namespace tatum { namespace detail {
  * \see HoldAnalysisOps
  */
 template<class AnalysisOps>
-class CommonAnalysisVisitor {
+class CommonAnalysisVisitor : public GraphVisitor {
     public:
         CommonAnalysisVisitor(size_t num_tags, size_t num_slacks)
             : ops_(num_tags, num_slacks) { }
 
-        void do_reset_node(const NodeId node_id) { ops_.reset_node(node_id); }
-        void do_reset_edge(const EdgeId edge_id) { ops_.reset_edge(edge_id); }
+        void do_reset_node(const NodeId node_id) override { ops_.reset_node(node_id); }
+        void do_reset_edge(const EdgeId edge_id) override { ops_.reset_edge(edge_id); }
 
-        bool do_arrival_pre_traverse_node(const TimingGraph& tg, const TimingConstraints& tc, const NodeId node_id);
+        bool do_arrival_pre_traverse_node(const TimingGraph& tg, const TimingConstraints& tc, const NodeId node_id) override;
 
-        bool do_required_pre_traverse_node(const TimingGraph& tg, const TimingConstraints& tc, const NodeId node_id);
+        bool do_required_pre_traverse_node(const TimingGraph& tg, const TimingConstraints& tc, const NodeId node_id) override;
 
-        void do_arrival_traverse_node(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalculator& dc, const NodeId node_id);
+        void do_arrival_traverse_node(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalculator& dc, const NodeId node_id) override;
 
-        void do_required_traverse_node(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalculator& dc, const NodeId node_id);
+        void do_required_traverse_node(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalculator& dc, const NodeId node_id) override;
 
-        void do_slack_traverse_node(const TimingGraph& tg, const DelayCalculator& dc, const NodeId node);
+        void do_slack_traverse_node(const TimingGraph& tg, const DelayCalculator& dc, const NodeId node) override;
 
     protected:
         AnalysisOps ops_;
