@@ -85,8 +85,11 @@ class PrintCallback : public tp::Callback {
     void add_hold_uncertainty(int src_domain_id, int sink_domain_id, float uncertainty) override {
         fprintf(stdout, " type: HOLD_UNCERTAINTY src_domain: %d sink_domain: %d uncertainty: %g\n", src_domain_id, sink_domain_id, uncertainty);
     }
-    void add_source_latency(int domain_id, float latency) override {
-        fprintf(stdout, " type: SOURCE_LATENCY domain: %d latency: %g\n", domain_id, latency);
+    void add_early_source_latency(int domain_id, float latency) override {
+        fprintf(stdout, " type: EARLY_SOURCE_LATENCY domain: %d latency: %g\n", domain_id, latency);
+    }
+    void add_late_source_latency(int domain_id, float latency) override {
+        fprintf(stdout, " type: LATE_SOURCE_LATENCY domain: %d latency: %g\n", domain_id, latency);
     }
     void finish_constraints() override { fprintf(stdout, "# end timing_constraints\n"); }
 
@@ -174,7 +177,8 @@ class NopCallback : public tp::Callback {
         void add_hold_constraint(int /*src_domain_id*/, int /*sink_domain_id*/, float /*constraint*/) override {}
         void add_setup_uncertainty(int /*src_domain_id*/, int /*sink_domain_id*/, float /*uncertainty*/) override {}
         void add_hold_uncertainty(int /*src_domain_id*/, int /*sink_domain_id*/, float /*uncertainty*/) override {}
-        void add_source_latency(int /*domain_id*/, float /*latency*/) override {}
+        void add_early_source_latency(int /*domain_id*/, float /*latency*/) override {}
+        void add_late_source_latency(int /*domain_id*/, float /*latency*/) override {}
         void finish_constraints() override {}
 
         void start_delay_model() override {}

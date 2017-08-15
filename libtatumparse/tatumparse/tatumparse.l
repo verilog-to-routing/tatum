@@ -88,7 +88,8 @@ SETUP_CONSTRAINT                { return tatumparse::Parser::make_SETUP_CONSTRAI
 HOLD_CONSTRAINT                 { return tatumparse::Parser::make_HOLD_CONSTRAINT(); }
 SETUP_UNCERTAINTY               { return tatumparse::Parser::make_SETUP_UNCERTAINTY(); }
 HOLD_UNCERTAINTY                { return tatumparse::Parser::make_HOLD_UNCERTAINTY(); }
-SOURCE_LATENCY                  { return tatumparse::Parser::make_SOURCE_LATENCY(); }
+EARLY_SOURCE_LATENCY            { return tatumparse::Parser::make_EARLY_SOURCE_LATENCY(); }
+LATE_SOURCE_LATENCY             { return tatumparse::Parser::make_LATE_SOURCE_LATENCY(); }
 domain:                         { return tatumparse::Parser::make_DOMAIN(); }
 name:                           { return tatumparse::Parser::make_NAME(); }
 constraint:                     { return tatumparse::Parser::make_CONSTRAINT(); }

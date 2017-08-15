@@ -109,8 +109,8 @@ bool CommonAnalysisVisitor<AnalysisOps>::do_arrival_pre_traverse_node(const Timi
             //Note: we assume that edge counting has set the effective period constraint assuming a
             //launch edge at time zero + source latency.  This means we don't need to do anything 
             //special for clocks with rising edges after time zero.
-            Time domain_source_latency = tc.source_latency(domain_id);
-            TimingTag launch_tag = TimingTag(Time(domain_source_latency), 
+            Time launch_source_latency = ops_.launch_source_latency(tc, domain_id);
+            TimingTag launch_tag = TimingTag(launch_source_latency, 
                                              domain_id,
                                              DomainId::INVALID(), //Any capture
                                              NodeId::INVALID(), //Origin
@@ -132,7 +132,9 @@ bool CommonAnalysisVisitor<AnalysisOps>::do_arrival_pre_traverse_node(const Timi
                     //when the caputre tag is converted into a data-arrival tag
                     Time clock_constraint = ops_.clock_constraint(tc, launch_domain_id, domain_id);
 
-                    TimingTag capture_tag = TimingTag(Time(domain_source_latency) + Time(clock_constraint), 
+                    Time capture_source_latency = ops_.capture_source_latency(tc, domain_id);
+
+                    TimingTag capture_tag = TimingTag(Time(capture_source_latency) + Time(clock_constraint), 
                                                       launch_domain_id,
                                                       domain_id,
                                                       NodeId::INVALID(), //Origin
@@ -479,7 +481,7 @@ void CommonAnalysisVisitor<AnalysisOps>::mark_sink_required_times(const TimingGr
 
             //Since there is no propagated clock tag to primary outputs, we need to account for
             //the capture source clock latency
-            Time capture_clock_source_latency = tc.source_latency(io_capture_domain);
+            Time capture_clock_source_latency = ops_.capture_source_latency(tc, io_capture_domain);
 
             for(const TimingTag& node_data_arr_tag : node_data_arr_tags) {
                 DomainId data_launch_domain = node_data_arr_tag.launch_clock_domain();

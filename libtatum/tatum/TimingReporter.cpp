@@ -230,7 +230,15 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
 
         {
             //Launch clock latency
-            Time latency = Time(timing_constraints_.source_latency(path_info.launch_domain()));
+            Time latency;
+            if (path_info.type() == TimingType::SETUP) {
+                //Setup clock launches late
+                latency = Time(timing_constraints_.source_latency(path_info.launch_domain(), ArrivalType::LATE));
+            } else {
+                TATUM_ASSERT(path_info.type() == TimingType::HOLD);
+                //Hold clock launches early
+                latency = Time(timing_constraints_.source_latency(path_info.launch_domain(), ArrivalType::EARLY));
+            }
             arr_path += latency;
             std::string point = "clock source latency";
             path_helper.update_print_path(os, point, arr_path);
@@ -311,6 +319,7 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
             if(path_info.type() == TimingType::SETUP) {
                 constraint = Time(timing_constraints_.setup_constraint(path_info.launch_domain(), path_info.capture_domain()));
             } else {
+                TATUM_ASSERT(path_info.type() == TimingType::HOLD);
                 constraint = Time(timing_constraints_.hold_constraint(path_info.launch_domain(), path_info.capture_domain()));
             }
 
@@ -321,7 +330,15 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
 
         {
             //Capture clock source latency
-            Time latency = Time(timing_constraints_.source_latency(path_info.capture_domain()));
+            Time latency;
+            if(path_info.type() == TimingType::SETUP) {
+                //Setup capture clock arrives early
+                latency = Time(timing_constraints_.source_latency(path_info.capture_domain(), ArrivalType::EARLY));
+            } else {
+                TATUM_ASSERT(path_info.type() == TimingType::HOLD);
+                //Hold capture clock arrives late
+                latency = Time(timing_constraints_.source_latency(path_info.capture_domain(), ArrivalType::LATE));
+            }
             req_path += latency;
             std::string point = "clock source latency";
             path_helper.update_print_path(os, point, req_path);
@@ -347,6 +364,7 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
             if(path_info.type() == TimingType::SETUP) {
                 uncertainty = -Time(timing_constraints_.setup_clock_uncertainty(path_info.launch_domain(), path_info.capture_domain()));
             } else {
+                TATUM_ASSERT(path_info.type() == TimingType::HOLD);
                 uncertainty = Time(timing_constraints_.hold_clock_uncertainty(path_info.launch_domain(), path_info.capture_domain()));
             }
             req_path += uncertainty;

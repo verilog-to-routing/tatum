@@ -147,14 +147,23 @@ Time TimingConstraints::input_constraint(const NodeId node_id, const DomainId do
     return std::numeric_limits<Time>::quiet_NaN();
 }
 
-Time TimingConstraints::source_latency(const DomainId domain) const {
+Time TimingConstraints::source_latency(const DomainId domain, const ArrivalType arrival_type) const {
 
-    auto iter = source_latencies_.find(domain);
-    if(iter == source_latencies_.end()) {
-        return Time(0.); //Defaults to zero if unspecified
+    if (arrival_type == ArrivalType::EARLY) {
+        auto iter = source_latencies_early_.find(domain);
+        if(iter == source_latencies_early_.end()) {
+            return Time(0.); //Defaults to zero if unspecified
+        }
+        return iter->second;
+    } else {
+        TATUM_ASSERT(arrival_type == ArrivalType::LATE);
+
+        auto iter = source_latencies_late_.find(domain);
+        if(iter == source_latencies_late_.end()) {
+            return Time(0.); //Defaults to zero if unspecified
+        }
+        return iter->second;
     }
-
-    return iter->second;
 }
 
 Time TimingConstraints::output_constraint(const NodeId node_id, const DomainId domain_id) const {
@@ -205,8 +214,13 @@ TimingConstraints::io_constraint_range TimingConstraints::output_constraints(con
     return tatum::util::make_range(range.first, range.second);
 }
 
-TimingConstraints::source_latency_range TimingConstraints::source_latencies() const {
-    return tatum::util::make_range(source_latencies_.begin(), source_latencies_.end());
+TimingConstraints::source_latency_range TimingConstraints::source_latencies(ArrivalType arrival_type) const {
+    if (arrival_type == ArrivalType::EARLY) {
+        return tatum::util::make_range(source_latencies_early_.begin(), source_latencies_early_.end());
+    } else {
+        TATUM_ASSERT(arrival_type == ArrivalType::LATE);
+        return tatum::util::make_range(source_latencies_late_.begin(), source_latencies_late_.end());
+    }
 }
 
 DomainId TimingConstraints::create_clock_domain(const std::string name) { 
@@ -268,8 +282,13 @@ void TimingConstraints::set_output_constraint(const NodeId node_id, const Domain
     }
 }
 
-void TimingConstraints::set_source_latency(const DomainId domain, const Time latency) {
-    source_latencies_[domain] = latency;
+void TimingConstraints::set_source_latency(const DomainId domain, const ArrivalType arrival_type, const Time latency) {
+    if (arrival_type == ArrivalType::EARLY) {
+        source_latencies_early_[domain] = latency;
+    } else {
+        TATUM_ASSERT(arrival_type == ArrivalType::LATE);
+        source_latencies_late_[domain] = latency;
+    }
 }
 
 void TimingConstraints::set_clock_domain_source(const NodeId node_id, const DomainId domain_id) {
@@ -379,8 +398,16 @@ void TimingConstraints::print_constraints() const {
         cout << " Uncertainty: " << uncertainty;
         cout << endl;
     }
-    cout << "Source Latency" << endl;
-    for(auto kv : source_latencies()) {
+    cout << "Early Source Latency" << endl;
+    for(auto kv : source_latencies(ArrivalType::EARLY)) {
+        auto domain = kv.first;
+        Time latency = kv.second;
+        cout << "Domain: " << domain;
+        cout << " Latency: " << latency;
+        cout << endl;
+    }
+    cout << "Late Source Latency" << endl;
+    for(auto kv : source_latencies(ArrivalType::LATE)) {
         auto domain = kv.first;
         Time latency = kv.second;
         cout << "Domain: " << domain;

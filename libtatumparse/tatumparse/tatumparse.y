@@ -128,7 +128,8 @@ using namespace tatumparse;
 %token HOLD_CONSTRAINT "HOLD_CONSTRAINT"
 %token SETUP_UNCERTAINTY "SETUP_UNCERTAINTY"
 %token HOLD_UNCERTAINTY "HOLD_UNCERTAINTY"
-%token SOURCE_LATENCY "SOURCE_LATENCY"
+%token EARLY_SOURCE_LATENCY "EARLY_SOURCE_LATENCY"
+%token LATE_SOURCE_LATENCY "LATE_SOURCE_LATENCY"
 %token DOMAIN "domain:"
 %token NAME "name:"
 %token CONSTRAINT "constraint:"
@@ -223,7 +224,8 @@ Constraints: TIMING_CONSTRAINTS EOL { callback.start_constraints(); }
            | Constraints TYPE HOLD_CONSTRAINT LaunchDomainId CaptureDomainId Constraint EOL { callback.add_hold_constraint($4, $5, $6); }
            | Constraints TYPE SETUP_UNCERTAINTY LaunchDomainId CaptureDomainId Uncertainty EOL { callback.add_setup_uncertainty($4, $5, $6); }
            | Constraints TYPE HOLD_UNCERTAINTY LaunchDomainId CaptureDomainId Uncertainty EOL { callback.add_hold_uncertainty($4, $5, $6); }
-           | Constraints TYPE SOURCE_LATENCY DomainId Latency EOL { callback.add_source_latency($4, $5); }
+           | Constraints TYPE EARLY_SOURCE_LATENCY DomainId Latency EOL { callback.add_early_source_latency($4, $5); }
+           | Constraints TYPE LATE_SOURCE_LATENCY DomainId Latency EOL { callback.add_late_source_latency($4, $5); }
 
 DelayModel: DELAY_MODEL EOL { callback.start_delay_model(); }
         | DelayModel EdgeId MinDelay MaxDelay EOL { callback.add_edge_delay($2, $3, $4); }

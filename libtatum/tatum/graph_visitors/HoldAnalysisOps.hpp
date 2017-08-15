@@ -28,6 +28,16 @@ class HoldAnalysisOps : public CommonAnalysisOps {
             return +tc.hold_clock_uncertainty(src_id, sink_id); 
         }
 
+        Time launch_source_latency(const TimingConstraints& tc, const DomainId domain) {
+            //For pessimistic hold analysis launch occurs early
+            return tc.source_latency(domain, ArrivalType::EARLY);
+        }
+
+        Time capture_source_latency(const TimingConstraints& tc, const DomainId domain) {
+            //For pessimistic hold analysis capture occurs late
+            return tc.source_latency(domain, ArrivalType::LATE);
+        }
+
         TimingTag const_gen_tag() { return TimingTag::CONST_GEN_TAG_HOLD(); }
 
         void merge_req_tags(const NodeId node, const Time time, const NodeId origin, const TimingTag& ref_tag, bool arrival_must_be_valid=false) { 
