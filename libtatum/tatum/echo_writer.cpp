@@ -119,21 +119,39 @@ void write_timing_constraints(std::ostream& os, const TimingConstraints& tc) {
         os << " type: CONSTANT_GENERATOR node: " << size_t(node_id) << "\n";
     }
 
-    for(auto kv : tc.input_constraints()) {
+    for(auto kv : tc.input_constraints(DelayType::MAX)) {
         auto node_id = kv.first;
         auto domain_id = kv.second.domain;
         auto constraint = kv.second.constraint;
         if(constraint.valid()) {
-            os << " type: INPUT_CONSTRAINT node: " << size_t(node_id) << " domain: " << size_t(domain_id) << " constraint: " << constraint << "\n";
+            os << " type: MAX_INPUT_CONSTRAINT node: " << size_t(node_id) << " domain: " << size_t(domain_id) << " constraint: " << constraint << "\n";
         }
     }
 
-    for(auto kv : tc.output_constraints()) {
+    for(auto kv : tc.input_constraints(DelayType::MIN)) {
         auto node_id = kv.first;
         auto domain_id = kv.second.domain;
         auto constraint = kv.second.constraint;
         if(constraint.valid()) {
-            os << " type: OUTPUT_CONSTRAINT node: " << size_t(node_id) << " domain: " << size_t(domain_id) << " constraint: " << constraint << "\n";
+            os << " type: MIN_INPUT_CONSTRAINT node: " << size_t(node_id) << " domain: " << size_t(domain_id) << " constraint: " << constraint << "\n";
+        }
+    }
+
+    for(auto kv : tc.output_constraints(DelayType::MAX)) {
+        auto node_id = kv.first;
+        auto domain_id = kv.second.domain;
+        auto constraint = kv.second.constraint;
+        if(constraint.valid()) {
+            os << " type: MAX_OUTPUT_CONSTRAINT node: " << size_t(node_id) << " domain: " << size_t(domain_id) << " constraint: " << constraint << "\n";
+        }
+    }
+
+    for(auto kv : tc.output_constraints(DelayType::MIN)) {
+        auto node_id = kv.first;
+        auto domain_id = kv.second.domain;
+        auto constraint = kv.second.constraint;
+        if(constraint.valid()) {
+            os << " type: MIN_OUTPUT_CONSTRAINT node: " << size_t(node_id) << " domain: " << size_t(domain_id) << " constraint: " << constraint << "\n";
         }
     }
 

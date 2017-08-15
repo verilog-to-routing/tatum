@@ -38,12 +38,20 @@ void EchoLoader::add_constant_generator(int node_id) {
     tc_->set_constant_generator(tatum::NodeId(node_id));
 }
 
-void EchoLoader::add_input_constraint(int node_id, int domain_id, float constraint) {
-    tc_->set_input_constraint(tatum::NodeId(node_id), tatum::DomainId(domain_id), tatum::Time(constraint));
+void EchoLoader::add_max_input_constraint(int node_id, int domain_id, float constraint) {
+    tc_->set_input_constraint(tatum::NodeId(node_id), tatum::DomainId(domain_id), tatum::DelayType::MAX, tatum::Time(constraint));
 }
 
-void EchoLoader::add_output_constraint(int node_id, int domain_id, float constraint) {
-    tc_->set_output_constraint(tatum::NodeId(node_id), tatum::DomainId(domain_id), tatum::Time(constraint));
+void EchoLoader::add_min_input_constraint(int node_id, int domain_id, float constraint) {
+    tc_->set_input_constraint(tatum::NodeId(node_id), tatum::DomainId(domain_id), tatum::DelayType::MIN, tatum::Time(constraint));
+}
+
+void EchoLoader::add_max_output_constraint(int node_id, int domain_id, float constraint) {
+    tc_->set_output_constraint(tatum::NodeId(node_id), tatum::DomainId(domain_id), tatum::DelayType::MAX, tatum::Time(constraint));
+}
+
+void EchoLoader::add_min_output_constraint(int node_id, int domain_id, float constraint) {
+    tc_->set_output_constraint(tatum::NodeId(node_id), tatum::DomainId(domain_id), tatum::DelayType::MIN, tatum::Time(constraint));
 }
 
 void EchoLoader::add_setup_constraint(int src_domain_id, int sink_domain_id, float constraint) {

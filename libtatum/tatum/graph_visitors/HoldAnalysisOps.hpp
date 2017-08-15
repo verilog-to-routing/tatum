@@ -38,6 +38,22 @@ class HoldAnalysisOps : public CommonAnalysisOps {
             return tc.source_latency(domain, ArrivalType::LATE);
         }
 
+        Time input_constraint(const TimingConstraints& tc, const NodeId node, const DomainId domain) {
+            return tc.input_constraint(node, domain, DelayType::MIN);
+        }
+
+        auto input_constraints(const TimingConstraints& tc, const NodeId node) {
+            return tc.input_constraints(node, DelayType::MIN);
+        }
+
+        Time output_constraint(const TimingConstraints& tc, const NodeId node, const DomainId domain) {
+            return tc.output_constraint(node, domain, DelayType::MIN);
+        }
+
+        auto output_constraints(const TimingConstraints& tc, const NodeId node) {
+            return tc.output_constraints(node, DelayType::MIN);
+        }
+
         TimingTag const_gen_tag() { return TimingTag::CONST_GEN_TAG_HOLD(); }
 
         void merge_req_tags(const NodeId node, const Time time, const NodeId origin, const TimingTag& ref_tag, bool arrival_must_be_valid=false) { 

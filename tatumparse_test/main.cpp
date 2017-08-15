@@ -67,11 +67,17 @@ class PrintCallback : public tp::Callback {
     void add_constant_generator(int node_id) override {
         fprintf(stdout, " type: CONSTANT_GENERATOR node: %d\n", node_id);
     }
-    void add_input_constraint(int node_id, int domain_id, float constraint) override {
-        fprintf(stdout, " type: INPUT_CONSTRAINT node: %d domain: %d constraint: %g\n", node_id, domain_id, constraint);
+    void add_max_input_constraint(int node_id, int domain_id, float constraint) override {
+        fprintf(stdout, " type: MAX_INPUT_CONSTRAINT node: %d domain: %d constraint: %g\n", node_id, domain_id, constraint);
     }
-    void add_output_constraint(int node_id, int domain_id,  float constraint) override {
-        fprintf(stdout, " type: OUTPUT_CONSTRAINT node: %d domain: %d constraint: %g\n", node_id, domain_id, constraint);
+    void add_min_input_constraint(int node_id, int domain_id, float constraint) override {
+        fprintf(stdout, " type: MIN_INPUT_CONSTRAINT node: %d domain: %d constraint: %g\n", node_id, domain_id, constraint);
+    }
+    void add_max_output_constraint(int node_id, int domain_id,  float constraint) override {
+        fprintf(stdout, " type: MAX_OUTPUT_CONSTRAINT node: %d domain: %d constraint: %g\n", node_id, domain_id, constraint);
+    }
+    void add_min_output_constraint(int node_id, int domain_id,  float constraint) override {
+        fprintf(stdout, " type: MIN_OUTPUT_CONSTRAINT node: %d domain: %d constraint: %g\n", node_id, domain_id, constraint);
     }
     void add_setup_constraint(int src_domain_id, int sink_domain_id, float constraint) override {
         fprintf(stdout, " type: SETUP_CONSTRAINT src_domain: %d sink_domain: %d constraint: %g\n", src_domain_id, sink_domain_id, constraint);
@@ -171,8 +177,10 @@ class NopCallback : public tp::Callback {
         void add_clock_domain(int /*domain_id*/, std::string /*name*/) override {}
         void add_clock_source(int /*node_id*/, int /*domain_id*/) override {}
         void add_constant_generator(int /*node_id*/) override {}
-        void add_input_constraint(int /*node_id*/, int /*domain_id*/, float /*constraint*/) override {}
-        void add_output_constraint(int /*node_id*/, int /*domain_id*/, float /*constraint*/) override {}
+        void add_max_input_constraint(int /*node_id*/, int /*domain_id*/, float /*constraint*/) override {}
+        void add_min_input_constraint(int /*node_id*/, int /*domain_id*/, float /*constraint*/) override {}
+        void add_max_output_constraint(int /*node_id*/, int /*domain_id*/, float /*constraint*/) override {}
+        void add_min_output_constraint(int /*node_id*/, int /*domain_id*/, float /*constraint*/) override {}
         void add_setup_constraint(int /*src_domain_id*/, int /*sink_domain_id*/, float /*constraint*/) override {}
         void add_hold_constraint(int /*src_domain_id*/, int /*sink_domain_id*/, float /*constraint*/) override {}
         void add_setup_uncertainty(int /*src_domain_id*/, int /*sink_domain_id*/, float /*uncertainty*/) override {}

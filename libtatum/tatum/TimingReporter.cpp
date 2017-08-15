@@ -257,7 +257,14 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
             TATUM_ASSERT(timing_path.data_arrival_elements().size() > 0);
             const TimingPathElem& path_elem = *(timing_path.data_arrival_elements().begin());
 
-            Time input_constraint = timing_constraints_.input_constraint(path_elem.node(), path_info.launch_domain());
+            Time input_constraint;
+            if (path_info.type() == TimingType::SETUP) {
+                input_constraint = timing_constraints_.input_constraint(path_elem.node(), path_info.launch_domain(), DelayType::MAX);
+            } else {
+                TATUM_ASSERT(path_info.type() == TimingType::HOLD);
+                input_constraint = timing_constraints_.input_constraint(path_elem.node(), path_info.launch_domain(), DelayType::MIN);
+            }
+
             if(input_constraint.valid()) {
                 arr_path += Time(input_constraint);
 
@@ -385,7 +392,13 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
             }
 
             //Output constraint
-            Time output_constraint = timing_constraints_.output_constraint(path_elem.node(), path_info.capture_domain());
+            Time output_constraint;
+            if (path_info.type() == TimingType::SETUP) {
+                output_constraint = timing_constraints_.output_constraint(path_elem.node(), path_info.capture_domain(), DelayType::MAX);
+            } else {
+                TATUM_ASSERT(path_info.type() == TimingType::HOLD);
+                output_constraint = timing_constraints_.output_constraint(path_elem.node(), path_info.capture_domain(), DelayType::MIN);
+            }
             if(output_constraint.valid()) {
                 req_path += -Time(output_constraint);
                 path_helper.update_print_path(os, "output external delay", req_path);

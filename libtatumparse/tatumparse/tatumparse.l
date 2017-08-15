@@ -82,8 +82,10 @@ timing_constraints:             { return tatumparse::Parser::make_TIMING_CONSTRA
 CLOCK                           { return tatumparse::Parser::make_CLOCK(); }
 CLOCK_SOURCE                    { return tatumparse::Parser::make_CLOCK_SOURCE(); }
 CONSTANT_GENERATOR              { return tatumparse::Parser::make_CONSTANT_GENERATOR(); }
-INPUT_CONSTRAINT                { return tatumparse::Parser::make_INPUT_CONSTRAINT(); }
-OUTPUT_CONSTRAINT               { return tatumparse::Parser::make_OUTPUT_CONSTRAINT(); }
+MAX_INPUT_CONSTRAINT            { return tatumparse::Parser::make_MAX_INPUT_CONSTRAINT(); }
+MIN_INPUT_CONSTRAINT            { return tatumparse::Parser::make_MIN_INPUT_CONSTRAINT(); }
+MAX_OUTPUT_CONSTRAINT           { return tatumparse::Parser::make_MAX_OUTPUT_CONSTRAINT(); }
+MIN_OUTPUT_CONSTRAINT           { return tatumparse::Parser::make_MIN_OUTPUT_CONSTRAINT(); }
 SETUP_CONSTRAINT                { return tatumparse::Parser::make_SETUP_CONSTRAINT(); }
 HOLD_CONSTRAINT                 { return tatumparse::Parser::make_HOLD_CONSTRAINT(); }
 SETUP_UNCERTAINTY               { return tatumparse::Parser::make_SETUP_UNCERTAINTY(); }

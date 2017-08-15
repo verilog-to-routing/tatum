@@ -7,6 +7,7 @@
 #include "tatum/util/tatum_range.hpp"
 
 #include "tatum/base/ArrivalType.hpp"
+#include "tatum/base/DelayType.hpp"
 
 #include "tatum/TimingConstraintsFwd.hpp"
 #include "tatum/TimingGraphFwd.hpp"
@@ -76,10 +77,10 @@ class TimingConstraints {
         Time hold_clock_uncertainty(const DomainId src_domain, const DomainId sink_domain) const;
 
         ///\returns The input delay constraint on node_id
-        Time input_constraint(const NodeId node_id, const DomainId domain_id) const;
+        Time input_constraint(const NodeId node_id, const DomainId domain_id, const DelayType delay_type) const;
 
         ///\returns The output delay constraint on node_id
-        Time output_constraint(const NodeId node_id, const DomainId domain_id) const;
+        Time output_constraint(const NodeId node_id, const DomainId domain_id, const DelayType delay_type) const;
 
         ///\returns The external (e.g. off-chip) source latency of a particular clock domain
         //
@@ -102,16 +103,16 @@ class TimingConstraints {
         clock_uncertainty_range hold_clock_uncertainties() const;
 
         ///\returns A range of all input constraints
-        io_constraint_range input_constraints() const;
+        io_constraint_range input_constraints(const DelayType delay_type) const;
 
         ///\returns A range of all output constraints
-        io_constraint_range output_constraints() const;
+        io_constraint_range output_constraints(const DelayType delay_type) const;
 
         ///\returns A range of output constraints for the node id
-        io_constraint_range input_constraints(const NodeId id) const;
+        io_constraint_range input_constraints(const NodeId id, const DelayType delay_type) const;
 
         ///\returns A range of input constraints for the node id
-        io_constraint_range output_constraints(const NodeId id) const;
+        io_constraint_range output_constraints(const NodeId id, const DelayType delay_type) const;
 
         ///\returns A range of all clock source latencies
         source_latency_range source_latencies(ArrivalType arrival_type) const;
@@ -135,10 +136,10 @@ class TimingConstraints {
         void set_hold_clock_uncertainty(const DomainId src_domain, const DomainId sink_domain, const Time uncertainty);
 
         ///Sets the input delay constraint on node_id with value constraint
-        void set_input_constraint(const NodeId node_id, const DomainId domain_id, const Time constraint);
+        void set_input_constraint(const NodeId node_id, const DomainId domain_id, const DelayType delay_type, const Time constraint);
 
         ///Sets the output delay constraint on node_id with value constraint
-        void set_output_constraint(const NodeId node_id, const DomainId domain_id, const Time constraint);
+        void set_output_constraint(const NodeId node_id, const DomainId domain_id, const DelayType delay_type, const Time constraint);
 
         ///Sets the source latency of the specified clock domain
         void set_source_latency(const DomainId domain_id, const ArrivalType arrival_type, const Time latency);
@@ -176,8 +177,11 @@ class TimingConstraints {
         std::map<DomainPair,Time> setup_clock_uncertainties_;
         std::map<DomainPair,Time> hold_clock_uncertainties_;
 
-        std::multimap<NodeId,IoConstraint> input_constraints_;
-        std::multimap<NodeId,IoConstraint> output_constraints_;
+        std::multimap<NodeId,IoConstraint> max_input_constraints_;
+        std::multimap<NodeId,IoConstraint> min_input_constraints_;
+
+        std::multimap<NodeId,IoConstraint> max_output_constraints_;
+        std::multimap<NodeId,IoConstraint> min_output_constraints_;
 
         std::map<DomainId,Time> source_latencies_early_;
         std::map<DomainId,Time> source_latencies_late_;
