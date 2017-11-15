@@ -10,6 +10,7 @@
 
 #ifdef TATUM_USE_TBB
 # include <tbb/parallel_for.h>
+# include <tbb/combinable.h>
 #endif
 
 namespace tatum {
@@ -40,23 +41,25 @@ class ParallelLevelizedWalker : public TimingGraphWalker {
             }
             num_unconstrained_startpoints_ = unconstrained_reducer.get_value();
 #elif defined(TATUM_USE_TBB)
-            //TODO: find equilvalent reducer...
+            tbb::combinable<size_t> unconstrained_counter(0);
+
             tbb::parallel_for<size_t>(0, nodes.size(), 
                 [&](auto idx) {
                     bool constrained = visitor.do_arrival_pre_traverse_node(tg, tc, *(nodes.begin() + idx));
 
                     if(!constrained) {
                         //TODO reduce properly
-                        num_unconstrained_startpoints_ += 1;
+                        unconstrained_counter.local() += 1;
                     }
                 });
+
+            num_unconstrained_startpoints_ = unconstrained_counter.combine(std::plus<size_t>());
 #else //Serial
             for(auto iter = nodes.begin(); iter != nodes.end(); ++iter) {
                 bool constrained = visitor.do_arrival_pre_traverse_node(tg, tc, *iter);
 
                 if(!constrained) {
                     num_unconstrained_startpoints_ += 1;
-
                 }
             }
 #endif
@@ -79,15 +82,19 @@ class ParallelLevelizedWalker : public TimingGraphWalker {
 
             num_unconstrained_endpoints_ = unconstrained_reducer.get_value();
 #elif defined(TATUM_USE_TBB)
+            tbb::combinable<size_t> unconstrained_counter(0);
+
             tbb::parallel_for<size_t>(0, po.size(), 
                 [&](auto idx) {
                 bool constrained = visitor.do_required_pre_traverse_node(tg, tc, *(po.begin() + idx));
 
                 if(!constrained) {
                     //TODO reduce porperly
-                    num_unconstrained_endpoints_ += 1;
+                    unconstrained_counter.local() += 1;
                 }
             });
+
+            num_unconstrained_endpoints_ = unconstrained_counter.combine(std::plus<size_t>());
 #else //Serial
 
             for(auto iter = po.begin(); iter != po.end(); ++iter) {
