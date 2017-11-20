@@ -9,42 +9,36 @@ project("libtatum")
 set(CILK_PLUS_SUPPORTED FALSE)
 set(TBB_SUPPORTED FALSE)
 
-#Check for Cilk Plus support
-if (TATUM_EXECUTION_ENGINE STREQUAL "auto" OR TATUM_EXECUTION_ENGINE STREQUAL "cilk")
-    #
-    # Determine if the compiler has Cilk Plus support
-    #  This is required for the analyzer to run in parallel mode
-    #  As of April 2015 the following compilers have full support
-    #  for Cilk Plus:
-    #    * GCC 5+ (Note: GCC 4.9 has only partial support, it does support the cilk_for keyword)
-    #    * Intel
-    #
-    # Note that Cilk Plus is considered deprecated as of GCC 7, and Intel 2018
-    include(CheckCXXCompilerFlag)
+# Determine if the compiler has Cilk Plus support
+#  This is required for the analyzer to run in parallel mode
+#  As of April 2015 the following compilers have full support
+#  for Cilk Plus:
+#    * GCC 5+ (Note: GCC 4.9 has only partial support, it does support the cilk_for keyword)
+#    * Intel
+#
+# Note that Cilk Plus is considered deprecated as of GCC 7, and Intel 2018
+include(CheckCXXCompilerFlag)
 
-    set(CMAKE_REQUIRED_FLAGS "-fcilkplus -lcilkrts")
-    #Check for cilk_for support, since some compilers like gcc 4.9
-    #supports cilk but not cilk_for
-    CHECK_CXX_SOURCE_COMPILES("#include <cilk/cilk.h>
-                               int main(int argc, char** argv) {
-                                   int cnt = 0;
-                                   cilk_for(int i = 0; i < 10; i++) {
-                                       cnt++;
-                                   }
-                               }" COMPILER_SUPPORTS_CILK_PLUS)
+set(CMAKE_REQUIRED_FLAGS "-fcilkplus -lcilkrts")
+#Check for cilk_for support, since some compilers like gcc 4.9
+#supports cilk but not cilk_for
+CHECK_CXX_SOURCE_COMPILES("#include <cilk/cilk.h>
+                           int main(int argc, char** argv) {
+                               int cnt = 0;
+                               cilk_for(int i = 0; i < 10; i++) {
+                                   cnt++;
+                               }
+                           }" COMPILER_SUPPORTS_CILK_PLUS)
 
-   if (COMPILER_SUPPORTS_CILK_PLUS)
-        set(CILK_PLUS_SUPPORTED TRUE)
-    endif()
+if (COMPILER_SUPPORTS_CILK_PLUS)
+    set(CILK_PLUS_SUPPORTED TRUE)
 endif()
 
 #Check for Thread Building Blocks support
-if (TATUM_EXECUTION_ENGINE STREQUAL "auto" OR TATUM_EXECUTION_ENGINE STREQUAL "tbb")
-    find_package(TBB)
+find_package(TBB)
 
-    if (TBB_FOUND)
-        set(TBB_SUPPORTED TRUE)
-    endif()
+if (TBB_FOUND)
+    set(TBB_SUPPORTED TRUE)
 endif()
 
 #
@@ -60,28 +54,26 @@ if (TATUM_EXECUTION_ENGINE STREQUAL "auto")
         set(TATUM_USE_EXECUTION_ENGINE "tbb")
     elseif (CILK_PLUS_SUPPORTED)
         set(TATUM_USE_EXECUTION_ENGINE "cilk")
-    else ()
+    else()
         set(TATUM_USE_EXECUTION_ENGINE "serial")
     endif()
 else()
     #The user requested a specific execution engine
-    if(TATUM_EXECUTION_ENGINE STREQUAL "cilk")
+    if (TATUM_EXECUTION_ENGINE STREQUAL "cilk")
         if (NOT CILK_PLUS_SUPPORTED)
             message(FATAL_ERROR "Tatum: Requested execution engine '${TATUM_EXECUTION_ENGINE}' not found")
-        else()
-            set(TATUM_USE_EXECUTION_ENGINE "${TATUM_EXECUTION_ENGINE}")
         endif()
-    elseif(TATUM_EXECUTION_ENGINE STREQUAL "tbb")
+    elseif (TATUM_EXECUTION_ENGINE STREQUAL "tbb")
         if (NOT TBB_SUPPORTED)
             message(FATAL_ERROR "Tatum: Requested execution engine '${TATUM_EXECUTION_ENGINE}' not found")
-        else()
-            set(TATUM_USE_EXECUTION_ENGINE "${TATUM_EXECUTION_ENGINE}")
         endif()
-    elseif(TATUM_EXECUTION_ENGINE STREQUAL "serial")
-        set(TATUM_USE_EXECUTION_ENGINE "${TATUM_EXECUTION_ENGINE}")
+    elseif (TATUM_EXECUTION_ENGINE STREQUAL "serial")
+        #Pass
     else()
         message(FATAL_ERROR "Tatum: Unrecognized execution engine '${TATUM_EXECUTION_ENGINE}'")
     endif()
+    #Set the engine to use (it must be valid or we would have errored out)
+    set(TATUM_USE_EXECUTION_ENGINE "${TATUM_EXECUTION_ENGINE}")
 endif()
 
 #
@@ -120,6 +112,9 @@ if (TATUM_USE_EXECUTION_ENGINE STREQUAL "cilk")
     target_compile_options(libtatum PUBLIC "-fcilkplus")
 
     target_compile_definitions(libtatum PUBLIC TATUM_USE_CILK)
+    if (TBB_SUPPORTED)
+        target_link_libraries(libtatum tbbmalloc_proxy) #Use the scalable memory allocator
+    endif()
 
     #Link to the cilk run-time
     target_link_libraries(libtatum cilkrts)
@@ -127,9 +122,9 @@ if (TATUM_USE_EXECUTION_ENGINE STREQUAL "cilk")
 elseif (TATUM_USE_EXECUTION_ENGINE STREQUAL "tbb")
     message(STATUS "Tatum: will support parallel execution using '${TATUM_USE_EXECUTION_ENGINE}'")
 
-    target_include_directories(libtatum PUBLIC "")
     target_compile_definitions(libtatum PUBLIC TATUM_USE_TBB)
     target_link_libraries(libtatum tbb)
+    target_link_libraries(libtatum tbbmalloc_proxy) #Use the scalable memory allocator
 
 elseif (TATUM_USE_EXECUTION_ENGINE STREQUAL "serial")
     #Nothing to do
