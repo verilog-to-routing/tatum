@@ -136,7 +136,7 @@ inline TimingTags::tag_range TimingTags::tags(const TagType type) const {
 }
 
 //Modifiers
-inline void TimingTags::add_tag(const TimingTag& tag) {
+inline bool TimingTags::add_tag(const TimingTag& tag) {
     //Find the position to insert this tag
     //
     //We keep tags of the same type together.
@@ -148,9 +148,12 @@ inline void TimingTags::add_tag(const TimingTag& tag) {
     //Insert the tag before the upper bound position
     // This ensures tags_ is always in sorted order
     insert(iter, tag);
+
+    return true; //Was modified
 }
 
-inline void TimingTags::max(const Time& new_time, const NodeId origin, const TimingTag& base_tag, bool arr_must_be_valid) {
+inline bool TimingTags::max(const Time& new_time, const NodeId origin, const TimingTag& base_tag, bool arr_must_be_valid) {
+    bool modified = false;
     auto bool_iter = find_matching_tag(base_tag, arr_must_be_valid);
 
     bool valid = bool_iter.first;
@@ -161,14 +164,18 @@ inline void TimingTags::max(const Time& new_time, const NodeId origin, const Tim
 
             //First time we've seen this domain
             TimingTag tag = TimingTag(new_time, origin, base_tag);
-            add_tag(tag);
+            modified |= add_tag(tag);
         } else {
-            iter->max(new_time, origin, base_tag);
+            modified |= iter->max(new_time, origin, base_tag);
         }
     }
+
+    return modified;
 }
 
-inline void TimingTags::min(const Time& new_time, const NodeId origin, const TimingTag& base_tag, bool arr_must_be_valid) {
+inline bool TimingTags::min(const Time& new_time, const NodeId origin, const TimingTag& base_tag, bool arr_must_be_valid) {
+    bool modified = false;
+
     auto bool_iter = find_matching_tag(base_tag, arr_must_be_valid);
 
     bool valid = bool_iter.first;
@@ -179,11 +186,12 @@ inline void TimingTags::min(const Time& new_time, const NodeId origin, const Tim
 
             //First time we've seen this domain
             TimingTag tag = TimingTag(new_time, origin, base_tag);
-            add_tag(tag);
+            modified |= add_tag(tag);
         } else {
-            iter->min(new_time, origin, base_tag);
+            modified |= iter->min(new_time, origin, base_tag);
         }
     }
+    return modified;
 }
 
 inline void TimingTags::clear() {
