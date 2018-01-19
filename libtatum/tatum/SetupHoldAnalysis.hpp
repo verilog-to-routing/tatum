@@ -47,19 +47,25 @@ class SetupHoldAnalysis : public GraphVisitor {
             return setup_unconstrained || hold_unconstrained;
         }
 
-        void do_arrival_traverse_node(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalculator& dc, const NodeId node_id) override { 
-            setup_visitor_.do_arrival_traverse_node(tg, tc, dc, node_id); 
-            hold_visitor_.do_arrival_traverse_node(tg, tc, dc, node_id); 
+        bool do_arrival_traverse_node(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalculator& dc, const NodeId node_id) override { 
+            bool setup_modified = setup_visitor_.do_arrival_traverse_node(tg, tc, dc, node_id); 
+            bool hold_modified = hold_visitor_.do_arrival_traverse_node(tg, tc, dc, node_id); 
+
+            return setup_modified || hold_modified;
         }
 
-        void do_required_traverse_node(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalculator& dc, const NodeId node_id) override { 
-            setup_visitor_.do_required_traverse_node(tg, tc, dc, node_id); 
-            hold_visitor_.do_required_traverse_node(tg, tc, dc, node_id); 
+        bool do_required_traverse_node(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalculator& dc, const NodeId node_id) override { 
+            bool setup_modified = setup_visitor_.do_required_traverse_node(tg, tc, dc, node_id); 
+            bool hold_modified = hold_visitor_.do_required_traverse_node(tg, tc, dc, node_id); 
+
+            return setup_modified || hold_modified;
         }
         
-        void do_slack_traverse_node(const TimingGraph& tg, const DelayCalculator& dc, const NodeId node) override {
-            setup_visitor_.do_slack_traverse_node(tg, dc, node); 
-            hold_visitor_.do_slack_traverse_node(tg, dc, node); 
+        bool do_slack_traverse_node(const TimingGraph& tg, const DelayCalculator& dc, const NodeId node) override {
+            bool setup_modified = setup_visitor_.do_slack_traverse_node(tg, dc, node); 
+            bool hold_modified = hold_visitor_.do_slack_traverse_node(tg, dc, node); 
+
+            return setup_modified || hold_modified;
         }
 
         TimingTags::tag_range setup_tags(const NodeId node_id) const { return setup_visitor_.setup_tags(node_id); }

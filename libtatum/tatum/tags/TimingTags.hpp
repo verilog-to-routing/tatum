@@ -71,7 +71,7 @@ class TimingTags {
         ///Adds a TimingTag to the current set provided it has a valid clock domain
         ///\param tag_pool The pool memory allocator used to allocate the tag
         ///\param src_tag The source tag who is inserted. Note that the src_tag is copied when inserted (the original is unchanged)
-        void add_tag(const TimingTag& src_tag);
+        bool add_tag(const TimingTag& src_tag);
 
         /*
          * Operations
@@ -80,13 +80,13 @@ class TimingTags {
         ///\param new_time The new arrival time to compare against
         ///\param base_tag The associated metat-data for new_time
         ///\remark Finds (or creates) the tag with the same clock domain as base_tag and update the arrival time if new_time is larger
-        void max(const Time& new_time, const NodeId origin, const TimingTag& base_tag, bool arr_must_be_valid=false);
+        bool max(const Time& new_time, const NodeId origin, const TimingTag& base_tag, bool arr_must_be_valid=false);
 
         ///Updates the required time of this set of tags to be the minimum.
         ///\param new_time The new arrival time to compare against
         ///\param base_tag The associated metat-data for new_time
         ///\remark Finds (or creates) the tag with the same clock domain as base_tag and update the required time if new_time is smaller
-        void min(const Time& new_time, const NodeId origin, const TimingTag& base_tag, bool arr_must_be_valid=false);
+        bool min(const Time& new_time, const NodeId origin, const TimingTag& base_tag, bool arr_must_be_valid=false);
 
         ///Clears the tags in the current set
         void clear();
