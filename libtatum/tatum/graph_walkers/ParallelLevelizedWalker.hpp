@@ -41,7 +41,7 @@ class ParallelLevelizedWalker : public TimingGraphWalker {
             }
             num_unconstrained_startpoints_ = unconstrained_reducer.get_value();
 #elif defined(TATUM_USE_TBB)
-            tbb::combinable<size_t> unconstrained_counter(zero());
+            tbb::combinable<size_t> unconstrained_counter(zero);
 
             tbb::parallel_for_each(nodes, [&](auto node) {
                 bool constrained = visitor.do_arrival_pre_traverse_node(tg, tc, node);
@@ -80,7 +80,7 @@ class ParallelLevelizedWalker : public TimingGraphWalker {
 
             num_unconstrained_endpoints_ = unconstrained_reducer.get_value();
 #elif defined(TATUM_USE_TBB)
-            tbb::combinable<size_t> unconstrained_counter(zero());
+            tbb::combinable<size_t> unconstrained_counter(zero);
 
             tbb::parallel_for_each(po, [&](auto node) {
                 bool constrained = visitor.do_required_pre_traverse_node(tg, tc, node);
