@@ -196,7 +196,7 @@ class ParallelLevelizedWalker : public TimingGraphWalker {
         // require that the initializer be a (thread-safe) callable.
         // We therefore use an explicit function, which should work for all 
         // versions.
-        constexpr size_t zero() { return 0; }
+        static size_t zero() { return 0; }
 #endif
 
         size_t num_unconstrained_startpoints_ = 0;
