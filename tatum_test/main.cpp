@@ -132,6 +132,11 @@ Args parse_args(int argc, char** argv) {
     Args args;
     auto prog = argv[0];
 
+    for (int i = 0; i < argc; ++i) {
+        cout << argv[i] << " ";
+    }
+    cout << "\n";
+
     int i = 1;
     while (i < argc) {
 
