@@ -229,7 +229,7 @@ int main(int argc, char** argv) {
 #if defined(TATUM_USE_CILK)
     size_t actual_num_workers = args.num_workers;
     if (actual_num_workers == 0) {
-        num_workers = __cilkrts_get_nworkers();
+        actual_num_workers = __cilkrts_get_nworkers();
     }
     if (__cilkrts_set_param("nworkers", std::to_string(actual_num_workers).c_str()) != 0) {
         exit(1);
