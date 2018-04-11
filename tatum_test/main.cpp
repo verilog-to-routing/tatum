@@ -294,6 +294,10 @@ int main(int argc, char** argv) {
     timing_graph->levelize();
     timing_graph->validate();
 
+    cout << "Timing Graph Nodes: " << timing_graph->nodes().size() << "\n";
+    cout << "Timing Graph Edges: " << timing_graph->edges().size() << "\n";
+    cout << "Timing Graph Levels: " << timing_graph->levels().size() << "\n";
+
     if (args.opt_graph_layout) {
         
         auto id_maps = timing_graph->optimize_layout();
