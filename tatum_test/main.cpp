@@ -239,7 +239,7 @@ int main(int argc, char** argv) {
     if (__cilkrts_set_param("nworkers", std::to_string(actual_num_workers).c_str()) != 0) {
         exit(1);
     }
-    cout << "Tatum executing with up to" << actual_num_workers << " workers via cilk\n";
+    cout << "Tatum executing with up to " << actual_num_workers << " workers via cilk\n";
 #elif defined(TATUM_USE_TBB) 
     size_t actual_num_workers = args.num_workers;
     if (actual_num_workers == 0) {
