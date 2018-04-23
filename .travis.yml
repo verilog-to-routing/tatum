@@ -18,10 +18,10 @@ addons:
 matrix:
     include:
         #Extensive testing for base compiler
-        #- env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=auto C_COMP=gcc-4.9 CXX_COMP=g++-4.9
+        - env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=auto C_COMP=gcc-4.9 CXX_COMP=g++-4.9
         - env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=serial C_COMPILER=gcc-4.9 CXX_COMPILER=g++-4.9
-        #- env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=tbb COMPILER=g++-4.9
-        #- env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=cilk COMPILER=g++-4.9
+        - env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=tbb COMPILER=g++-4.9
+        - env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=cilk COMPILER=g++-4.9
 
         #Simple testing for other compilers
         #- env: TESTS="basic" TATUM_EXECUTION_ENGINE=auto COMPILER=g++-5
@@ -29,5 +29,8 @@ matrix:
         #- env: TESTS="basic" TATUM_EXECUTION_ENGINE=auto COMPILER=g++-7
 
 script:
+    #Build
     - mkdir -p build && pushd build && CC=$C_COMPILER CXX=$CXX_COMPILER cmake .. -DTATUM_EXECUTION_ENGINE=$TATUM_EXECUTION_ENGINE && make -j2 && popd
+
+    #Test
     - ./scripts/reg_test.py --tatum_test_exec build/tatum_test/tatum_test --tatum_nworkers 2 $TESTS
