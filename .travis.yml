@@ -12,14 +12,14 @@ addons:
             - g++-6
             - g++-7
 
-            #Intel threadbuilding blocks
+            #Thread Building Blocks
             - libtbb-dev
 
 matrix:
     include:
         #Extensive testing for base compiler
-        - env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=auto COMPILER=g++-4.9
-        #- env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=serial COMPILER=g++-4.9
+        #- env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=auto C_COMP=gcc-4.9 CXX_COMP=g++-4.9
+        - env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=serial COMPILER=g++-4.9
         #- env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=tbb COMPILER=g++-4.9
         #- env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=cilk COMPILER=g++-4.9
 
@@ -29,5 +29,5 @@ matrix:
         #- env: TESTS="basic" TATUM_EXECUTION_ENGINE=auto COMPILER=g++-7
 
 script:
-    - CXX=$COMPILER make -j2
+    - CC=$C_COMP CXX=$CXX_COMP make -j2
     - ./scripts/reg_test.py --tatum_test_exec build/tatum_test/tatum_test --tatum_nworkers 2 $TESTS
