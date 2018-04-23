@@ -1,32 +1,29 @@
 language: cpp
 
-addons:
-    apt:
-        sources:
-            - ubuntu-toolchain-r-test
-        packages:
-            #Tool chains
-            - cmake
-            - g++-4.9
-            - g++-5
-            - g++-6
-            - g++-7
-
-            #Thread Building Blocks
-            - libtbb-dev
-
 matrix:
     include:
         #Extensive testing for base compiler
         - env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=auto MATRIX_EVAL="CC=gcc-5 CXX=g++-5"
+          addons: { apt: { packages: ["cmake", "g++-5", "libtbb-dev"], sources: ["ubuntu-toolchain-r-test"] } }
+
         - env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=serial MATRIX_EVAL="CC=gcc-5 CXX=g++-5"
+          addons: { apt: { packages: ["cmake", "g++-5", "libtbb-dev"], sources: ["ubuntu-toolchain-r-test"] } }
+
         - env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=tbb MATRIX_EVAL="CC=gcc-5 CXX=g++-5"
+          addons: { apt: { packages: ["cmake", "g++-5", "libtbb-dev"], sources: ["ubuntu-toolchain-r-test"] } }
+
         - env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=cilk MATRIX_EVAL="CC=gcc-5 CXX=g++-5"
+          addons: { apt: { packages: ["cmake", "g++-5", "libtbb-dev"], sources: ["ubuntu-toolchain-r-test"] } }
 
         #Simple testing for other compilers
         - env: TESTS="basic" TATUM_EXECUTION_ENGINE=auto MATRIX_EVAL="CC=gcc-4.9 CXX=g++-4.9"
+          addons: { apt: { packages: ["cmake", "g++-4.9", "libtbb-dev"], sources: ["ubuntu-toolchain-r-test"] } }
+
         - env: TESTS="basic" TATUM_EXECUTION_ENGINE=auto MATRIX_EVAL="CC=gcc-6 CXX=g++-6"
+          addons: { apt: { packages: ["cmake", "g++-6", "libtbb-dev"], sources: ["ubuntu-toolchain-r-test"] } }
+
         - env: TESTS="basic" TATUM_EXECUTION_ENGINE=auto MATRIX_EVAL="CC=gcc-7 CXX=g++-7"
+          addons: { apt: { packages: ["cmake", "g++-7", "libtbb-dev"], sources: ["ubuntu-toolchain-r-test"] } }
 
 before_install:
     - eval "${MATRIX_EVAL}" #Set compiler versions
