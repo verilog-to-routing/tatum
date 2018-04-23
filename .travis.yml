@@ -7,10 +7,10 @@ addons:
         packages:
             #Tool chains
             - cmake
-            - gcc-4.9
-            - gcc-5
-            - gcc-6
-            - gcc-7
+            - g++-4.9
+            - g++-5
+            - g++-6
+            - g++-7
 
             #Intel threadbuilding blocks
             - libtbb-dev
@@ -19,14 +19,14 @@ matrix:
     include:
         #Extensive testing for base compiler
         - env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=auto COMPILER=g++-4.9
-        - env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=serial COMPILER=g++-4.9
-        - env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=tbb COMPILER=g++-4.9
-        - env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=cilk COMPILER=g++-4.9
+        #- env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=serial COMPILER=g++-4.9
+        #- env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=tbb COMPILER=g++-4.9
+        #- env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=cilk COMPILER=g++-4.9
 
         #Simple testing for other compilers
-        - env: TESTS="basic" TATUM_EXECUTION_ENGINE=auto COMPILER=g++-5
-        - env: TESTS="basic" TATUM_EXECUTION_ENGINE=auto COMPILER=g++-6
-        - env: TESTS="basic" TATUM_EXECUTION_ENGINE=auto COMPILER=g++-7
+        #- env: TESTS="basic" TATUM_EXECUTION_ENGINE=auto COMPILER=g++-5
+        #- env: TESTS="basic" TATUM_EXECUTION_ENGINE=auto COMPILER=g++-6
+        #- env: TESTS="basic" TATUM_EXECUTION_ENGINE=auto COMPILER=g++-7
 
 script:
     - CXX=$COMPILER make -j2
