@@ -18,15 +18,18 @@ addons:
 matrix:
     include:
         #Extensive testing for base compiler
-        - env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=auto C_COMP=gcc-4.9 CXX_COMP=g++-4.9
-        - env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=serial C_COMPILER=gcc-4.9 CXX_COMPILER=g++-4.9
-        - env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=tbb COMPILER=g++-4.9
-        - env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=cilk COMPILER=g++-4.9
+        - env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=auto MATRIX_EVAL="CC=gcc-4.9 CXX=g++-4.9"
+        - env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=serial MATRIX_EVAL="CC=gcc-4.9 CXX=g++-4.9"
+        - env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=tbb MATRIX_EVAL="CC=gcc-4.9 CXX=g++-4.9"
+        - env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=cilk MATRIX_EVAL="CC=gcc-4.9 CXX=g++-4.9"
 
         #Simple testing for other compilers
         #- env: TESTS="basic" TATUM_EXECUTION_ENGINE=auto COMPILER=g++-5
         #- env: TESTS="basic" TATUM_EXECUTION_ENGINE=auto COMPILER=g++-6
         #- env: TESTS="basic" TATUM_EXECUTION_ENGINE=auto COMPILER=g++-7
+
+before_install:
+    - eval "${MATRIX_EVAL}" #Set compiler versions
 
 script:
     #Build
