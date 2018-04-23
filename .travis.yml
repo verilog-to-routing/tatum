@@ -30,10 +30,12 @@ matrix:
 
 before_install:
     - eval "${MATRIX_EVAL}" #Set compiler versions
+    - echo $CC
+    - echo $CXX
 
 script:
     #Build
-    - mkdir -p build && pushd build && CC=$C_COMPILER CXX=$CXX_COMPILER cmake .. -DTATUM_EXECUTION_ENGINE=$TATUM_EXECUTION_ENGINE && make -j2 && popd
+    - mkdir -p build && pushd build && cmake .. -DTATUM_EXECUTION_ENGINE=$TATUM_EXECUTION_ENGINE && make -j2 && popd
 
     #Test
     - ./scripts/reg_test.py --tatum_test_exec build/tatum_test/tatum_test --tatum_nworkers 2 $TESTS
