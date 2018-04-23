@@ -333,9 +333,8 @@ int main(int argc, char** argv) {
      */
 
 
-    std::ofstream ofs;
+    std::ofstream ofs(args.write_echo);
     if (!args.write_echo.empty()) {
-        ofs = std::ofstream(args.write_echo);
         tatum::write_timing_graph(ofs, *timing_graph);
         tatum::write_timing_constraints(ofs, *timing_constraints);
         tatum::write_delay_model(ofs, *timing_graph, *delay_calculator);
