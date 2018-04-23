@@ -69,7 +69,7 @@ struct Args {
     float unit_delay = 0;
 
     //Write an echo file of resutls?
-    size_t write_echo = 0;
+    std::string write_echo;
 
     //Optimize graph memory layout?
     size_t opt_graph_layout = 0;
@@ -145,33 +145,36 @@ Args parse_args(int argc, char** argv) {
             usage(prog);
             exit(0);
         } else if (arg_str.size() >= 2 && arg_str[0] == '-' && arg_str[1] == '-') {
-            std::istringstream ss(argv[i+1]);
-            float arg_val;
-            ss >> arg_val;
-            if (ss.fail() || !ss.eof()) {
-                std::stringstream msg;
-                msg << "Invalid option value '" << argv[i+1] << "'\n";
-                cmd_error(prog, msg.str());
-            }
-
-            if (arg_str == "--num_workers") {
-                args.num_workers = arg_val;
-            } else if (argv[i] == std::string("--num_serial")) { 
-                args.num_serial_runs = arg_val;
-            } else if (argv[i] == std::string("--num_parallel")) { 
-                args.num_parallel_runs = arg_val;
-            } else if (argv[i] == std::string("--unit_delay")) { 
-                args.unit_delay = arg_val;
-            } else if (argv[i] == std::string("--write_echo")) { 
-                args.write_echo = arg_val;
-            } else if (argv[i] == std::string("--opt_graph_layout")) { 
-                args.opt_graph_layout = arg_val;
-            } else if (argv[i] == std::string("--verify")) { 
-                args.verify = arg_val;
+            if (arg_str == "--write_echo") {
+                args.write_echo = argv[i+1];
             } else {
-                std::stringstream msg;
-                msg << "Invalid option '" << arg_str << "'\n";
-                cmd_error(prog, msg.str());
+
+                std::istringstream ss(argv[i+1]);
+                float arg_val;
+                ss >> arg_val;
+                if (ss.fail() || !ss.eof()) {
+                    std::stringstream msg;
+                    msg << "Invalid option value '" << argv[i+1] << "'\n";
+                    cmd_error(prog, msg.str());
+                }
+
+                if (arg_str == "--num_workers") {
+                    args.num_workers = arg_val;
+                } else if (argv[i] == std::string("--num_serial")) { 
+                    args.num_serial_runs = arg_val;
+                } else if (argv[i] == std::string("--num_parallel")) { 
+                    args.num_parallel_runs = arg_val;
+                } else if (argv[i] == std::string("--unit_delay")) { 
+                    args.unit_delay = arg_val;
+                } else if (argv[i] == std::string("--opt_graph_layout")) { 
+                    args.opt_graph_layout = arg_val;
+                } else if (argv[i] == std::string("--verify")) { 
+                    args.verify = arg_val;
+                } else {
+                    std::stringstream msg;
+                    msg << "Invalid option '" << arg_str << "'\n";
+                    cmd_error(prog, msg.str());
+                }
             }
 
             i += 2;
@@ -331,8 +334,8 @@ int main(int argc, char** argv) {
 
 
     std::ofstream ofs;
-    if (args.write_echo) {
-        ofs = std::ofstream("timing_graph.echo");
+    if (!args.write_echo.empty()) {
+        ofs = std::ofstream(args.write_echo);
         tatum::write_timing_graph(ofs, *timing_graph);
         tatum::write_timing_constraints(ofs, *timing_constraints);
         tatum::write_delay_model(ofs, *timing_graph, *delay_calculator);
@@ -448,7 +451,7 @@ int main(int argc, char** argv) {
         cout << endl << "Net Serial Analysis elapsed time: " << serial_analyzer->get_profiling_data("total_analysis_sec") << " sec over " << serial_analyzer->get_profiling_data("num_full_updates") << " full updates" << endl;
     }
 
-    if (args.write_echo) {
+    if (!args.write_echo.empty()) {
         tatum::write_analysis_result(ofs, *timing_graph, serial_analyzer);
         ofs.flush();
     }
