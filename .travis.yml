@@ -5,27 +5,29 @@ addons:
         sources:
             - ubuntu-toolchain-r-test
         packages:
+            #Tool chains
             - cmake
-            - libtbb-dev
             - gcc-4.9
-            #- gcc-5
-            #- gcc-6
-            #- gcc-7
+            - gcc-5
+            - gcc-6
+            - gcc-7
 
-compiler:
-    #- gcc
-    #- clang
-    - gcc-4.9
-    #- gcc-5
-    #- gcc-6
-    #- gcc-7
+            #Intel threadbuilding blocks
+            - libtbb-dev
 
-env:
-    #- TATUM_EXECUTION_ENGINE=auto
-    #- TATUM_EXECUTION_ENGINE=serial
-    #- TATUM_EXECUTION_ENGINE=tbb
-    #- TATUM_EXECUTION_ENGINE=cilk
+matrix:
+    include:
+        #Extensive testing for base compiler
+        - env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=auto COMPILER=g++-4.9
+        - env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=serial COMPILER=g++-4.9
+        - env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=tbb COMPILER=g++-4.9
+        - env: TESTS="basic mcnc20" TATUM_EXECUTION_ENGINE=cilk COMPILER=g++-4.9
+
+        #Simple testing for other compilers
+        - env: TESTS="basic" TATUM_EXECUTION_ENGINE=auto COMPILER=g++-5
+        - env: TESTS="basic" TATUM_EXECUTION_ENGINE=auto COMPILER=g++-6
+        - env: TESTS="basic" TATUM_EXECUTION_ENGINE=auto COMPILER=g++-7
 
 script:
-    - make -j2
-    - ./scripts/reg_test.py --tatum_test_exec build/tatum_test/tatum_test --tatum_nworkers 2 basic mcnc20
+    - CXX=$COMPILER make -j2
+    - ./scripts/reg_test.py --tatum_test_exec build/tatum_test/tatum_test --tatum_nworkers 2 $TESTS
