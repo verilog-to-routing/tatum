@@ -29,5 +29,5 @@ matrix:
         #- env: TESTS="basic" TATUM_EXECUTION_ENGINE=auto COMPILER=g++-7
 
 script:
-    - CC=$C_COMPILER CXX=$CXX_COMPILER make -j2
+    - mkdir -p build && cd build && CC=$C_COMPILER CXX=$CXX_COMPILER cmake .. -DTATUM_EXECUTION_ENGINE=$TATUM_EXECUTION_ENGINE && make -j2
     - ./scripts/reg_test.py --tatum_test_exec build/tatum_test/tatum_test --tatum_nworkers 2 $TESTS
