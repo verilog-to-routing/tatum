@@ -27,8 +27,8 @@ matrix:
         - env: TESTS="basic" TATUM_EXECUTION_ENGINE=auto MATRIX_EVAL="CC=gcc-4.9 CXX=g++-4.9"
           addons: { apt: { packages: ["cmake", "g++-4.9", "libtbb-dev"], sources: ["ubuntu-toolchain-r-test"] } }
 
-        #- env: TESTS="basic" TATUM_EXECUTION_ENGINE=auto MATRIX_EVAL="CC=clang-3.5 CXX=clang++-3.5"
-          #addons: { apt: { packages: ["cmake", "clang-3.5", "g++-4.9", "libtbb-dev"], sources: ["llvm-toolchain-trusty-3.5", "ubuntu-toolchain-r-test"] } }
+        - env: TESTS="basic" TATUM_EXECUTION_ENGINE=auto MATRIX_EVAL="CC=clang-3.5 CXX=clang++-3.5"
+          addons: { apt: { packages: ["cmake", "clang-3.5", "g++-4.9", "libtbb-dev"], sources: ["llvm-toolchain-trusty-3.5", "ubuntu-toolchain-r-test"] } }
 
         - env: TESTS="basic" TATUM_EXECUTION_ENGINE=auto MATRIX_EVAL="CC=clang-5.0 CXX=clang++-5.0"
           addons: { apt: { packages: ["cmake", "clang-5.0", "g++-4.9", "libtbb-dev"], sources: ["llvm-toolchain-trusty-5.0", "ubuntu-toolchain-r-test"] } }
