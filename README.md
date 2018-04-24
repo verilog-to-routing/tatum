@@ -1,4 +1,5 @@
 #Tatum: A Fast, Flexible Static Timing Analysis (STA) Engine for Digital Circuits
+[![Build Status](https://travis-ci.org/kmurray/tatum.svg?branch=master)](https://travis-ci.org/kmurray/tatum)
 
 ##Overview
 Tatum is primarily a library (`libtatum`) which provides a fast and flexible Static Timing Analysis (STA) engine for digital circuits.
