@@ -118,7 +118,7 @@ void TimingReporter::report_timing_setup(std::ostream& os,
                                          size_t npaths) const {
     auto paths = path_collector_.collect_worst_setup_paths(timing_graph_, setup_analyzer, npaths);
 
-    report_timing(os, paths, npaths);
+    report_timing(os, paths);
 }
 
 void TimingReporter::report_timing_hold(std::string filename, 
@@ -133,7 +133,7 @@ void TimingReporter::report_timing_hold(std::ostream& os,
                                          size_t npaths) const {
     auto paths = path_collector_.collect_worst_hold_paths(timing_graph_, hold_analyzer, npaths);
 
-    report_timing(os, paths, npaths);
+    report_timing(os, paths);
 }
 
 void TimingReporter::report_unconstrained_setup(std::string filename, 
@@ -181,11 +181,10 @@ void TimingReporter::report_unconstrained_hold(std::ostream& os,
  */
 
 void TimingReporter::report_timing(std::ostream& os,
-                                   const std::vector<TimingPath>& paths, 
-                                   size_t npaths) const {
+                                   const std::vector<TimingPath>& paths) const {
     tatum::OsFormatGuard flag_guard(os);
 
-    os << "#Timing report of worst " << npaths << " path(s)\n";
+    os << "#Timing report of worst " << paths.size() << " path(s)\n";
     os << "# Unit scale: " << std::setprecision(0) << std::scientific << unit_scale_ << " seconds\n";
     os << "# Output precision: " << precision_ << "\n";
     os << "\n";

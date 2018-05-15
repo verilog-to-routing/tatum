@@ -36,7 +36,8 @@ class TimingReporter {
         void report_unconstrained_hold(std::ostream& os, const tatum::HoldTimingAnalyzer& hold_analyzer) const;
 
     private:
-        void report_timing(std::ostream& os, const std::vector<TimingPath>& paths, size_t npaths) const;
+        void report_timing(std::ostream& os, const std::vector<TimingPath>& paths) const;
+
         void report_path(std::ostream& os, const TimingPath& path) const;
 
         void report_unconstrained(std::ostream& os, const NodeType type, const detail::TagRetriever& tag_retriever) const;
