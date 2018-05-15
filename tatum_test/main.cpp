@@ -383,6 +383,7 @@ int main(int argc, char** argv) {
             //write_dot_file_setup("tg_setup_annotated.dot", *timing_graph, *delay_calculator, *echo_setup_analyzer, nodes);
             dot_writer.write_dot_file("tg_setup_annotated.dot", *echo_setup_analyzer);
             timing_reporter.report_timing_setup("report_timing.setup.rpt", *echo_setup_analyzer);
+            timing_reporter.report_skew_setup("report_skew.setup.rpt", *echo_setup_analyzer);
             timing_reporter.report_unconstrained_setup("report_unconstrained_timing.setup.rpt", *echo_setup_analyzer);
         }
         std::shared_ptr<tatum::HoldTimingAnalyzer> echo_hold_analyzer = std::dynamic_pointer_cast<tatum::HoldTimingAnalyzer>(serial_analyzer);
@@ -390,6 +391,7 @@ int main(int argc, char** argv) {
             //write_dot_file_hold("tg_hold_annotated.dot", *timing_graph, *delay_calculator, *echo_hold_analyzer, nodes);
             dot_writer.write_dot_file("tg_hold_annotated.dot", *echo_hold_analyzer);
             timing_reporter.report_timing_hold("report_timing.hold.rpt", *echo_hold_analyzer);
+            timing_reporter.report_skew_hold("report_skew.hold.rpt", *echo_hold_analyzer);
             timing_reporter.report_unconstrained_hold("report_unconstrained_timing.hold.rpt", *echo_hold_analyzer);
         }
 

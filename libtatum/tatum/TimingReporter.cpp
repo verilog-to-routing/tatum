@@ -136,6 +136,42 @@ void TimingReporter::report_timing_hold(std::ostream& os,
     report_timing(os, paths);
 }
 
+void TimingReporter::report_skew_setup(std::string filename, 
+                                         const SetupTimingAnalyzer& setup_analyzer,
+                                         size_t nworst) const {
+    std::ofstream os(filename);
+    report_skew_setup(os, setup_analyzer, nworst);
+}
+
+void TimingReporter::report_skew_setup(std::ostream& os, 
+                                         const SetupTimingAnalyzer& setup_analyzer,
+                                         size_t nworst) const {
+    detail::SetupTagRetriever tag_retriever(setup_analyzer);
+
+    os << "#Clock skew for setup timing startpoint/endpoint\n";
+    os << "\n";
+    report_skew(os, tag_retriever, TimingType::SETUP, nworst);
+    os << "#End of clock skew for setup timing startpoint/endpoint report\n";
+}
+
+void TimingReporter::report_skew_hold(std::string filename, 
+                                         const HoldTimingAnalyzer& hold_analyzer,
+                                         size_t nworst) const {
+    std::ofstream os(filename);
+    report_skew_hold(os, hold_analyzer, nworst);
+}
+
+void TimingReporter::report_skew_hold(std::ostream& os, 
+                                         const HoldTimingAnalyzer& hold_analyzer,
+                                         size_t nworst) const {
+    detail::HoldTagRetriever tag_retriever(hold_analyzer);
+
+    os << "#Clock skew for hold timing startpoint/endpoint\n";
+    os << "\n";
+    report_skew(os, tag_retriever, TimingType::HOLD, nworst);
+    os << "#End of clock skew for hold timing startpoint/endpoint report\n";
+}
+
 void TimingReporter::report_unconstrained_setup(std::string filename, 
                                                           const tatum::SetupTimingAnalyzer& setup_analyzer) const {
     std::ofstream os(filename);
@@ -487,6 +523,218 @@ void TimingReporter::report_unconstrained(std::ostream& os, const NodeType type,
             }
         }
     }
+}
+
+void TimingReporter::report_skew(std::ostream& os, const detail::TagRetriever& tag_retriever, TimingType timing_type, size_t nworst) const {
+    tatum::OsFormatGuard flag_guard(os);
+
+    std::vector<PathSkew> path_skews;
+
+    for(NodeId node : timing_graph_.nodes()) {
+        NodeType node_type = timing_graph_.node_type(node);
+        if (node_type != NodeType::SINK) continue;
+
+        const auto& required_tags = tag_retriever.tags(node, TagType::DATA_REQUIRED);
+
+        for (auto& required_tag : required_tags) {
+            DomainId capture_domain = required_tag.capture_clock_domain();
+            DomainId launch_domain = required_tag.launch_clock_domain();
+
+            PathSkew path_skew;
+            path_skew.launch_domain = launch_domain;
+            path_skew.capture_domain = capture_domain;
+
+            //Figure out what the launch clock time was at the upstream source node
+            Time clock_launch_time;
+
+            //So long as neither a tree root (i.e. primary input) nor a clock pin (i.e. FF clock input)
+            //Walk back upstream
+            NodeId arrival_node = node;
+            while (!timing_graph_.node_in_edges(arrival_node).empty() && timing_graph_.node_type(arrival_node) != NodeType::CPIN) {
+                const auto& data_arrival_tags = tag_retriever.tags(arrival_node, TagType::DATA_ARRIVAL);
+                auto arrival_tag_itr = find_tag(data_arrival_tags, launch_domain, DomainId::INVALID());
+                TATUM_ASSERT(arrival_tag_itr != data_arrival_tags.end());
+
+                //The arrival tag knows which node it was generated from
+                auto origin_node = arrival_tag_itr->origin_node();
+                if (origin_node) {
+                    arrival_node = origin_node;
+                } else {
+                    for (auto in_edge : timing_graph_.node_in_edges(arrival_node)) {
+                        if (timing_graph_.edge_type(in_edge) == EdgeType::PRIMITIVE_CLOCK_LAUNCH) {
+                            arrival_node = timing_graph_.edge_src_node(in_edge);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (timing_graph_.node_in_edges(arrival_node).empty()) {
+                //arrival_node is a primary input
+                TATUM_ASSERT(timing_graph_.node_type(arrival_node) == NodeType::SOURCE);
+                
+                const auto& data_arrival_tags = tag_retriever.tags(arrival_node, TagType::DATA_ARRIVAL);
+                auto arrival_tag_itr = find_tag(data_arrival_tags, launch_domain, DomainId::INVALID());
+                TATUM_ASSERT(arrival_tag_itr != data_arrival_tags.end());
+
+                clock_launch_time = arrival_tag_itr->time();
+            } else {
+                TATUM_ASSERT(timing_graph_.node_type(arrival_node) == NodeType::CPIN);
+
+                const auto& clock_launch_tags = tag_retriever.tags(arrival_node, TagType::CLOCK_LAUNCH);
+                auto launch_tag_itr = find_tag(clock_launch_tags, launch_domain, DomainId::INVALID());
+                TATUM_ASSERT(launch_tag_itr != clock_launch_tags.end());
+
+                clock_launch_time = launch_tag_itr->time();
+            }
+            path_skew.launch_node = arrival_node;
+            path_skew.clock_launch = clock_launch_time;
+
+
+            //Figure out what the capture clock time at this sink node
+            Time clock_capture_time;
+
+            //If this sink is a FF, it will have an incoming capture clock edge,
+            //use it to find the associated clock pin (since the Tsu/Thld is placed on that
+            //edge the required time at this node includes it).
+            NodeId capture_cpin_node;
+            for (auto in_edge : timing_graph_.node_in_edges(node)) {
+                if (timing_graph_.edge_type(in_edge) == EdgeType::PRIMITIVE_CLOCK_CAPTURE) {
+                    capture_cpin_node = timing_graph_.edge_src_node(in_edge);
+                    break;
+                }
+            }
+
+            if (!capture_cpin_node) {
+                //node is a primary output
+                TATUM_ASSERT(timing_graph_.node_type(node) == NodeType::SINK);
+
+                const auto& data_required_tags = tag_retriever.tags(node, TagType::DATA_REQUIRED);
+                auto required_tag_itr = find_tag(data_required_tags, launch_domain, capture_domain);
+                TATUM_ASSERT(required_tag_itr != data_required_tags.end());
+
+                clock_capture_time =  required_tag_itr->time();
+
+                path_skew.capture_node = capture_cpin_node;
+            } else {
+                //node is a FF sink, look-up the clock arrival time on the associated clock pin
+                TATUM_ASSERT(capture_cpin_node);
+                TATUM_ASSERT(timing_graph_.node_type(capture_cpin_node) == NodeType::CPIN);
+
+                const auto& clock_capture_tags = tag_retriever.tags(capture_cpin_node, TagType::CLOCK_CAPTURE);
+                auto capture_tag_itr = find_tag(clock_capture_tags, launch_domain, capture_domain);
+                TATUM_ASSERT(capture_tag_itr != clock_capture_tags.end());
+
+                clock_capture_time = capture_tag_itr->time();
+
+                path_skew.capture_node = node;
+            }
+            path_skew.clock_capture = clock_launch_time;
+
+            //At this point clock_launch_time and clock_capture_time hold the respective
+            //data-arrival clock launch, and data-required clock capture times.
+            //
+            //Note that the data-required clock capture time *includes* the constraint,
+            //between the launch and capture domains, so we need to remove it to get the
+            //true skew.
+            Time clock_constraint;
+            if (timing_type == TimingType::SETUP) {
+                clock_constraint = timing_constraints_.setup_constraint(launch_domain, capture_domain);
+            } else {
+                TATUM_ASSERT(timing_type == TimingType::HOLD);
+                clock_constraint = timing_constraints_.hold_constraint(launch_domain, capture_domain);
+            }
+            path_skew.clock_constraint = clock_constraint;
+            Time normalized_clock_capture_time = clock_capture_time - clock_constraint;
+            path_skew.clock_capture_normalized = normalized_clock_capture_time;
+            
+            //We define skew as the capture - launch times, this means positive skew implies
+            //that the capture clock arrives after the launch clock, and negative skew implies
+            //the capture clock arrives before the launch clock.
+            path_skew.clock_skew = normalized_clock_capture_time - clock_launch_time;
+
+            path_skews.push_back(path_skew);
+        }
+    }
+
+    auto skew_order = [&](const PathSkew& lhs, const PathSkew& rhs) {
+        if (timing_type == TimingType::SETUP) {
+            //Positive skew helps setup paths (since the capture clock edge is delayed, 
+            //lengthening the clock period), so show the most negative skews first.
+            return lhs.clock_skew < rhs.clock_skew;
+        } else {
+            //Positive skew hurts hold paths (since the capture clock edge is delay,
+            //this gives the data more time to catch-up to the capture clock),
+            //so show the most positive skews first.
+            TATUM_ASSERT(timing_type == TimingType::HOLD);
+            return lhs.clock_skew > rhs.clock_skew;
+        }
+    };
+    std::sort(path_skews.begin(), path_skews.end(), skew_order);
+
+    size_t num_skews = std::min(path_skews.size(), nworst);
+    for (size_t i = 0; i < num_skews; ++i) {
+        os << "#Skew Path " << i << "\n";
+        report_skew_path(os, path_skews[i], timing_type); 
+        os << "\n";
+    }
+}
+
+void TimingReporter::report_skew_path(std::ostream& os, const PathSkew& path_skew, TimingType timing_type) const {
+    std::string divider = "--------------------------------------------------------------------------------";
+
+    os << "Startpoint: " << name_resolver_.node_name(path_skew.launch_node) 
+       << " (" << name_resolver_.node_block_type_name(path_skew.launch_node)
+       << " clocked by " << timing_constraints_.clock_domain_name(path_skew.launch_domain)
+       << ")\n";
+    os << "Endpoint  : " << name_resolver_.node_name(path_skew.capture_node) 
+       << " (" << name_resolver_.node_block_type_name(path_skew.capture_node) 
+       << " clocked by " << timing_constraints_.clock_domain_name(path_skew.capture_domain)
+       << ")\n";
+
+    if(timing_type == TimingType::SETUP) {
+        os << "Path Type : setup" << "\n";
+    } else {
+        TATUM_ASSERT_MSG(timing_type == TimingType::HOLD, "Expected path type SETUP or HOLD");
+        os << "Path Type : hold" << "\n";
+    }
+    os << "\n";
+
+    std::string launch_name = name_resolver_.node_name(path_skew.launch_node) 
+                            + " (" 
+                            + name_resolver_.node_block_type_name(path_skew.launch_node)
+                            + ")";
+    std::string capture_name = name_resolver_.node_name(path_skew.capture_node) 
+                            + " (" 
+                            + name_resolver_.node_block_type_name(path_skew.capture_node)
+                            + ")";
+
+    size_t point_print_width = std::max(launch_name.size(), capture_name.size());
+    point_print_width = std::max(point_print_width, std::string("clock data capture (normalized)").size());
+
+    ReportTimingPathHelper path_helper(unit_scale_, precision_, point_print_width);
+    path_helper.print_path_line(os, "Point", " Incr", " Path");
+    path_helper.print_divider(os);
+
+    //Data launch path
+    path_helper.update_print_path(os, launch_name, path_skew.clock_launch);
+    path_helper.update_print_path_no_incr(os, "data launch", path_skew.clock_launch);
+    os << "\n";
+
+    path_helper.reset_path();
+
+    //Data capture path
+    path_helper.update_print_path(os, capture_name, path_skew.clock_capture);
+    path_helper.update_print_path_no_incr(os, "data capture", path_skew.clock_launch);
+    path_helper.print_divider(os);
+
+    //Skew calculation
+    path_helper.print_path_line_no_incr(os, "data capture", path_skew.clock_capture_normalized);
+    path_helper.print_path_line_no_incr(os, "clock constraint", -path_skew.clock_constraint);
+    path_helper.print_path_line_no_incr(os, "data launch", -path_skew.clock_launch);
+    path_helper.print_divider(os);
+
+    path_helper.print_path_line_no_incr(os, "skew", path_skew.clock_skew);
 }
 
 bool TimingReporter::nearly_equal(const Time& lhs, const Time& rhs) const {
