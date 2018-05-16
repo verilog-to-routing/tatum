@@ -228,14 +228,14 @@ void TimingReporter::report_timing(std::ostream& os,
     size_t i = 0;
     for(const auto& path : paths) {
         os << "#Path " << ++i << "\n";
-        report_path(os, path);
+        report_timing_path(os, path);
         os << "\n";
     }
 
     os << "#End of timing report\n";
 }
 
-void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path) const {
+void TimingReporter::report_timing_path(std::ostream& os, const TimingPath& timing_path) const {
     std::string divider = "--------------------------------------------------------------------------------";
 
     TimingPathInfo path_info = timing_path.path_info();
