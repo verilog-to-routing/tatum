@@ -136,7 +136,7 @@ def run_single_test(args, work_dir, test_file):
 
         #Print log if failed
         with open(log, 'r') as log_file:
-            for line in log:
+            for line in log_file:
                 print("\t{}".format(line), end='')
 
     return num_failed
