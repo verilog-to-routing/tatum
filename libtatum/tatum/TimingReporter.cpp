@@ -124,11 +124,11 @@ void TimingReporter::report_skew_setup(std::string filename,
 void TimingReporter::report_skew_setup(std::ostream& os, 
                                          const SetupTimingAnalyzer& setup_analyzer,
                                          size_t nworst) const {
-    detail::SetupTagRetriever tag_retriever(setup_analyzer);
+    auto paths = path_collector_.collect_worst_setup_skew_paths(timing_graph_, timing_constraints_, setup_analyzer, nworst);
 
     os << "#Clock skew for setup timing startpoint/endpoint\n";
     os << "\n";
-    report_skew(os, tag_retriever, TimingType::SETUP, nworst);
+    report_skew(os, paths, TimingType::SETUP);
     os << "#End of clock skew for setup timing startpoint/endpoint report\n";
 }
 
@@ -142,11 +142,11 @@ void TimingReporter::report_skew_hold(std::string filename,
 void TimingReporter::report_skew_hold(std::ostream& os, 
                                          const HoldTimingAnalyzer& hold_analyzer,
                                          size_t nworst) const {
-    detail::HoldTagRetriever tag_retriever(hold_analyzer);
+    auto paths = path_collector_.collect_worst_hold_skew_paths(timing_graph_, timing_constraints_, hold_analyzer, nworst);
 
     os << "#Clock skew for hold timing startpoint/endpoint\n";
     os << "\n";
-    report_skew(os, tag_retriever, TimingType::HOLD, nworst);
+    report_skew(os, paths, TimingType::HOLD);
     os << "#End of clock skew for hold timing startpoint/endpoint report\n";
 }
 
@@ -361,9 +361,19 @@ void TimingReporter::report_unconstrained(std::ostream& os, const NodeType type,
     }
 }
 
-void TimingReporter::report_skew(std::ostream& os, const detail::TagRetriever& tag_retriever, TimingType timing_type, size_t nworst) const {
+void TimingReporter::report_skew(std::ostream& os, const std::vector<SkewPath>& skew_paths, TimingType timing_type) const {
     tatum::OsFormatGuard flag_guard(os);
 
+#if 1
+    int i = 1;
+    for (const auto& skew_path : skew_paths) {
+        os << "#Skew Path " << i << "\n";
+        report_skew_path(os, skew_path, timing_type); 
+        os << "\n";
+        ++i;
+    }
+
+#else 
     std::vector<PathSkew> path_skews;
 
     for(NodeId node : timing_graph_.nodes()) {
@@ -514,18 +524,27 @@ void TimingReporter::report_skew(std::ostream& os, const detail::TagRetriever& t
         report_skew_path(os, path_skews[i], timing_type); 
         os << "\n";
     }
+#endif
 }
 
-void TimingReporter::report_skew_path(std::ostream& os, const PathSkew& path_skew, TimingType timing_type) const {
-    std::string divider = "--------------------------------------------------------------------------------";
+void TimingReporter::report_skew_path(std::ostream& os, const SkewPath& skew_path, TimingType timing_type) const {
 
-    os << "Startpoint: " << name_resolver_.node_name(path_skew.launch_node) 
-       << " (" << name_resolver_.node_block_type_name(path_skew.launch_node)
-       << " clocked by " << timing_constraints_.clock_domain_name(path_skew.launch_domain)
+    auto& launch_path = skew_path.clock_launch_path;
+    auto& capture_path = skew_path.clock_capture_path;
+
+    TATUM_ASSERT(!launch_path.elements().empty());
+    TATUM_ASSERT(!capture_path.elements().empty());
+
+    NodeId launch_node = launch_path.elements().begin()->node();
+    NodeId capture_node = (--capture_path.elements().end())->node();
+
+    os << "Startpoint: " << name_resolver_.node_name(launch_node) 
+       << " (" << name_resolver_.node_block_type_name(launch_node)
+       << " clocked by " << timing_constraints_.clock_domain_name(skew_path.launch_domain)
        << ")\n";
-    os << "Endpoint  : " << name_resolver_.node_name(path_skew.capture_node) 
-       << " (" << name_resolver_.node_block_type_name(path_skew.capture_node) 
-       << " clocked by " << timing_constraints_.clock_domain_name(path_skew.capture_domain)
+    os << "Endpoint  : " << name_resolver_.node_name(capture_node) 
+       << " (" << name_resolver_.node_block_type_name(capture_node) 
+       << " clocked by " << timing_constraints_.clock_domain_name(skew_path.capture_domain)
        << ")\n";
 
     if(timing_type == TimingType::SETUP) {
@@ -536,22 +555,53 @@ void TimingReporter::report_skew_path(std::ostream& os, const PathSkew& path_ske
     }
     os << "\n";
 
-    std::string launch_name = name_resolver_.node_name(path_skew.launch_node) 
+    std::string launch_name = name_resolver_.node_name(launch_node) 
                             + " (" 
-                            + name_resolver_.node_block_type_name(path_skew.launch_node)
+                            + name_resolver_.node_block_type_name(launch_node)
                             + ")";
-    std::string capture_name = name_resolver_.node_name(path_skew.capture_node) 
+    std::string capture_name = name_resolver_.node_name(capture_node) 
                             + " (" 
-                            + name_resolver_.node_block_type_name(path_skew.capture_node)
+                            + name_resolver_.node_block_type_name(capture_node)
                             + ")";
 
     size_t point_print_width = std::max(launch_name.size(), capture_name.size());
     point_print_width = std::max(point_print_width, std::string("clock data capture (normalized)").size());
 
     detail::ReportTimingPathHelper path_helper(unit_scale_, precision_, point_print_width);
+
+
     path_helper.print_path_line(os, "Point", " Incr", " Path");
     path_helper.print_divider(os);
 
+#if 1
+    Time data_launch_time = report_timing_clock_subpath(os, path_helper, launch_path, skew_path.launch_domain, timing_type);
+
+    path_helper.update_print_path_no_incr(os, "data launch", data_launch_time);
+    os << "\n";
+
+    os << "\n";
+
+    path_helper.reset_path();
+
+    Time data_capture_time = report_timing_clock_subpath(os, path_helper, capture_path, skew_path.capture_domain, timing_type);
+
+    path_helper.update_print_path_no_incr(os, "data capture", data_capture_time);
+    path_helper.print_divider(os);
+
+    Time clock_constraint;
+    if (timing_type == TimingType::SETUP) {
+        clock_constraint = timing_constraints_.setup_constraint(skew_path.launch_domain, skew_path.capture_domain);
+    } else {
+        clock_constraint = timing_constraints_.hold_constraint(skew_path.launch_domain, skew_path.capture_domain);
+    }
+    path_helper.print_path_line_no_incr(os, "data capture", data_capture_time);
+    path_helper.print_path_line_no_incr(os, "clock constraint", -clock_constraint);
+    path_helper.print_path_line_no_incr(os, "data launch", -data_launch_time);
+    path_helper.print_divider(os);
+
+    Time skew = data_capture_time - clock_constraint - data_launch_time;
+    path_helper.print_path_line_no_incr(os, "skew", skew);
+#else
     //Data launch path
     path_helper.update_print_path(os, launch_name, path_skew.clock_launch);
     path_helper.update_print_path_no_incr(os, "data launch", path_skew.clock_launch);
@@ -571,6 +621,7 @@ void TimingReporter::report_skew_path(std::ostream& os, const PathSkew& path_ske
     path_helper.print_divider(os);
 
     path_helper.print_path_line_no_incr(os, "skew", path_skew.clock_skew);
+#endif
 }
 
 Time TimingReporter::report_timing_clock_subpath(std::ostream& os,

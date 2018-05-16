@@ -100,9 +100,9 @@ class TimingReporter {
 
         void report_unconstrained(std::ostream& os, const NodeType type, const detail::TagRetriever& tag_retriever) const;
 
-        void report_skew(std::ostream& os, const detail::TagRetriever& tag_retriever, TimingType timing_type, size_t nworst) const;
+        void report_skew(std::ostream& os, const std::vector<SkewPath>& paths, TimingType timing_type) const;
 
-        void report_skew_path(std::ostream& os, const PathSkew& path_skew, TimingType timing_type) const;
+        void report_skew_path(std::ostream& os, const SkewPath& skew_path, TimingType timing_type) const;
 
         Time report_timing_clock_subpath(std::ostream& os, 
                                          detail::ReportTimingPathHelper& path_helper,

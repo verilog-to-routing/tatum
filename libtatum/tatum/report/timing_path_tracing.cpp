@@ -5,7 +5,6 @@
 
 namespace tatum { namespace detail {
 
-Time calc_path_delay(const TimingSubPath& path);
 NodeId find_startpoint(const TimingSubPath& path);
 NodeId find_endpoint(const TimingSubPath& path);
 
@@ -210,13 +209,65 @@ TimingSubPath trace_clock_capture_path(const TimingGraph& timing_graph,
     return TimingSubPath(clock_capture_elements);
 }
 
-Time calc_path_delay(const TimingSubPath& path) {
-    TATUM_ASSERT(path.elements().size() > 0);
+TimingSubPath trace_skew_clock_launch_path(const TimingGraph& timing_graph,
+                                           const detail::TagRetriever& tag_retriever, 
+                                           const DomainId launch_domain,
+                                           const DomainId capture_domain,
+                                           const NodeId data_launch_node) {
+    TimingSubPath subpath = trace_clock_launch_path(timing_graph, tag_retriever, launch_domain, capture_domain, data_launch_node);
 
+    //A primary input may have no actual clock path, since the data arrival time is marked directly
+    if (subpath.elements().empty()) {
+        std::vector<TimingPathElem> elements;
+
+        auto data_arrival_tags = tag_retriever.tags(data_launch_node, TagType::DATA_ARRIVAL);
+        auto iter = find_tag(data_arrival_tags, launch_domain, DomainId::INVALID());
+        TATUM_ASSERT(iter != data_arrival_tags.end());
+        elements.emplace_back(*iter, data_launch_node, EdgeId::INVALID());
+
+        subpath = TimingSubPath(elements);
+    }
+    return subpath;
+}
+
+TimingSubPath trace_skew_clock_capture_path(const TimingGraph& timing_graph,
+                                            const detail::TagRetriever& tag_retriever, 
+                                            const DomainId launch_domain,
+                                            const DomainId capture_domain,
+                                            const NodeId data_capture_node) {
+    TimingSubPath subpath = trace_clock_capture_path(timing_graph, tag_retriever, launch_domain, capture_domain, data_capture_node);
+
+    //A primary output may have no actual clock path, since the data required time is marked directly
+    if (subpath.elements().empty()) {
+        std::vector<TimingPathElem> elements;
+
+        auto data_arrival_tags = tag_retriever.tags(data_capture_node, TagType::DATA_REQUIRED);
+        auto iter = find_tag(data_arrival_tags, launch_domain, capture_domain);
+        TATUM_ASSERT(iter != data_arrival_tags.end());
+        elements.emplace_back(*iter, data_capture_node, EdgeId::INVALID());
+
+        subpath = TimingSubPath(elements);
+    }
+    return subpath;
+}
+
+Time calc_path_delay(const TimingSubPath& path) {
+#if 0
+    TATUM_ASSERT(!path.elements().empty());
     TimingTag first_arrival = path.elements().begin()->tag();
     TimingTag last_arrival = (--path.elements().end())->tag();
 
     return last_arrival.time() - first_arrival.time();
+#else
+    if (path.elements().size() > 0) {
+        TimingTag first_arrival = path.elements().begin()->tag();
+        TimingTag last_arrival = (--path.elements().end())->tag();
+
+        return last_arrival.time() - first_arrival.time();
+    } else {
+        return Time(0.);
+    }
+#endif
 }
 
 NodeId find_startpoint(const TimingSubPath& path) {
