@@ -296,7 +296,7 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
         }
 
         //Launch clock path
-        for(const TimingPathElem& path_elem : timing_path.clock_launch_elements()) {
+        for(const TimingPathElem& path_elem : timing_path.clock_launch_path().elements()) {
             std::string point = name_resolver_.node_name(path_elem.node()) + " (" + name_resolver_.node_block_type_name(path_elem.node()) + ")";
             arr_path = path_elem.tag().time();
 
@@ -305,8 +305,8 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
 
         {
             //Input constraint
-            TATUM_ASSERT(timing_path.data_arrival_elements().size() > 0);
-            const TimingPathElem& path_elem = *(timing_path.data_arrival_elements().begin());
+            TATUM_ASSERT(timing_path.data_arrival_path().elements().size() > 0);
+            const TimingPathElem& path_elem = *(timing_path.data_arrival_path().elements().begin());
 
             Time input_constraint;
             if (path_info.type() == TimingType::SETUP) {
@@ -324,7 +324,7 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
         }
 
         //Launch data
-        for(const TimingPathElem& path_elem : timing_path.data_arrival_elements()) {
+        for(const TimingPathElem& path_elem : timing_path.data_arrival_path().elements()) {
 
             std::string point = name_resolver_.node_name(path_elem.node()) + " (" + name_resolver_.node_block_type_name(path_elem.node()) + ")";
 
@@ -340,7 +340,7 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
 
         {
             //Final arrival time
-            const TimingPathElem& path_elem = *(--timing_path.data_arrival_elements().end());
+            const TimingPathElem& path_elem = *(--timing_path.data_arrival_path().elements().end());
 
             TATUM_ASSERT(timing_graph_.node_type(path_elem.node()) == NodeType::SINK);
 
@@ -403,7 +403,7 @@ void TimingReporter::report_path(std::ostream& os, const TimingPath& timing_path
         }
 
         //Clock capture path
-        for(const TimingPathElem& path_elem : timing_path.clock_capture_elements()) {
+        for(const TimingPathElem& path_elem : timing_path.clock_capture_path().elements()) {
             TATUM_ASSERT(path_elem.tag().type() == TagType::CLOCK_CAPTURE);
 
             req_path = path_elem.tag().time();
@@ -743,8 +743,8 @@ bool TimingReporter::nearly_equal(const Time& lhs, const Time& rhs) const {
 
 size_t TimingReporter::estimate_point_print_width(const TimingPath& path) const {
     size_t width = 60; //default
-    for(auto elems : {path.clock_launch_elements(), path.data_arrival_elements(), path.clock_capture_elements()}) {
-        for(auto elem : elems) {
+    for(auto subpath : {path.clock_launch_path(), path.data_arrival_path(), path.clock_capture_path()}) {
+        for(auto elem : subpath.elements()) {
             //Take the longest typical point name
             std::string point = name_resolver_.node_name(elem.node()) + " (" + name_resolver_.node_block_type_name(elem.node()) + ")";
             point += " [clock-to-output]";
