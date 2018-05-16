@@ -252,7 +252,7 @@ void TimingReporter::report_timing_path(std::ostream& os, const TimingPath& timi
 
         arr_path = report_timing_clock_subpath(os, path_helper, timing_path.clock_launch_path(), path_info.launch_domain(), path_info.type());
 
-        arr_path = report_timing_data_arrival_subpath(os, path_helper, timing_path.data_arrival_path(), path_info.launch_domain(), path_info.type());
+        arr_path = report_timing_data_arrival_subpath(os, path_helper, timing_path.data_arrival_path(), path_info.launch_domain(), path_info.type(), arr_path);
 
         {
             //Final arrival time
@@ -654,9 +654,32 @@ Time TimingReporter::report_timing_clock_subpath(std::ostream& os,
         path_helper.update_print_path(os, point, path);
     }
 
+
+    DelayType delay_type;
+    if (timing_type == TimingType::SETUP) {
+        delay_type = DelayType::MAX;
+    } else {
+        delay_type = DelayType::MIN;
+    }
+
     //Launch clock path
     for(const TimingPathElem& path_elem : subpath.elements()) {
+
+        //Ask the application for a detailed breakdown of the edge delays
+        auto delay_breakdown = name_resolver_.edge_delay_breakdown(path_elem.incomming_edge(), delay_type);
+        if (!delay_breakdown.components.empty()) {
+            //Application provided detailed delay breakdown of edge delay, report it
+            for (auto& delay_component : delay_breakdown.components) {
+                std::string point = "| " + delay_component.inst_name + " (" + delay_component.type_name + ")";
+                path += delay_component.delay;
+                path_helper.update_print_path(os, point, path);
+            }
+            TATUM_ASSERT_MSG(nearly_equal(path, path_elem.tag().time()), "Delay breakdown must match calculated delay");
+        }
+
+
         std::string point = name_resolver_.node_name(path_elem.node()) + " (" + name_resolver_.node_type_name(path_elem.node()) + ")";
+
         path = path_elem.tag().time();
 
         path_helper.update_print_path(os, point, path);
@@ -669,9 +692,9 @@ Time TimingReporter::report_timing_data_arrival_subpath(std::ostream& os,
                                                         detail::ReportTimingPathHelper& path_helper,
                                                         const TimingSubPath& subpath,
                                                         DomainId domain,
-                                                        TimingType timing_type) const {
+                                                        TimingType timing_type,
+                                                        Time path) const {
 
-    Time path(0.);
     {
         //Input constraint
         TATUM_ASSERT(subpath.elements().size() > 0);
@@ -692,8 +715,27 @@ Time TimingReporter::report_timing_data_arrival_subpath(std::ostream& os,
         }
     }
 
+    DelayType delay_type;
+    if (timing_type == TimingType::SETUP) {
+        delay_type = DelayType::MAX;
+    } else {
+        delay_type = DelayType::MIN;
+    }
+
     //Launch data
     for(const TimingPathElem& path_elem : subpath.elements()) {
+
+        //Ask the application for a detailed breakdown of the edge delays
+        auto delay_breakdown = name_resolver_.edge_delay_breakdown(path_elem.incomming_edge(), delay_type);
+        if (!delay_breakdown.components.empty()) {
+            //Application provided detailed delay breakdown of edge delay, report it
+            for (auto& delay_component : delay_breakdown.components) {
+                std::string point = "| " + delay_component.inst_name + " (" + delay_component.type_name + ")";
+                path += delay_component.delay;
+                path_helper.update_print_path(os, point, path);
+            }
+            TATUM_ASSERT_MSG(nearly_equal(path, path_elem.tag().time()), "Delay breakdown must match calculated delay");
+        }
 
         std::string point = name_resolver_.node_name(path_elem.node()) + " (" + name_resolver_.node_type_name(path_elem.node()) + ")";
 

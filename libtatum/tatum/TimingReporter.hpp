@@ -114,7 +114,8 @@ class TimingReporter {
                                                 detail::ReportTimingPathHelper& path_helper,
                                                 const TimingSubPath& subpath,
                                                 DomainId domain,
-                                                TimingType timing_type) const;
+                                                TimingType timing_type,
+                                                Time path) const;
 
         Time report_timing_data_required_element(std::ostream& os,
                                                  detail::ReportTimingPathHelper& path_helper,

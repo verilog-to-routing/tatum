@@ -382,7 +382,7 @@ int main(int argc, char** argv) {
             cout << "Warning: " << serial_analyzer->num_unconstrained_endpoints() << " sinks are unconstrained\n";
         }
 
-        tatum::NodeNumResolver name_resolver(*timing_graph);
+        tatum::NodeNumResolver name_resolver(*timing_graph, *delay_calculator);
         tatum::TimingReporter timing_reporter(name_resolver, *timing_graph, *timing_constraints);
 
         auto dot_writer = make_graphviz_dot_writer(*timing_graph, *delay_calculator);
