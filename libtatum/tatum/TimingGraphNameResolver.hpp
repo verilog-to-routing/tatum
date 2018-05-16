@@ -1,8 +1,10 @@
 #ifndef TATUM_TIMING_GRAPH_NAME_RESOLVER_HPP
 #define TATUM_TIMING_GRAPH_NAME_RESOLVER_HPP
 #include <string>
+#include <vector>
 #include "TimingGraphFwd.hpp"
 #include "tatum/base/DelayType.hpp"
+#include "tatum/Time.hpp"
 
 namespace tatum {
 
