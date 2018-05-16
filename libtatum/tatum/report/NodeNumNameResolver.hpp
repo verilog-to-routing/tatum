@@ -8,7 +8,10 @@ namespace tatum {
 //A name resolver which just resolved to node ID's and node types
 class NodeNumResolver : public TimingGraphNameResolver {
     public:
-        NodeNumResolver(const TimingGraph& tg, const DelayCalculator& dc): tg_(tg), dc_(dc) {}
+        NodeNumResolver(const TimingGraph& tg, const DelayCalculator& dc, bool verbose)
+            : tg_(tg)
+            , dc_(dc)
+            , verbose_(verbose) {}
 
         std::string node_name(NodeId node) const override {
             return "Node(" + std::to_string(size_t(node)) + ")";
@@ -24,7 +27,7 @@ class NodeNumResolver : public TimingGraphNameResolver {
         EdgeDelayBreakdown edge_delay_breakdown(EdgeId edge, DelayType delay_type) const override {
             EdgeDelayBreakdown delay_breakdown;
 
-            if (edge) {
+            if (edge && verbose_) {
                 auto edge_type = tg_.edge_type(edge);
 
                 DelayComponent component;
@@ -55,6 +58,7 @@ class NodeNumResolver : public TimingGraphNameResolver {
     private:
         const TimingGraph& tg_;
         const DelayCalculator& dc_;
+        bool verbose_;
 };
 
 } //namespace

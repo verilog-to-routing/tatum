@@ -382,8 +382,11 @@ int main(int argc, char** argv) {
             cout << "Warning: " << serial_analyzer->num_unconstrained_endpoints() << " sinks are unconstrained\n";
         }
 
-        tatum::NodeNumResolver name_resolver(*timing_graph, *delay_calculator);
+        tatum::NodeNumResolver name_resolver(*timing_graph, *delay_calculator, false);
         tatum::TimingReporter timing_reporter(name_resolver, *timing_graph, *timing_constraints);
+
+        tatum::NodeNumResolver detailed_name_resolver(*timing_graph, *delay_calculator, true);
+        tatum::TimingReporter detailed_timing_reporter(detailed_name_resolver, *timing_graph, *timing_constraints);
 
         auto dot_writer = make_graphviz_dot_writer(*timing_graph, *delay_calculator);
 
@@ -400,6 +403,10 @@ int main(int argc, char** argv) {
             timing_reporter.report_timing_setup("report_timing.setup.rpt", *echo_setup_analyzer);
             timing_reporter.report_skew_setup("report_skew.setup.rpt", *echo_setup_analyzer);
             timing_reporter.report_unconstrained_setup("report_unconstrained_timing.setup.rpt", *echo_setup_analyzer);
+
+            detailed_timing_reporter.report_timing_setup("report_timing_detailed.setup.rpt", *echo_setup_analyzer);
+            detailed_timing_reporter.report_skew_setup("report_skew_detailed.setup.rpt", *echo_setup_analyzer);
+            detailed_timing_reporter.report_unconstrained_setup("report_unconstrained_timing_detailed.setup.rpt", *echo_setup_analyzer);
         }
         std::shared_ptr<tatum::HoldTimingAnalyzer> echo_hold_analyzer = std::dynamic_pointer_cast<tatum::HoldTimingAnalyzer>(serial_analyzer);
         if(echo_hold_analyzer) {
@@ -408,6 +415,10 @@ int main(int argc, char** argv) {
             timing_reporter.report_timing_hold("report_timing.hold.rpt", *echo_hold_analyzer);
             timing_reporter.report_skew_hold("report_skew.hold.rpt", *echo_hold_analyzer);
             timing_reporter.report_unconstrained_hold("report_unconstrained_timing.hold.rpt", *echo_hold_analyzer);
+
+            detailed_timing_reporter.report_timing_hold("report_timing_detailed.hold.rpt", *echo_hold_analyzer);
+            detailed_timing_reporter.report_skew_hold("report_skew_detailed.hold.rpt", *echo_hold_analyzer);
+            detailed_timing_reporter.report_unconstrained_hold("report_unconstrained_timing_detailed.hold.rpt", *echo_hold_analyzer);
         }
 
         //Verify
