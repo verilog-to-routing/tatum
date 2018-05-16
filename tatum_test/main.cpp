@@ -79,6 +79,11 @@ struct Args {
 
     //Verify results match reference
     size_t verify = 0;
+
+    //Timing graph node whose transitive fanout is included in the 
+    //dumped .dot file (useful for debugging). Values < 0 dump the
+    //entire graph.
+    int debug_dot_node = -1;
 };
 
 void usage(std::string prog);
@@ -118,6 +123,12 @@ void usage(std::string prog) {
     cout << "                                      (default " << default_args.print_sizes << ")\n";
     cout << "    --verify VERIFY:                  Verify calculated results match reference.\n";
     cout << "                                      0 implies no, non-zero implies yes.\n";
+    cout << "                                      (default " << default_args.verify << ")\n";
+    cout << "    --debug_dot_node NODEID:          Specifies the timing graph node node whose transitive\n";
+    cout << "                                      connections are dumped to the .dot file (useful for debugging).\n";
+    cout << "                                      Values < 0 dump the entire graph,\n";
+    cout << "                                      Values >= 0 dump the transitive connections of\n";
+    cout << "                                      the matching node.\n";
     cout << "                                      (default " << default_args.verify << ")\n";
 }
 
@@ -170,6 +181,8 @@ Args parse_args(int argc, char** argv) {
                     args.opt_graph_layout = arg_val;
                 } else if (argv[i] == std::string("--verify")) { 
                     args.verify = arg_val;
+                } else if (argv[i] == std::string("--debug_dot_node")) { 
+                    args.debug_dot_node = arg_val;
                 } else {
                     std::stringstream msg;
                     msg << "Invalid option '" << arg_str << "'\n";
@@ -375,8 +388,10 @@ int main(int argc, char** argv) {
         auto dot_writer = make_graphviz_dot_writer(*timing_graph, *delay_calculator);
 
         std::vector<NodeId> nodes;
-        //nodes = find_transitively_connected_nodes(*timing_graph, {NodeId(6768)});
-        //dot_writer.set_nodes_to_dump(nodes);
+        if (args.debug_dot_node >= 0) {
+            nodes = find_transitively_connected_nodes(*timing_graph, {NodeId(args.debug_dot_node)});
+            dot_writer.set_nodes_to_dump(nodes);
+        }
 
         std::shared_ptr<tatum::SetupTimingAnalyzer> echo_setup_analyzer = std::dynamic_pointer_cast<tatum::SetupTimingAnalyzer>(serial_analyzer);
         if(echo_setup_analyzer) {
