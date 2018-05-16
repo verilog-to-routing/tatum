@@ -94,7 +94,7 @@ void TimingReporter::report_timing_setup(std::string filename,
 void TimingReporter::report_timing_setup(std::ostream& os, 
                                          const SetupTimingAnalyzer& setup_analyzer,
                                          size_t npaths) const {
-    auto paths = path_collector_.collect_worst_setup_paths(timing_graph_, setup_analyzer, npaths);
+    auto paths = path_collector_.collect_worst_setup_timing_paths(timing_graph_, setup_analyzer, npaths);
 
     report_timing(os, paths);
 }
@@ -109,7 +109,7 @@ void TimingReporter::report_timing_hold(std::string filename,
 void TimingReporter::report_timing_hold(std::ostream& os, 
                                          const HoldTimingAnalyzer& hold_analyzer,
                                          size_t npaths) const {
-    auto paths = path_collector_.collect_worst_hold_paths(timing_graph_, hold_analyzer, npaths);
+    auto paths = path_collector_.collect_worst_hold_timing_paths(timing_graph_, hold_analyzer, npaths);
 
     report_timing(os, paths);
 }

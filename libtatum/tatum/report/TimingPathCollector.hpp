@@ -7,8 +7,8 @@ namespace tatum {
 
     class TimingPathCollector {
         public:
-            std::vector<TimingPath> collect_worst_setup_paths(const TimingGraph& timing_graph, const tatum::SetupTimingAnalyzer& setup_analyzer, size_t npaths) const;
-            std::vector<TimingPath> collect_worst_hold_paths(const TimingGraph& timing_graph, const tatum::HoldTimingAnalyzer& hold_analyzer, size_t npaths) const;
+            std::vector<TimingPath> collect_worst_setup_timing_paths(const TimingGraph& timing_graph, const tatum::SetupTimingAnalyzer& setup_analyzer, size_t npaths) const;
+            std::vector<TimingPath> collect_worst_hold_timing_paths(const TimingGraph& timing_graph, const tatum::HoldTimingAnalyzer& hold_analyzer, size_t npaths) const;
     };
 
 } //namespace
