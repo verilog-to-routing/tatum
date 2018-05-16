@@ -62,7 +62,12 @@ std::vector<SkewPath> collect_worst_skew_paths(const TimingGraph& timing_graph, 
             TimingSubPath data_arrival_path = detail::trace_data_arrival_path(timing_graph, tag_retriever, path.launch_domain, path.capture_domain, node);
 
             TATUM_ASSERT(!data_arrival_path.elements().empty());
-            NodeId launch_node = data_arrival_path.elements().begin()->node();
+            auto& data_launch_elem = *data_arrival_path.elements().begin(); 
+
+            //Constant generators do not have skew
+            if (is_const_gen_tag(data_launch_elem.tag())) continue;
+
+            NodeId launch_node = data_launch_elem.node();
 
             path.clock_launch_path = detail::trace_skew_clock_launch_path(timing_graph, tag_retriever, path.launch_domain, path.capture_domain, launch_node);
             path.clock_capture_path = detail::trace_skew_clock_capture_path(timing_graph, tag_retriever, path.launch_domain, path.capture_domain, node);

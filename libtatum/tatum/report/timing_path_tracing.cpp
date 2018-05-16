@@ -140,6 +140,13 @@ TimingSubPath trace_data_arrival_path(const TimingGraph& timing_graph,
         if(iter == data_tags.end()) {
             //Then look for incompletely specified (i.e. wildcard) capture clocks
             iter = find_tag(data_tags, launch_domain, DomainId::INVALID());
+
+            //Look for a constant generator
+            if (iter == data_tags.end()) {
+                iter = find_tag(data_tags, DomainId::INVALID(), DomainId::INVALID()); 
+                TATUM_ASSERT(iter != data_tags.end());
+                TATUM_ASSERT(is_const_gen_tag(*iter));
+            }
         }
         TATUM_ASSERT(iter != data_tags.end());
 
@@ -252,13 +259,6 @@ TimingSubPath trace_skew_clock_capture_path(const TimingGraph& timing_graph,
 }
 
 Time calc_path_delay(const TimingSubPath& path) {
-#if 0
-    TATUM_ASSERT(!path.elements().empty());
-    TimingTag first_arrival = path.elements().begin()->tag();
-    TimingTag last_arrival = (--path.elements().end())->tag();
-
-    return last_arrival.time() - first_arrival.time();
-#else
     if (path.elements().size() > 0) {
         TimingTag first_arrival = path.elements().begin()->tag();
         TimingTag last_arrival = (--path.elements().end())->tag();
@@ -267,7 +267,6 @@ Time calc_path_delay(const TimingSubPath& path) {
     } else {
         return Time(0.);
     }
-#endif
 }
 
 NodeId find_startpoint(const TimingSubPath& path) {
