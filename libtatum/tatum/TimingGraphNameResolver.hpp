@@ -11,7 +11,7 @@ class TimingGraphNameResolver {
         virtual ~TimingGraphNameResolver() = default;
 
         virtual std::string node_name(tatum::NodeId node) const = 0;
-        virtual std::string node_block_type_name(tatum::NodeId node) const = 0;
+        virtual std::string node_type_name(tatum::NodeId node) const = 0;
 };
 
 } //namespace

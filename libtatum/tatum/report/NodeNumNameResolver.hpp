@@ -14,7 +14,7 @@ class NodeNumResolver : public tatum::TimingGraphNameResolver {
             return "Node(" + std::to_string(size_t(node)) + ")";
         }
 
-        std::string node_block_type_name(tatum::NodeId node) const override {
+        std::string node_type_name(tatum::NodeId node) const override {
             auto type = tg_.node_type(node);
             std::stringstream ss;
             ss << type;

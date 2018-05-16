@@ -219,11 +219,11 @@ void TimingReporter::report_timing_path(std::ostream& os, const TimingPath& timi
     TimingPathInfo path_info = timing_path.path_info();
 
     os << "Startpoint: " << name_resolver_.node_name(path_info.startpoint()) 
-       << " (" << name_resolver_.node_block_type_name(path_info.startpoint())
+       << " (" << name_resolver_.node_type_name(path_info.startpoint())
         << " clocked by " << timing_constraints_.clock_domain_name(path_info.launch_domain())
         << ")\n";
     os << "Endpoint  : " << name_resolver_.node_name(path_info.endpoint()) 
-        << " (" << name_resolver_.node_block_type_name(path_info.endpoint()) 
+        << " (" << name_resolver_.node_type_name(path_info.endpoint()) 
         << " clocked by " << timing_constraints_.clock_domain_name(path_info.capture_domain())
         << ")\n";
 
@@ -353,7 +353,7 @@ void TimingReporter::report_unconstrained(std::ostream& os, const NodeType type,
             auto tags = tag_retriever.tags(node);
             if(!is_constrained(node_type, tags)) {
                 os << size_t(node)
-                   << " " << name_resolver_.node_block_type_name(node)
+                   << " " << name_resolver_.node_type_name(node)
                    << " " << name_resolver_.node_name(node)
                    << "\n";
             }
@@ -539,11 +539,11 @@ void TimingReporter::report_skew_path(std::ostream& os, const SkewPath& skew_pat
     NodeId capture_node = (--capture_path.elements().end())->node();
 
     os << "Startpoint: " << name_resolver_.node_name(launch_node) 
-       << " (" << name_resolver_.node_block_type_name(launch_node)
+       << " (" << name_resolver_.node_type_name(launch_node)
        << " clocked by " << timing_constraints_.clock_domain_name(skew_path.launch_domain)
        << ")\n";
     os << "Endpoint  : " << name_resolver_.node_name(capture_node) 
-       << " (" << name_resolver_.node_block_type_name(capture_node) 
+       << " (" << name_resolver_.node_type_name(capture_node) 
        << " clocked by " << timing_constraints_.clock_domain_name(skew_path.capture_domain)
        << ")\n";
 
@@ -557,11 +557,11 @@ void TimingReporter::report_skew_path(std::ostream& os, const SkewPath& skew_pat
 
     std::string launch_name = name_resolver_.node_name(launch_node) 
                             + " (" 
-                            + name_resolver_.node_block_type_name(launch_node)
+                            + name_resolver_.node_type_name(launch_node)
                             + ")";
     std::string capture_name = name_resolver_.node_name(capture_node) 
                             + " (" 
-                            + name_resolver_.node_block_type_name(capture_node)
+                            + name_resolver_.node_type_name(capture_node)
                             + ")";
 
     size_t point_print_width = std::max(launch_name.size(), capture_name.size());
@@ -656,7 +656,7 @@ Time TimingReporter::report_timing_clock_subpath(std::ostream& os,
 
     //Launch clock path
     for(const TimingPathElem& path_elem : subpath.elements()) {
-        std::string point = name_resolver_.node_name(path_elem.node()) + " (" + name_resolver_.node_block_type_name(path_elem.node()) + ")";
+        std::string point = name_resolver_.node_name(path_elem.node()) + " (" + name_resolver_.node_type_name(path_elem.node()) + ")";
         path = path_elem.tag().time();
 
         path_helper.update_print_path(os, point, path);
@@ -695,7 +695,7 @@ Time TimingReporter::report_timing_data_arrival_subpath(std::ostream& os,
     //Launch data
     for(const TimingPathElem& path_elem : subpath.elements()) {
 
-        std::string point = name_resolver_.node_name(path_elem.node()) + " (" + name_resolver_.node_block_type_name(path_elem.node()) + ")";
+        std::string point = name_resolver_.node_name(path_elem.node()) + " (" + name_resolver_.node_type_name(path_elem.node()) + ")";
 
         EdgeId in_edge = path_elem.incomming_edge();
         if(in_edge && timing_graph_.edge_type(in_edge) == EdgeType::PRIMITIVE_CLOCK_LAUNCH) {
@@ -770,7 +770,7 @@ size_t TimingReporter::estimate_point_print_width(const TimingPath& path) const 
     for(auto subpath : {path.clock_launch_path(), path.data_arrival_path(), path.clock_capture_path()}) {
         for(auto elem : subpath.elements()) {
             //Take the longest typical point name
-            std::string point = name_resolver_.node_name(elem.node()) + " (" + name_resolver_.node_block_type_name(elem.node()) + ")";
+            std::string point = name_resolver_.node_name(elem.node()) + " (" + name_resolver_.node_type_name(elem.node()) + ")";
             point += " [clock-to-output]";
 
             //Keep the max over all points
