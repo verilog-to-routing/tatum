@@ -49,12 +49,12 @@ def parse_args():
                         default=None)
 
     parser.add_argument("--tatum_nserial",
-                        help="How serial runs tatum should perform per test. (Default: %(default))",
+                        help="How serial runs tatum should perform per test. (Default: %(default)s)",
                         type=int,
                         default=3)
 
     parser.add_argument("--tatum_nparallel",
-                        help="How parallel runs tatum should perform per test. (Default: %(default))",
+                        help="How parallel runs tatum should perform per test. (Default: %(default)s)",
                         type=int,
                         default=6)
 
