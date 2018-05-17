@@ -291,7 +291,7 @@ void TimingReporter::report_timing_path(std::ostream& os, const TimingPath& timi
         const TimingPathElem& path_elem = timing_path.data_required_element();
 
         req_path = report_timing_data_required_element(os, path_helper, path_elem,
-                                                       path_info.launch_domain(), path_info.capture_domain(), path_info.type(),
+                                                       path_info.capture_domain(), path_info.type(),
                                                        req_path);
         //Final arrival time
         req_time = path_elem.tag().time();
@@ -486,7 +486,21 @@ Time TimingReporter::report_timing_clock_capture_subpath(std::ostream& os,
         path_helper.update_print_path(os, point, path);
     }
 
-    return report_timing_clock_subpath(os, path_helper, subpath, capture_domain, timing_type, path);
+    path = report_timing_clock_subpath(os, path_helper, subpath, capture_domain, timing_type, path);
+
+
+    //Uncertainty
+    Time uncertainty;
+    if(timing_type == TimingType::SETUP) {
+        uncertainty = -Time(timing_constraints_.setup_clock_uncertainty(launch_domain, capture_domain));
+    } else {
+        TATUM_ASSERT(timing_type == TimingType::HOLD);
+        uncertainty = Time(timing_constraints_.hold_clock_uncertainty(launch_domain, capture_domain));
+    }
+    path += uncertainty;
+    path_helper.update_print_path(os, "clock uncertainty", path);
+
+    return path;
 }
 
 Time TimingReporter::report_timing_clock_subpath(std::ostream& os,
@@ -623,23 +637,11 @@ Time TimingReporter::report_timing_data_arrival_subpath(std::ostream& os,
 Time TimingReporter::report_timing_data_required_element(std::ostream& os,
                                                          detail::ReportTimingPathHelper& path_helper,
                                                          const TimingPathElem& data_required_elem,
-                                                         DomainId launch_domain,
                                                          DomainId capture_domain,
                                                          TimingType timing_type,
                                                          Time path) const {
     {
         TATUM_ASSERT(timing_graph_.node_type(data_required_elem.node()) == NodeType::SINK);
-
-        //Uncertainty
-        Time uncertainty;
-        if(timing_type == TimingType::SETUP) {
-            uncertainty = -Time(timing_constraints_.setup_clock_uncertainty(launch_domain, capture_domain));
-        } else {
-            TATUM_ASSERT(timing_type == TimingType::HOLD);
-            uncertainty = Time(timing_constraints_.hold_clock_uncertainty(launch_domain, capture_domain));
-        }
-        path += uncertainty;
-        path_helper.update_print_path(os, "clock uncertainty", path);
 
         //Setup/hold time
         EdgeId in_edge = data_required_elem.incomming_edge();
