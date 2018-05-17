@@ -379,11 +379,8 @@ void TimingReporter::report_skew_path(std::ostream& os, const SkewPath& skew_pat
     auto& launch_path = skew_path.clock_launch_path;
     auto& capture_path = skew_path.clock_capture_path;
 
-    TATUM_ASSERT(!launch_path.elements().empty());
-    TATUM_ASSERT(!capture_path.elements().empty());
-
-    NodeId launch_node = launch_path.elements().begin()->node();
-    NodeId capture_node = (--capture_path.elements().end())->node();
+    NodeId launch_node = skew_path.data_launch_node;
+    NodeId capture_node = skew_path.data_capture_node;
 
     os << "Startpoint: " << name_resolver_.node_name(launch_node) 
        << " (" << name_resolver_.node_type_name(launch_node)
@@ -421,6 +418,7 @@ void TimingReporter::report_skew_path(std::ostream& os, const SkewPath& skew_pat
     path_helper.print_divider(os);
 
     Time data_launch_time = report_timing_clock_launch_subpath(os, path_helper, launch_path, skew_path.launch_domain, timing_type);
+    TATUM_ASSERT(nearly_equal(data_launch_time, skew_path.clock_launch_arrival));
 
     path_helper.update_print_path_no_incr(os, "data launch", data_launch_time);
     os << "\n";
@@ -430,6 +428,7 @@ void TimingReporter::report_skew_path(std::ostream& os, const SkewPath& skew_pat
     path_helper.reset_path();
 
     Time data_capture_time = report_timing_clock_capture_subpath(os, path_helper, capture_path, skew_path.launch_domain, skew_path.capture_domain, timing_type);
+    TATUM_ASSERT(nearly_equal(data_capture_time, skew_path.clock_capture_arrival));
 
     path_helper.update_print_path_no_incr(os, "data capture", data_capture_time);
     path_helper.print_divider(os);
@@ -446,6 +445,7 @@ void TimingReporter::report_skew_path(std::ostream& os, const SkewPath& skew_pat
     path_helper.print_divider(os);
 
     Time skew = data_capture_time - clock_constraint - data_launch_time;
+    TATUM_ASSERT(nearly_equal(skew, skew_path.clock_skew));
     path_helper.print_path_line_no_incr(os, "skew", skew);
 }
 
@@ -488,17 +488,18 @@ Time TimingReporter::report_timing_clock_capture_subpath(std::ostream& os,
 
     path = report_timing_clock_subpath(os, path_helper, subpath, capture_domain, timing_type, path);
 
-
-    //Uncertainty
-    Time uncertainty;
-    if(timing_type == TimingType::SETUP) {
-        uncertainty = -Time(timing_constraints_.setup_clock_uncertainty(launch_domain, capture_domain));
-    } else {
-        TATUM_ASSERT(timing_type == TimingType::HOLD);
-        uncertainty = Time(timing_constraints_.hold_clock_uncertainty(launch_domain, capture_domain));
+    {
+        //Uncertainty
+        Time uncertainty;
+        if(timing_type == TimingType::SETUP) {
+            uncertainty = -Time(timing_constraints_.setup_clock_uncertainty(launch_domain, capture_domain));
+        } else {
+            TATUM_ASSERT(timing_type == TimingType::HOLD);
+            uncertainty = Time(timing_constraints_.hold_clock_uncertainty(launch_domain, capture_domain));
+        }
+        path += uncertainty;
+        path_helper.update_print_path(os, "clock uncertainty", path);
     }
-    path += uncertainty;
-    path_helper.update_print_path(os, "clock uncertainty", path);
 
     return path;
 }
