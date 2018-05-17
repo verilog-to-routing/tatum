@@ -104,11 +104,18 @@ class TimingReporter {
 
         void report_skew_path(std::ostream& os, const SkewPath& skew_path, TimingType timing_type) const;
 
-        Time report_timing_clock_subpath(std::ostream& os, 
-                                         detail::ReportTimingPathHelper& path_helper,
-                                         const TimingSubPath& subpath,
-                                         DomainId domain,
-                                         TimingType timing_type) const;
+        Time report_timing_clock_launch_subpath(std::ostream& os,
+                                                detail::ReportTimingPathHelper& path_helper,
+                                                const TimingSubPath& subpath,
+                                                DomainId domain,
+                                                TimingType timing_type) const;
+
+        Time report_timing_clock_capture_subpath(std::ostream& os,
+                                                 detail::ReportTimingPathHelper& path_helper,
+                                                 const TimingSubPath& subpath,
+                                                 DomainId launch_domain,
+                                                 DomainId capture_domain,
+                                                 TimingType timing_type) const;
 
         Time report_timing_data_arrival_subpath(std::ostream& os,
                                                 detail::ReportTimingPathHelper& path_helper,
@@ -124,6 +131,14 @@ class TimingReporter {
                                                  DomainId capture_domain,
                                                  TimingType timing_type,
                                                  Time path) const;
+
+        //Reports clock latency and path (caller should handle rising edge)
+        Time report_timing_clock_subpath(std::ostream& os, 
+                                         detail::ReportTimingPathHelper& path_helper,
+                                         const TimingSubPath& subpath,
+                                         DomainId domain,
+                                         TimingType timing_type,
+                                         Time path) const;
 
         bool nearly_equal(const tatum::Time& lhs, const tatum::Time& rhs) const;
 

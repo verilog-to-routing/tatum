@@ -250,7 +250,7 @@ void TimingReporter::report_timing_path(std::ostream& os, const TimingPath& timi
     {
         path_helper.reset_path();
 
-        arr_path = report_timing_clock_subpath(os, path_helper, timing_path.clock_launch_path(), path_info.launch_domain(), path_info.type());
+        arr_path = report_timing_clock_launch_subpath(os, path_helper, timing_path.clock_launch_path(), path_info.launch_domain(), path_info.type());
 
         arr_path = report_timing_data_arrival_subpath(os, path_helper, timing_path.data_arrival_path(), path_info.launch_domain(), path_info.type(), arr_path);
 
@@ -285,7 +285,8 @@ void TimingReporter::report_timing_path(std::ostream& os, const TimingPath& timi
     {
         path_helper.reset_path();
 
-        req_path = report_timing_clock_subpath(os, path_helper, timing_path.clock_capture_path(), path_info.capture_domain(), path_info.type());
+        req_path = report_timing_clock_capture_subpath(os, path_helper, timing_path.clock_capture_path(), 
+                                                       path_info.launch_domain(), path_info.capture_domain(), path_info.type());
 
         const TimingPathElem& path_elem = timing_path.data_required_element();
 
@@ -574,7 +575,7 @@ void TimingReporter::report_skew_path(std::ostream& os, const SkewPath& skew_pat
     path_helper.print_divider(os);
 
 #if 1
-    Time data_launch_time = report_timing_clock_subpath(os, path_helper, launch_path, skew_path.launch_domain, timing_type);
+    Time data_launch_time = report_timing_clock_launch_subpath(os, path_helper, launch_path, skew_path.launch_domain, timing_type);
 
     path_helper.update_print_path_no_incr(os, "data launch", data_launch_time);
     os << "\n";
@@ -583,7 +584,7 @@ void TimingReporter::report_skew_path(std::ostream& os, const SkewPath& skew_pat
 
     path_helper.reset_path();
 
-    Time data_capture_time = report_timing_clock_subpath(os, path_helper, capture_path, skew_path.capture_domain, timing_type);
+    Time data_capture_time = report_timing_clock_capture_subpath(os, path_helper, capture_path, skew_path.launch_domain, skew_path.capture_domain, timing_type);
 
     path_helper.update_print_path_no_incr(os, "data capture", data_capture_time);
     path_helper.print_divider(os);
@@ -624,11 +625,11 @@ void TimingReporter::report_skew_path(std::ostream& os, const SkewPath& skew_pat
 #endif
 }
 
-Time TimingReporter::report_timing_clock_subpath(std::ostream& os,
-                                                 detail::ReportTimingPathHelper& path_helper,
-                                                 const TimingSubPath& subpath,
-                                                 DomainId domain,
-                                                 TimingType timing_type) const {
+Time TimingReporter::report_timing_clock_launch_subpath(std::ostream& os,
+                                                        detail::ReportTimingPathHelper& path_helper,
+                                                        const TimingSubPath& subpath,
+                                                        DomainId domain,
+                                                        TimingType timing_type) const {
     Time path(0.);
 
     {
@@ -638,6 +639,38 @@ Time TimingReporter::report_timing_clock_subpath(std::ostream& os,
         path_helper.update_print_path(os, point, path);
     }
 
+    return report_timing_clock_subpath(os, path_helper, subpath, domain, timing_type, path);
+}
+
+Time TimingReporter::report_timing_clock_capture_subpath(std::ostream& os,
+                                                        detail::ReportTimingPathHelper& path_helper,
+                                                        const TimingSubPath& subpath,
+                                                        DomainId launch_domain,
+                                                        DomainId capture_domain,
+                                                        TimingType timing_type) const {
+    Time path(0.);
+
+    {
+        //Launch clock origin
+        if (timing_type == TimingType::SETUP) {
+            path += timing_constraints_.setup_constraint(launch_domain, capture_domain);
+        } else {
+            TATUM_ASSERT(timing_type == TimingType::HOLD);
+            path += timing_constraints_.hold_constraint(launch_domain, capture_domain);
+        }
+        std::string point = "clock " + timing_constraints_.clock_domain_name(capture_domain) + " (rise edge)";
+        path_helper.update_print_path(os, point, path);
+    }
+
+    return report_timing_clock_subpath(os, path_helper, subpath, capture_domain, timing_type, path);
+}
+
+Time TimingReporter::report_timing_clock_subpath(std::ostream& os,
+                                                 detail::ReportTimingPathHelper& path_helper,
+                                                 const TimingSubPath& subpath,
+                                                 DomainId domain,
+                                                 TimingType timing_type,
+                                                 Time path) const {
     {
         //Launch clock latency
         Time latency;
