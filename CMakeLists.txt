@@ -26,6 +26,8 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
     set(FLEX_BISON_WARN_SUPPRESS_FLAGS -Wno-switch-default -Wno-unused-parameter -Wno-sign-compare -Wno-missing-declarations)
 endif()
 
+add_compile_options(-fPIC)
+
 add_subdirectory(libtatum)
 
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})

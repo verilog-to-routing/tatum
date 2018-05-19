@@ -43,6 +43,8 @@ if(FLEX_BISON_WARN_SUPPRESS_FLAGS)
     add_compile_options(${FLEX_BISON_WARN_SUPPRESS_FLAGS})
 endif()
 
+add_compile_options(-fPIC)
+
 #Create the library
 add_library(libtatumparse STATIC
              ${LIB_HEADERS}

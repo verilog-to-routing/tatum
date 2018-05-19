@@ -135,3 +135,5 @@ else()
     message(FATAL_ERROR "Tatum: Unrecognized concrete execution engine '${TATUM_USE_EXECUTION_ENGINE}'")
 endif()
 
+add_compile_options(-fPIC)
+
