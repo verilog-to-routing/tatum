@@ -225,8 +225,8 @@ int main(int argc, char** argv) {
 
     int exit_code = 0;
 
-    struct timespec prog_start, load_start, verify_start;
-    struct timespec prog_end, load_end, verify_end;
+    struct timespec prog_start, load_start, opt_start, verify_start;
+    struct timespec prog_end, load_end, opt_end, verify_end;
 
     clock_gettime(CLOCK_MONOTONIC, &prog_start);
 
@@ -325,7 +325,10 @@ int main(int argc, char** argv) {
 
     if (args.opt_graph_layout) {
         
+        clock_gettime(CLOCK_MONOTONIC, &opt_start);
         auto id_maps = timing_graph->optimize_layout();
+        clock_gettime(CLOCK_MONOTONIC, &opt_end);
+        cout << "Optimizing graph took: " << tatum::time_sec(opt_start, opt_end) << " sec" << endl;
 
         remap_delay_calculator(*timing_graph, *delay_calculator, id_maps.edge_id_map);
         timing_constraints->remap_nodes(id_maps.node_id_map);
