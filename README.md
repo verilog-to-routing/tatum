@@ -19,13 +19,13 @@ In particular:
 ## How to Cite
 If your work uses Tatum please cite the following paper as a general citation:
 
-    K. E. Murray and V. Betz, "Tatum: Parallel Timing Analysis for Faster Design Cycles and Improved Optimization", *IEEE International Conference on Field-Programmable Technology (FPT)*, 2018
+K. E. Murray and V. Betz, "Tatum: Parallel Timing Analysis for Faster Design Cycles and Improved Optimization", *IEEE International Conference on Field-Programmable Technology (FPT)*, 2018
 
 Bibtex:
 ```
 @inproceedings{c:tatum,
     author = {Murray, Kevin E. and Betz, Vaughn},
-    title = {{Tatum: Parallel Timing Analysis for Faster Design Cycles and Improved Optimization}},
+    title = {Tatum: Parallel Timing Analysis for Faster Design Cycles and Improved Optimization},
     booktitle = {IEEE International Conference on Field-Programmable Technology (FPT)},
     year = {2018}
 }
