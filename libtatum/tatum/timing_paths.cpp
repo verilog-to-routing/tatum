@@ -4,6 +4,7 @@
 #include "tatum/TimingConstraints.hpp"
 #include "tatum/report/TimingReportTagRetriever.hpp"
 #include "tatum/report/timing_path_tracing.hpp"
+#include "tatum/error.hpp"
 
 namespace tatum {
 
