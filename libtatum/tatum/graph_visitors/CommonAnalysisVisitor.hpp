@@ -302,7 +302,7 @@ void CommonAnalysisVisitor<AnalysisOps>::do_arrival_traverse_edge(const TimingGr
     }
 
     //NOTE: we do not handle clock caputure edges (which create required times) here, but in
-    //      mark_sink_reqquired_times(), after all edges have been processed (i.e. all arrival times
+    //      mark_sink_required_times(), after all edges have been processed (i.e. all arrival times
     //      set)
     //
     //To calulate the required times at a node we must know all the arrival times at the node.
