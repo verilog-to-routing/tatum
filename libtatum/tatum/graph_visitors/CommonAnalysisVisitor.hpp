@@ -125,16 +125,15 @@ bool CommonAnalysisVisitor<AnalysisOps>::do_arrival_pre_traverse_node(const Timi
             for(DomainId launch_domain_id : tc.clock_domains()) {
                 if(tc.should_analyze(launch_domain_id, domain_id)) {
 
-                    //Initialize the clock capture tag with the constraint, including the effect of any source latency
+                    //Initialize the clock capture tag with-out the period constraint
+                    //This is not the true constraint, but allows us (by propagating this tag) to calculate 
+                    //propagated capture clock delay.
                     //
-                    //Note: We assume that this period constraint has been resolved by edge counting for this
-                    //domain pair. Note that it does include the effect of clock uncertainty, which is handled
-                    //when the caputre tag is converted into a data-arrival tag
-                    Time clock_constraint = ops_.clock_constraint(tc, launch_domain_id, domain_id);
-
+                    //Note: We assume that actual the period constraint and clock uncertainty are applied
+                    //at the capture node (where this tag is converted to a data-required tag)
                     Time capture_source_latency = ops_.capture_source_latency(tc, domain_id);
 
-                    TimingTag capture_tag = TimingTag(Time(capture_source_latency) + Time(clock_constraint), 
+                    TimingTag capture_tag = TimingTag(Time(capture_source_latency), 
                                                       launch_domain_id,
                                                       domain_id,
                                                       NodeId::INVALID(), //Origin
@@ -437,7 +436,7 @@ void CommonAnalysisVisitor<AnalysisOps>::mark_sink_required_times(const TimingGr
                 bool same_launch_domain = (data_launch_domain == clock_launch_domain);
 
                 //We only want to analyze paths between domains where a valid constraint has been specified
-                bool valid_launch_capture_pair = tc.should_analyze(data_launch_domain, clock_capture_domain);
+                bool valid_launch_capture_pair = tc.should_analyze(data_launch_domain, clock_capture_domain, node_id);
 
                 if(same_launch_domain && valid_launch_capture_pair) {
 
@@ -446,10 +445,13 @@ void CommonAnalysisVisitor<AnalysisOps>::mark_sink_required_times(const TimingGr
                     //a valid arrival time).
                     TATUM_ASSERT(node_data_arr_tag.time().valid());
 
+                    Time clock_constraint = ops_.clock_constraint(tc, data_launch_domain, clock_capture_domain, node_id);
+
                     //We apply the clock uncertainty to the generated required time tag
                     Time clock_uncertainty = ops_.clock_uncertainty(tc, data_launch_domain, clock_capture_domain);
 
-                    Time req_time =   src_capture_clk_tag.time() //Period + latency + propagated clock network delay to CPIN
+                    Time req_time =   src_capture_clk_tag.time() //Latency + propagated clock network delay to CPIN
+                                    + clock_constraint           //Period constraint
                                     + capture_edge_delay         //CPIN to sink delay (Thld, or Tsu)
                                     + Time(clock_uncertainty);   //Clock period uncertainty
 
@@ -497,14 +499,14 @@ void CommonAnalysisVisitor<AnalysisOps>::mark_sink_required_times(const TimingGr
                     }
 
                     //Should we be analyzing paths between these two domains?
-                    if(tc.should_analyze(data_launch_domain, io_capture_domain)) {
+                    if(tc.should_analyze(data_launch_domain, io_capture_domain, node_id)) {
 
                         //We only set a required time if the source domain actually reaches this sink
                         //domain.  This is indicated by the presence of an arrival tag (which should have
                         //a valid arrival time).
                         TATUM_ASSERT(node_data_arr_tag.time().valid());
 
-                        Time constraint = ops_.clock_constraint(tc, data_launch_domain, io_capture_domain);
+                        Time constraint = ops_.clock_constraint(tc, data_launch_domain, io_capture_domain, node_id);
 
                         Time clock_uncertainty = ops_.clock_uncertainty(tc, data_launch_domain, io_capture_domain);
 
