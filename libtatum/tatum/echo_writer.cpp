@@ -165,7 +165,7 @@ void write_timing_constraints(std::ostream& os, const TimingConstraints& tc) {
             if (key.capture_node) {
                 os << " capture_node: " << size_t(key.capture_node);
             } else {
-                os << " capture_node: *";
+                os << " capture_node: -1";
             }
             os << " constraint: " << constraint;
             os << "\n";
@@ -182,7 +182,7 @@ void write_timing_constraints(std::ostream& os, const TimingConstraints& tc) {
             if (key.capture_node) {
                 os << " capture_node: " << size_t(key.capture_node);
             } else {
-                os << " capture_node: *";
+                os << " capture_node: -1";
             }
             os << " constraint: " << constraint;
             os << "\n";
