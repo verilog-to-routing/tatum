@@ -195,13 +195,7 @@ struct DomainPair {
     DomainPair(DomainId src, DomainId sink): src_domain_id(src), sink_domain_id(sink) {}
 
     friend bool operator<(const DomainPair& lhs, const DomainPair& rhs) {
-        if(lhs.src_domain_id < rhs.src_domain_id) {
-            return true;
-        } else if(lhs.src_domain_id == rhs.src_domain_id 
-                  && lhs.sink_domain_id < rhs.sink_domain_id) {
-            return true;
-        }
-        return false;
+        return std::tie(lhs.src_domain_id, lhs.sink_domain_id) < std::tie(rhs.src_domain_id, rhs.sink_domain_id);
     }
 
     DomainId src_domain_id;
