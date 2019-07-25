@@ -125,15 +125,19 @@ bool CommonAnalysisVisitor<AnalysisOps>::do_arrival_pre_traverse_node(const Timi
             for(DomainId launch_domain_id : tc.clock_domains()) {
                 if(tc.should_analyze(launch_domain_id, domain_id)) {
 
-                    //Initialize the clock capture tag with-out the period constraint
-                    //This is not the true constraint, but allows us (by propagating this tag) to calculate 
-                    //propagated capture clock delay.
+                    //Initialize the clock capture tag with the constraint, including the effect of any source latency
                     //
-                    //Note: We assume that actual the period constraint and clock uncertainty are applied
-                    //at the capture node (where this tag is converted to a data-required tag)
+                    //Note: We assume that this period constraint has been resolved by edge counting for this
+                    //domain pair. Note that it does not include the effect of clock uncertainty, which is handled
+                    //when the caputre tag is converted into a data-arrival tag.
+                    //
+                    //Also note that this is the default clock constraint. If there is a different per capture node
+                    //constraint this is also handled when setting the required time.
+                    Time clock_constraint = ops_.clock_constraint(tc, launch_domain_id, domain_id);
+
                     Time capture_source_latency = ops_.capture_source_latency(tc, domain_id);
 
-                    TimingTag capture_tag = TimingTag(Time(capture_source_latency), 
+                    TimingTag capture_tag = TimingTag(Time(capture_source_latency) + Time(clock_constraint), 
                                                       launch_domain_id,
                                                       domain_id,
                                                       NodeId::INVALID(), //Origin
@@ -445,13 +449,16 @@ void CommonAnalysisVisitor<AnalysisOps>::mark_sink_required_times(const TimingGr
                     //a valid arrival time).
                     TATUM_ASSERT(node_data_arr_tag.time().valid());
 
-                    Time clock_constraint = ops_.clock_constraint(tc, data_launch_domain, clock_capture_domain, node_id);
+                    //If there is a per-sink override for the clock constraint we need to adjust the clock
+                    //arrival time from the default
+                    Time clock_constraint_offset =   ops_.clock_constraint(tc, data_launch_domain, clock_capture_domain, node_id)
+                                                   - ops_.clock_constraint(tc, data_launch_domain, clock_capture_domain);
 
                     //We apply the clock uncertainty to the generated required time tag
                     Time clock_uncertainty = ops_.clock_uncertainty(tc, data_launch_domain, clock_capture_domain);
 
                     Time req_time =   src_capture_clk_tag.time() //Latency + propagated clock network delay to CPIN
-                                    + clock_constraint           //Period constraint
+                                    + clock_constraint_offset    //Period constraint adjustment
                                     + capture_edge_delay         //CPIN to sink delay (Thld, or Tsu)
                                     + Time(clock_uncertainty);   //Clock period uncertainty
 

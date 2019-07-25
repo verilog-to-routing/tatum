@@ -485,13 +485,15 @@ Time TimingReporter::report_timing_clock_capture_subpath(std::ostream& os,
     {
         //Launch clock origin
         if (timing_type == TimingType::SETUP) {
-            offset = timing_constraints_.setup_constraint(launch_domain, capture_domain, capture_node);
+            path = timing_constraints_.setup_constraint(launch_domain, capture_domain, capture_node);
+            offset = path - timing_constraints_.setup_constraint(launch_domain, capture_domain);
         } else {
             TATUM_ASSERT(timing_type == TimingType::HOLD);
-            offset = timing_constraints_.hold_constraint(launch_domain, capture_domain, capture_node);
+            path = timing_constraints_.hold_constraint(launch_domain, capture_domain, capture_node);
+            offset = path - timing_constraints_.hold_constraint(launch_domain, capture_domain);
         }
 
-        path = offset;
+        //os << "[offset]" << tatum::detail::to_printable_string(offset, 1e-9,3)  << "\n";
         std::string point = "clock " + timing_constraints_.clock_domain_name(capture_domain) + " (rise edge)";
         path_helper.update_print_path(os, point, path);
     }
