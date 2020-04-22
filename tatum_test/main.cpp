@@ -592,6 +592,10 @@ int main(int argc, char** argv) {
         cout << "  " << cpd.launch_domain() << " -> " << cpd.capture_domain() << ": " << std::scientific << cpd.delay() << "\n";
     }
 
+    if (exit_code) {
+        cout << "FAILED!\n";
+    }
+
     clock_gettime(CLOCK_MONOTONIC, &prog_end);
 
     cout << endl << "Total time: " << tatum::time_sec(prog_start, prog_end) << " sec" << endl;
