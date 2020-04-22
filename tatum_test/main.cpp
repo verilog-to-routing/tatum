@@ -60,6 +60,9 @@ struct Args {
     //Number of serial runs to perform
     size_t num_serial_runs = 10;
 
+    //Number of serial incremental runs to perform
+    size_t num_serial_incr_runs = 10;
+
     //Number of parallel runs to perform
     size_t num_parallel_runs = 30;
 
@@ -103,38 +106,40 @@ void usage(std::string prog) {
     cout << "    tg_file:                      The input file (or '-' for stdin)\n";
     cout << "\n";
     cout << "  Options:\n";
-    cout << "    --num_workers NUM_WORKERS:        Number of parallel workers.\n";
-    cout << "                                      0 implies machine concurrency.\n";
-    cout << "                                      (default " << default_args.num_workers << ")\n";
-    cout << "    --num_serial NUM_SERIAL_RUNS:     Number of serial runs to perform.\n";
-    cout << "                                      (default " << default_args.num_serial_runs << ")\n";
-    cout << "    --num_parallel NUM_PARALLEL_RUNS: Number of serial runs to perform.\n";
-    cout << "                                      (default " << default_args.num_parallel_runs << ")\n";
-    cout << "    --unit_delay UNIT_DELAY:          Use specified unit delay for all edges.\n";
-    cout << "                                      0 uses delay model from input.\n";
-    cout << "                                      (default " << default_args.unit_delay << ")\n";
-    cout << "    --write_echo WRITE_ECHO:          Write an echo file of restuls.\n";
-    cout << "                                      empty implies no, non-empty implies write to specified file.\n";
-    cout << "                                      (default " << default_args.write_echo << ")\n";
-    cout << "    --opt_graph_layout OPT_LAYOUT:    Optimize graph layout.\n";
-    cout << "                                      0 implies no, non-zero implies yes.\n";
-    cout << "                                      (default " << default_args.opt_graph_layout << ")\n";
-    cout << "    --print_sizes PRINT_SIZES:        Print various data structure sizes.\n";
-    cout << "                                      0 implies no, non-zero implies yes.\n";
-    cout << "                                      (default " << default_args.print_sizes << ")\n";
-    cout << "    --report REPORT:                  Generate various reports.\n";
-    cout << "                                      0 implies no, non-zero implies yes.\n";
-    cout << "                                      (default " << default_args.report << ")\n";
-    cout << "    --verify VERIFY:                  Verify calculated results match reference.\n";
-    cout << "                                      0 implies no, non-zero implies yes.\n";
-    cout << "                                      (default " << default_args.verify << ")\n";
-    cout << "    --debug_dot_node NODEID:          Specifies the timing graph node node whose transitive\n";
-    cout << "                                      connections are dumped to the .dot file (useful for debugging).\n";
-    cout << "                                      Values < -1 dump the entire graph,\n";
-    cout << "                                      Values == -1 do not dump dot file,\n";
-    cout << "                                      Values >= 0 dump the transitive connections of\n";
-    cout << "                                      the matching node.\n";
-    cout << "                                      (default " << default_args.debug_dot_node << ")\n";
+    cout << "    --num_workers NUM_WORKERS:                 Number of parallel workers.\n";
+    cout << "                                               0 implies machine concurrency.\n";
+    cout << "                                               (default " << default_args.num_workers << ")\n";
+    cout << "    --num_serial NUM_SERIAL_RUNS:              Number of serial runs to perform.\n";
+    cout << "                                               (default " << default_args.num_serial_runs << ")\n";
+    cout << "    --num_serial_incr NUM_SERIAL_INCR_RUNS:    Number of serial incremental runs to perform.\n";
+    cout << "                                               (default " << default_args.num_serial_incr_runs << ")\n";
+    cout << "    --num_parallel NUM_PARALLEL_RUNS:          Number of serial runs to perform.\n";
+    cout << "                                               (default " << default_args.num_parallel_runs << ")\n";
+    cout << "    --unit_delay UNIT_DELAY:                   Use specified unit delay for all edges.\n";
+    cout << "                                               0 uses delay model from input.\n";
+    cout << "                                               (default " << default_args.unit_delay << ")\n";
+    cout << "    --write_echo WRITE_ECHO:                   Write an echo file of restuls.\n";
+    cout << "                                               empty implies no, non-empty implies write to specified file.\n";
+    cout << "                                               (default " << default_args.write_echo << ")\n";
+    cout << "    --opt_graph_layout OPT_LAYOUT:             Optimize graph layout.\n";
+    cout << "                                               0 implies no, non-zero implies yes.\n";
+    cout << "                                               (default " << default_args.opt_graph_layout << ")\n";
+    cout << "    --print_sizes PRINT_SIZES:                 Print various data structure sizes.\n";
+    cout << "                                               0 implies no, non-zero implies yes.\n";
+    cout << "                                               (default " << default_args.print_sizes << ")\n";
+    cout << "    --report REPORT:                           Generate various reports.\n";
+    cout << "                                               0 implies no, non-zero implies yes.\n";
+    cout << "                                               (default " << default_args.report << ")\n";
+    cout << "    --verify VERIFY:                           Verify calculated results match reference.\n";
+    cout << "                                               0 implies no, non-zero implies yes.\n";
+    cout << "                                               (default " << default_args.verify << ")\n";
+    cout << "    --debug_dot_node NODEID:                   Specifies the timing graph node node whose transitive\n";
+    cout << "                                               connections are dumped to the .dot file (useful for debugging).\n";
+    cout << "                                               Values < -1 dump the entire graph,\n";
+    cout << "                                               Values == -1 do not dump dot file,\n";
+    cout << "                                               Values >= 0 dump the transitive connections of\n";
+    cout << "                                               the matching node.\n";
+    cout << "                                               (default " << default_args.debug_dot_node << ")\n";
 }
 
 void cmd_error(std::string prog, std::string msg) {
@@ -178,6 +183,8 @@ Args parse_args(int argc, char** argv) {
                     args.num_workers = arg_val;
                 } else if (argv[i] == std::string("--num_serial")) { 
                     args.num_serial_runs = arg_val;
+                } else if (argv[i] == std::string("--num_serial_incr")) { 
+                    args.num_serial_incr_runs = arg_val;
                 } else if (argv[i] == std::string("--num_parallel")) { 
                     args.num_parallel_runs = arg_val;
                 } else if (argv[i] == std::string("--unit_delay")) { 
@@ -492,6 +499,89 @@ int main(int argc, char** argv) {
     }
 
     std::cout << endl;
+
+    if (args.num_serial_incr_runs) {
+        std::shared_ptr<tatum::TimingAnalyzer> serial_incr_analyzer = tatum::AnalyzerFactory<tatum::SetupHoldAnalysis,tatum::SerialIncrWalker>::make(*timing_graph, *timing_constraints, *delay_calculator);
+        auto serial_incr_setup_analyzer = std::dynamic_pointer_cast<tatum::SetupTimingAnalyzer>(serial_incr_analyzer);
+        auto serial_incr_hold_analyzer = std::dynamic_pointer_cast<tatum::HoldTimingAnalyzer>(serial_incr_analyzer);
+
+        float serial_incr_verify_time = 0;
+        size_t serial_incr_tags_verified = 0;
+        std::map<std::string,std::vector<double>> serial_incr_prof_data;
+        {
+            cout << "Running SerialIncr Analysis " << args.num_serial_incr_runs << " times" << endl;
+
+            //Analyze
+            serial_incr_prof_data = profile(args.num_serial_incr_runs, serial_incr_analyzer);
+
+            //Verify
+            clock_gettime(CLOCK_MONOTONIC, &verify_start);
+
+            if (args.verify) {
+                cout << "\n";
+                auto res = verify_analyzer(*timing_graph, serial_incr_analyzer, *golden_reference);
+
+                serial_incr_tags_verified = res.first;
+
+                if(!res.second) {
+                    cout << "Verification failed!\n";
+                    exit_code = 1;
+                }
+            }
+
+            clock_gettime(CLOCK_MONOTONIC, &verify_end);
+            serial_incr_verify_time += tatum::time_sec(verify_start, verify_end);
+
+            cout << endl;
+            cout << "SerialIncr Analysis took " << std::setprecision(6) << std::setw(6) << arithmean(serial_incr_prof_data["analysis_sec"])*args.num_serial_incr_runs << " sec";
+            if(serial_incr_prof_data["analysis_sec"].size() > 0) {
+                cout << " AVG: " << arithmean(serial_incr_prof_data["analysis_sec"]);
+                cout << " Median: " << median(serial_incr_prof_data["analysis_sec"]);
+                cout << " Min: " << *std::min_element(serial_incr_prof_data["analysis_sec"].begin(), serial_incr_prof_data["analysis_sec"].end());
+                cout << " Max: " << *std::max_element(serial_incr_prof_data["analysis_sec"].begin(), serial_incr_prof_data["analysis_sec"].end());
+            }
+            cout << endl;
+
+            cout << "\tReset             Median: " << std::setprecision(6) << std::setw(6) << median(serial_incr_prof_data["reset_sec"]) << " s";
+            cout << " (" << std::setprecision(2) << median(serial_incr_prof_data["reset_sec"])/median(serial_incr_prof_data["analysis_sec"]) << ")" << endl;
+
+            cout << "\tArr Pre-traversal Median: " << std::setprecision(6) << std::setw(6) << median(serial_incr_prof_data["arrival_pre_traversal_sec"]) << " s";
+            cout << " (" << std::setprecision(2) << median(serial_incr_prof_data["arrival_pre_traversal_sec"])/median(serial_incr_prof_data["analysis_sec"]) << ")" << endl;
+
+            cout << "\tReq Pre-traversal Median: " << std::setprecision(6) << std::setw(6) << median(serial_incr_prof_data["required_pre_traversal_sec"]) << " s";
+            cout << " (" << std::setprecision(2) << median(serial_incr_prof_data["required_pre_traversal_sec"])/median(serial_incr_prof_data["analysis_sec"]) << ")" << endl;
+
+            cout << "\tArr     traversal Median: " << std::setprecision(6) << std::setw(6) << median(serial_incr_prof_data["arrival_traversal_sec"]) << " s";
+            cout << " (" << std::setprecision(2) << median(serial_incr_prof_data["arrival_traversal_sec"])/median(serial_incr_prof_data["analysis_sec"]) << ")" << endl;
+
+            cout << "\tReq     traversal Median: " << std::setprecision(6) << std::setw(6) << median(serial_incr_prof_data["required_traversal_sec"]) << " s";
+            cout << " (" << std::setprecision(2) << median(serial_incr_prof_data["required_traversal_sec"])/median(serial_incr_prof_data["analysis_sec"]) << ")" << endl;
+
+            cout << "\tUpdate slack      Median: " << std::setprecision(6) << std::setw(6) << median(serial_incr_prof_data["update_slack_sec"]) << " s";
+            cout << " (" << std::setprecision(2) << median(serial_incr_prof_data["update_slack_sec"])/median(serial_incr_prof_data["analysis_sec"]) << ")" << endl;
+
+            cout << "Verifying SerialIncr Analysis took: " <<  serial_incr_verify_time<< " sec" << endl;
+            if(serial_incr_tags_verified != golden_reference->num_tags() && serial_incr_tags_verified != golden_reference->num_tags()/2) {
+                //Potentially alow / 2 for setup only analysis from setup/hold golden
+                cout << "WARNING: Expected tags (" << golden_reference->num_tags() << ") differs from tags checked (" << serial_tags_verified << ") , verification may not have occured!" << endl;
+            } else {
+                cout << "\tVerified " << serial_tags_verified << " tags (expected " << golden_reference->num_tags() << " or " << golden_reference->num_tags()/2 << ") accross " << timing_graph->nodes().size() << " nodes" << endl;
+            }
+        }
+        cout << endl;
+
+
+        cout << "SerialIncr Speed-Up: " << std::fixed << median(serial_prof_data["analysis_sec"]) / median(serial_incr_prof_data["analysis_sec"]) << "x" << endl;
+        cout << "\t            Reset: " << std::fixed << median(serial_prof_data["reset_sec"]) / median(serial_incr_prof_data["reset_sec"]) << "x" << endl;
+        cout << "\tArr Pre-traversal: " << std::fixed << median(serial_prof_data["arrival_pre_traversal_sec"]) / median(serial_incr_prof_data["arrival_pre_traversal_sec"]) << "x" << endl;
+        cout << "\tReq Pre-traversal: " << std::fixed << median(serial_prof_data["required_pre_traversal_sec"]) / median(serial_incr_prof_data["required_pre_traversal_sec"]) << "x" << endl;
+        cout << "\t    Arr-traversal: " << std::fixed << median(serial_prof_data["arrival_traversal_sec"]) / median(serial_incr_prof_data["arrival_traversal_sec"]) << "x" << endl;
+        cout << "\t    Req-traversal: " << std::fixed << median(serial_prof_data["required_traversal_sec"]) / median(serial_incr_prof_data["required_traversal_sec"]) << "x" << endl;
+        cout << "\t     Update-slack: " << std::fixed << median(serial_prof_data["update_slack_sec"]) / median(serial_incr_prof_data["update_slack_sec"]) << "x" << endl;
+        cout << endl;
+
+        cout << endl << "Net SerialIncr Analysis elapsed time: " << serial_incr_analyzer->get_profiling_data("total_analysis_sec") << " sec over " << serial_incr_analyzer->get_profiling_data("num_full_updates") << " full updates" << endl;
+    }
 
     if (args.num_parallel_runs) {
         std::shared_ptr<tatum::TimingAnalyzer> parallel_analyzer = tatum::AnalyzerFactory<tatum::SetupHoldAnalysis,tatum::ParallelWalker>::make(*timing_graph, *timing_constraints, *delay_calculator);
