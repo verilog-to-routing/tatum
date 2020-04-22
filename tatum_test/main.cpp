@@ -502,7 +502,7 @@ int main(int argc, char** argv) {
         size_t parallel_tags_verified = 0;
         std::map<std::string,std::vector<double>> parallel_prof_data;
         {
-            cout << "Running Parrallel Analysis " << args.num_parallel_runs << " times" << endl;
+            cout << "Running Parallel Analysis " << args.num_parallel_runs << " times" << endl;
 
             //Analyze
             parallel_prof_data = profile(args.num_parallel_runs, parallel_analyzer);
