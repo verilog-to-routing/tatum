@@ -483,11 +483,11 @@ int main(int argc, char** argv) {
         cout << " (" << std::setprecision(2) << median(serial_prof_data["update_slack_sec"])/median(serial_prof_data["analysis_sec"]) << ")" << endl;
 
         cout << "Verifying Serial Analysis took: " << serial_verify_time << " sec" << endl;
-        if(serial_tags_verified != golden_reference->num_tags() && serial_tags_verified != golden_reference->num_tags() / 2) {
-            //Potentially alow / 2 for setup only analysis from setup/hold golden
-            cout << "WARNING: Expected tags (" << golden_reference->num_tags() << ") differs from tags checked (" << serial_tags_verified << ") , verification may not have occured!" << endl;
-        } else {
+        if(serial_tags_verified == golden_reference->num_tags() || serial_tags_verified == golden_reference->num_tags() / 2) {
+            //Potentially allow / 2 for setup only analysis from setup/hold golden
             cout << "\tVerified " << serial_tags_verified << " tags (expected " << golden_reference->num_tags() << " or " << golden_reference->num_tags()/2 << ") accross " << timing_graph->nodes().size() << " nodes" << endl;
+        } else {
+            cout << "WARNING: Expected tags (" << golden_reference->num_tags() << ") differs from tags checked (" << serial_tags_verified << ") , verification may not have occured!" << endl;
         }
         cout << endl;
         cout << endl << "Net Serial Analysis elapsed time: " << serial_analyzer->get_profiling_data("total_analysis_sec") << " sec over " << serial_analyzer->get_profiling_data("num_full_updates") << " full updates" << endl;
@@ -526,7 +526,28 @@ int main(int argc, char** argv) {
                 if(!res.second) {
                     cout << "Verification failed!\n";
                     exit_code = 1;
+
+
                 }
+            }
+
+            std::vector<NodeId> nodes;
+            if (args.debug_dot_node == -1) {
+                //Pass
+            } else if (args.debug_dot_node < -1) {
+                auto tg_nodes = timing_graph->nodes();
+                nodes = std::vector<NodeId>(tg_nodes.begin(), tg_nodes.end());
+            } else if (args.debug_dot_node >= 0) {
+                nodes = find_transitively_connected_nodes(*timing_graph, {NodeId(args.debug_dot_node)});
+            }
+            if (args.debug_dot_node != -1) {
+                auto dot_writer = make_graphviz_dot_writer(*timing_graph, *delay_calculator);
+                dot_writer.set_nodes_to_dump(nodes);
+
+                std::shared_ptr<tatum::SetupTimingAnalyzer> debug_setup_analyzer = std::dynamic_pointer_cast<tatum::SetupTimingAnalyzer>(serial_incr_analyzer);
+                dot_writer.write_dot_file("debug_tg_setup_annotated.dot", *debug_setup_analyzer);
+                std::shared_ptr<tatum::HoldTimingAnalyzer> debug_hold_analyzer = std::dynamic_pointer_cast<tatum::HoldTimingAnalyzer>(serial_incr_analyzer);
+                dot_writer.write_dot_file("debug_tg_hold_annotated.dot", *debug_setup_analyzer);
             }
 
             clock_gettime(CLOCK_MONOTONIC, &verify_end);
@@ -561,11 +582,11 @@ int main(int argc, char** argv) {
             cout << " (" << std::setprecision(2) << median(serial_incr_prof_data["update_slack_sec"])/median(serial_incr_prof_data["analysis_sec"]) << ")" << endl;
 
             cout << "Verifying SerialIncr Analysis took: " <<  serial_incr_verify_time<< " sec" << endl;
-            if(serial_incr_tags_verified != golden_reference->num_tags() && serial_incr_tags_verified != golden_reference->num_tags()/2) {
-                //Potentially alow / 2 for setup only analysis from setup/hold golden
-                cout << "WARNING: Expected tags (" << golden_reference->num_tags() << ") differs from tags checked (" << serial_tags_verified << ") , verification may not have occured!" << endl;
-            } else {
+            if(serial_incr_tags_verified == golden_reference->num_tags() || serial_incr_tags_verified == golden_reference->num_tags()/2) {
+                //Potentially allow / 2 for setup only analysis from setup/hold golden
                 cout << "\tVerified " << serial_tags_verified << " tags (expected " << golden_reference->num_tags() << " or " << golden_reference->num_tags()/2 << ") accross " << timing_graph->nodes().size() << " nodes" << endl;
+            } else {
+                cout << "WARNING: Expected tags (" << golden_reference->num_tags() << ") differs from tags checked (" << serial_incr_tags_verified << ") , verification may not have occured!" << endl;
             }
         }
         cout << endl;
@@ -644,11 +665,11 @@ int main(int argc, char** argv) {
             cout << " (" << std::setprecision(2) << median(parallel_prof_data["update_slack_sec"])/median(parallel_prof_data["analysis_sec"]) << ")" << endl;
 
             cout << "Verifying Parallel Analysis took: " <<  parallel_verify_time<< " sec" << endl;
-            if(parallel_tags_verified != golden_reference->num_tags() && parallel_tags_verified != golden_reference->num_tags()/2) {
-                //Potentially alow / 2 for setup only analysis from setup/hold golden
-                cout << "WARNING: Expected tags (" << golden_reference->num_tags() << ") differs from tags checked (" << serial_tags_verified << ") , verification may not have occured!" << endl;
-            } else {
+            if(parallel_tags_verified == golden_reference->num_tags() || parallel_tags_verified == golden_reference->num_tags()/2) {
+                //Potentially allow / 2 for setup only analysis from setup/hold golden
                 cout << "\tVerified " << serial_tags_verified << " tags (expected " << golden_reference->num_tags() << " or " << golden_reference->num_tags()/2 << ") accross " << timing_graph->nodes().size() << " nodes" << endl;
+            } else {
+                cout << "WARNING: Expected tags (" << golden_reference->num_tags() << ") differs from tags checked (" << parallel_tags_verified << ") , verification may not have occured!" << endl;
             }
         }
         cout << endl;
