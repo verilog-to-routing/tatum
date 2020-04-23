@@ -84,7 +84,7 @@ class SerialIncrWalker : public TimingGraphWalker {
              */
 
             const auto& rev_levels = tg.reversed_levels();
-            auto rev_level_itr = rev_levels.begin() + 1;
+            auto rev_level_itr = rev_levels.begin();
 
             for(NodeId node_id : tg.level_nodes(*rev_level_itr)) {
                 next_level_nodes_to_process_->push_back(node_id);
@@ -105,7 +105,9 @@ class SerialIncrWalker : public TimingGraphWalker {
 
                         //Record that this node was updated, for later efficient slack update
                         nodes_to_update_slack_.emplace_back(node);
+                    }
 
+                    if (node_updated || level_id == *rev_levels.begin()) {
                         //Queue this node's downstream dependencies for updating
                         for (EdgeId in_edge : tg.node_in_edges(node)) {
                             NodeId src_node = tg.edge_src_node(in_edge);
