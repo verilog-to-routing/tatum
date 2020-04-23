@@ -76,7 +76,7 @@ struct Args {
     size_t print_sizes = 0;
 
     //Verify results match reference
-    size_t verify = 0;
+    size_t verify = 1;
 
     //Print reports
     size_t report = 1;
