@@ -504,7 +504,7 @@ bool CommonAnalysisVisitor<AnalysisOps>::mark_sink_required_times(const TimingGr
                                                 NodeId::INVALID(), //Origin
                                                 TagType::DATA_REQUIRED);
 
-                    timing_modified |= ops_.add_tag(node_id, node_data_req_tag);
+                    timing_modified |= ops_.merge_req_tags(node_id, req_time, NodeId::INVALID(), node_data_req_tag);
                 }
             }
         }
@@ -565,7 +565,7 @@ bool CommonAnalysisVisitor<AnalysisOps>::mark_sink_required_times(const TimingGr
                                                     NodeId::INVALID(), //Origin
                                                     TagType::DATA_REQUIRED);
 
-                        timing_modified |= ops_.add_tag(node_id, node_data_req_tag);
+                        timing_modified |= ops_.merge_req_tags(node_id, req_time, NodeId::INVALID(), node_data_req_tag);
                     }
                 }
             }
