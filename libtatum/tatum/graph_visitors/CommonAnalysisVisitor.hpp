@@ -97,7 +97,7 @@ bool CommonAnalysisVisitor<AnalysisOps>::do_arrival_pre_traverse_node(const Timi
         //by any non-constant tag at downstream nodes
 
         TimingTag const_gen_tag = ops_.const_gen_tag();
-        ops_.add_tag(node_id, const_gen_tag);
+        ops_.set_tag(node_id, const_gen_tag);
 
         node_constrained = true;
     } else {
@@ -106,9 +106,6 @@ bool CommonAnalysisVisitor<AnalysisOps>::do_arrival_pre_traverse_node(const Timi
 
         if(tc.node_is_clock_source(node_id)) {
             //Generate the appropriate clock tag
-
-            TATUM_ASSERT_MSG(ops_.get_tags(node_id, TagType::CLOCK_LAUNCH).size() == 0, "Uninitialized clock source should have no launch clock tags");
-            TATUM_ASSERT_MSG(ops_.get_tags(node_id, TagType::CLOCK_CAPTURE).size() == 0, "Uninitialized clock source should have no capture clock tags");
 
             //Find the domain of this node (since it is a source)
             DomainId domain_id = tc.node_clock_domain(node_id);
@@ -126,7 +123,7 @@ bool CommonAnalysisVisitor<AnalysisOps>::do_arrival_pre_traverse_node(const Timi
                                              NodeId::INVALID(), //Origin
                                              TagType::CLOCK_LAUNCH);
             //Add the launch tag
-            ops_.add_tag(node_id, launch_tag);
+            ops_.set_tag(node_id, launch_tag);
 
             //Initialize the clock capture tags from any valid launch domain to this domain
             //
@@ -153,7 +150,7 @@ bool CommonAnalysisVisitor<AnalysisOps>::do_arrival_pre_traverse_node(const Timi
                                                       NodeId::INVALID(), //Origin
                                                       TagType::CLOCK_CAPTURE);
 
-                    ops_.add_tag(node_id, capture_tag);
+                    ops_.set_tag(node_id, capture_tag);
 
                     node_constrained = true;
                 }
