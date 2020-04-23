@@ -29,6 +29,10 @@ class TimingGraphWalker {
             invalidate_edge_impl(edge);
         }
 
+        void clear_invalidated_edges() {
+            clear_invalidated_edges_impl();
+        }
+
         ///Performs the arrival time pre-traversal
         ///\param tg The timing graph
         ///\param tc The timing constraints
@@ -113,8 +117,11 @@ class TimingGraphWalker {
         size_t num_unconstrained_endpoints() const { return num_unconstrained_endpoints_impl(); }
 
     protected:
-        ///Sub-class defined arrival time pre-traversal
+        ///Sub-class defined edge invalidation
         virtual void invalidate_edge_impl(const EdgeId edge) = 0;
+        //
+        ///Sub-class defined clearing of edge invalidation
+        virtual void clear_invalidated_edges_impl() = 0;
 
         ///Sub-class defined arrival time pre-traversal
         ///\param tg The timing graph

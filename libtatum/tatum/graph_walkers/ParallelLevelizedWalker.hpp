@@ -22,6 +22,10 @@ class ParallelLevelizedWalker : public TimingGraphWalker {
             //Do nothing, this walker only does full updates
         }
 
+        void clear_invalidated_edges_impl() override {
+            //Do nothing, this walker only does full updates
+        }
+
         void do_arrival_pre_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, GraphVisitor& visitor) override {
             num_unconstrained_startpoints_ = 0;
 

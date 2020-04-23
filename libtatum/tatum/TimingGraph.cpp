@@ -447,8 +447,8 @@ void TimingGraph::force_levelize() {
 
     //Build the reverse node-to-level look-up
     node_levels_.resize(nodes().size());
-    for (LevelId level : levels()) {
-        for(NodeId node : level_nodes(level)) {
+    for (LevelId level : level_ids_) {
+        for(NodeId node : level_nodes_[level]) {
             node_levels_[node] = level;
         }
     }
