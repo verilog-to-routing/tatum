@@ -57,6 +57,10 @@ class FullSetupTimingAnalyzer : public SetupTimingAnalyzer {
             graph_walker_.set_profiling_data("num_full_updates", graph_walker_.get_profiling_data("num_full_updates") + 1);
         }
 
+        virtual void invalidate_edge_impl(const EdgeId edge) override {
+            graph_walker_.invalidate_edge(edge);
+        }
+
         //TimingAnalyzer
         double get_profiling_data_impl(std::string key) const override { return graph_walker_.get_profiling_data(key); }
         size_t num_unconstrained_startpoints_impl() const override { return graph_walker_.num_unconstrained_startpoints(); }

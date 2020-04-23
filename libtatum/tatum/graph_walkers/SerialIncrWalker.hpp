@@ -12,6 +12,10 @@ namespace tatum {
  */
 class SerialIncrWalker : public TimingGraphWalker {
     protected:
+        void invalidate_edge_impl(const EdgeId /*edge*/) override {
+            //TODO: handle this
+        }
+
         void do_arrival_pre_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, GraphVisitor& visitor) override {
             size_t num_unconstrained = 0;
 
