@@ -73,6 +73,9 @@ class TimingTags {
         ///\param src_tag The source tag who is inserted. Note that the src_tag is copied when inserted (the original is unchanged)
         bool add_tag(const TimingTag& src_tag);
 
+        ///Like add_tag(), but sets the matching tag (instead of unconditionally adding it)
+        bool set_tag(const TimingTag& src_tag);
+
         /*
          * Operations
          */
