@@ -59,8 +59,16 @@ class SetupAnalysisOps : public CommonAnalysisOps {
 
         TimingTag const_gen_tag() { return TimingTag::CONST_GEN_TAG_SETUP(); }
 
+        bool merge_req_tags(const NodeId node, const TimingTag& ref_tag, bool arrival_must_be_valid=false) { 
+            return merge_req_tags(node, ref_tag.time(), ref_tag.origin_node(), ref_tag, arrival_must_be_valid);
+        }
+
         bool merge_req_tags(const NodeId node, const Time time, const NodeId origin, const TimingTag& ref_tag, bool arrival_must_be_valid=false) { 
             return node_tags_[node].min(time, origin, ref_tag, arrival_must_be_valid); 
+        }
+
+        bool merge_arr_tags(const NodeId node, const TimingTag& ref_tag) { 
+            return merge_arr_tags(node, ref_tag.time(), ref_tag.origin_node(), ref_tag);
         }
 
         bool merge_arr_tags(const NodeId node, const Time time, const NodeId origin, const TimingTag& ref_tag) { 
