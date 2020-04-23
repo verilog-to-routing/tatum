@@ -167,6 +167,13 @@ EdgeId TimingGraph::node_clock_launch_edge(const NodeId node) const {
     return EdgeId::INVALID();
 }
 
+LevelId TimingGraph::node_level(const NodeId node) const {
+    if (!is_levelized_) {
+        return LevelId::INVALID();
+    }
+    return node_levels_[node];
+}
+
 
 NodeId TimingGraph::add_node(const NodeType type) {
     //Invalidate the levelization
@@ -329,6 +336,7 @@ void TimingGraph::force_levelize() {
     //Clear any previous levelization
     level_nodes_.clear();
     level_ids_.clear();
+    node_levels_.clear();
     primary_inputs_.clear();
     logical_outputs_.clear();
 
@@ -436,6 +444,14 @@ void TimingGraph::force_levelize() {
     level_nodes_.emplace_back(last_level);
     level_idx++;
     level_ids_.emplace_back(level_idx);
+
+    //Build the reverse node-to-level look-up
+    node_levels_.resize(nodes().size());
+    for (LevelId level : levels()) {
+        for(NodeId node : level_nodes(level)) {
+            node_levels_[node] = level;
+        }
+    }
 
     //Mark the levelization as valid
     is_levelized_ = true;
@@ -583,7 +599,8 @@ bool TimingGraph::valid_level_id(const LevelId level_id) const {
 bool TimingGraph::validate_sizes() const {
     if (   node_ids_.size() != node_types_.size()
         || node_ids_.size() != node_in_edges_.size()
-        || node_ids_.size() != node_out_edges_.size()) {
+        || node_ids_.size() != node_out_edges_.size()
+        || node_ids_.size() != node_levels_.size()) {
         throw tatum::Error("Inconsistent node attribute sizes");
     }
 
@@ -812,6 +829,15 @@ bool TimingGraph::validate_structure() const {
 
         if(node_type(node) != NodeType::SINK) {
             throw tatum::Error("Logical outputs should be only SINK nodes", node);
+        }
+    }
+
+    //Check levelization look-up is consistent with levelization
+    for (LevelId level : levels()) {
+        for(NodeId node : level_nodes(level)) {
+            if (node_level(node) != level) {
+                throw tatum::Error("Node level look-up does not match levelization", node);
+            }
         }
     }
 
