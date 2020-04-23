@@ -41,10 +41,6 @@ class CommonAnalysisOps {
             return node_tags_[node_id].tags(type); 
         }
 
-        bool add_tag(const NodeId node, const TimingTag& tag) {
-            return node_tags_[node].add_tag(tag);
-        }
-
         bool set_tag(const NodeId node, const TimingTag& tag) {
             return node_tags_[node].set_tag(tag);
         }
