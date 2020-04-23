@@ -152,6 +152,32 @@ inline bool TimingTags::add_tag(const TimingTag& tag) {
     return true; //Was modified
 }
 
+inline bool TimingTags::set_tag(const TimingTag& tag) {
+    bool modified = false;
+    auto bool_iter = find_matching_tag(tag, false);
+
+    bool valid = bool_iter.first;
+    TATUM_ASSERT_SAFE(valid);
+
+    auto iter = bool_iter.second;
+    if(iter == end(tag.type())) {
+        //An exact match was not found
+
+        //First time we've seen this domain
+        modified |= add_tag(tag);
+    } else { //Found an exact match to launch/capture
+        if (iter->time() != tag.time() || iter->origin_node() != tag.origin_node()) {
+            //Other attributes differ, update to new values
+            *iter = tag;
+            modified |= true;
+        } else { //Tag is identical
+            TATUM_ASSERT_SAFE(*iter == tag);
+        }
+    }
+
+    return modified;
+}
+
 inline bool TimingTags::max(const Time& new_time, const NodeId origin, const TimingTag& base_tag, bool arr_must_be_valid) {
     bool modified = false;
     auto bool_iter = find_matching_tag(base_tag, arr_must_be_valid);

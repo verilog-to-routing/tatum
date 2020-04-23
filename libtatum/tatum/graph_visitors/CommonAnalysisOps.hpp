@@ -45,6 +45,10 @@ class CommonAnalysisOps {
             return node_tags_[node].add_tag(tag);
         }
 
+        bool set_tag(const NodeId node, const TimingTag& tag) {
+            return node_tags_[node].set_tag(tag);
+        }
+
         void reset_node(const NodeId node) { 
             node_tags_[node].clear();
             node_slacks_[node].clear();
