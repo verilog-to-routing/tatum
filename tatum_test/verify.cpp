@@ -77,18 +77,10 @@ std::pair<size_t,bool> verify_node_tags(const NodeId node, TimingTags::tag_range
     //Check that every tag in the analyzer matches the reference results
     size_t tags_verified = 0;
     for(const TimingTag& tag : analyzer_tags) {
-        DomainId domain;
-        if(tag.type() == TagType::CLOCK_LAUNCH || tag.type() == TagType::DATA_ARRIVAL || tag.type() == TagType::DATA_REQUIRED) {
-            domain = tag.launch_clock_domain();
-        } else {
-            TATUM_ASSERT(tag.type() == TagType::CLOCK_CAPTURE);
-            domain = tag.capture_clock_domain();
-        }
-
         auto iter = ref_results.find({tag.launch_clock_domain(), tag.capture_clock_domain()});
         if(iter == ref_results.end()) {
             cout << "Node: " << node << " Type: " << type << endl;
-            cout << "\tERROR No reference tag found for clock domain " << tag.launch_clock_domain() << endl;
+            cout << "\tERROR No reference tag found for clock domain pair " << tag.launch_clock_domain() << ", " << tag.capture_clock_domain() << endl;
             error = true;
         } else {
             if(!verify_tag(tag, iter->second)) {
@@ -136,7 +128,7 @@ bool verify_tag(const TimingTag& tag, const TagResult& ref_result) {
 bool verify_time(NodeId node, DomainId launch_domain, DomainId capture_domain, float analyzer_time, float reference_time) {
     float arr_abs_err = fabs(analyzer_time - reference_time);
     float arr_rel_err = relative_error(analyzer_time, reference_time);
-    if(std::isnan(analyzer_time) && std::isnan(analyzer_time) != std::isnan(reference_time)) {
+    if(std::isnan(analyzer_time) && (std::isnan(analyzer_time) != std::isnan(reference_time))) {
         cout << "Node: " << node << " Launch Clk: " << launch_domain << " Capture Clk: " << capture_domain;
         cout << " Calc: " << analyzer_time;
         cout << " Ref: " << reference_time << endl;
