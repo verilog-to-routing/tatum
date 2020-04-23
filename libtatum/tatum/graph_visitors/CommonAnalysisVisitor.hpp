@@ -161,7 +161,8 @@ bool CommonAnalysisVisitor<AnalysisOps>::do_arrival_pre_traverse_node(const Timi
         } else {
             //A standard primary input, generate the appropriate data tags
 
-            TATUM_ASSERT_MSG(ops_.get_tags(node_id, TagType::DATA_ARRIVAL).size() == 0, "Primary input already has data tags");
+            //No longer true for an incremental analyzer
+            //TATUM_ASSERT_MSG(ops_.get_tags(node_id, TagType::DATA_ARRIVAL).size() == 0, "Primary input already has data tags");
 
             auto input_constraints = ops_.input_constraints(tc, node_id);
             if(!input_constraints.empty()) { //Some inputs may be unconstrained, so do not create tags for them
