@@ -11,6 +11,9 @@ class GraphVisitor {
         virtual void do_reset_node(const NodeId node_id) = 0;
         virtual void do_reset_edge(const EdgeId edge_id) = 0;
 
+        virtual void do_reset_node_arrival_tags(const NodeId node_id) = 0;
+        virtual void do_reset_node_required_tags(const NodeId node_id) = 0;
+
         //Returns true if the specified source/sink is unconstrainted
         virtual bool do_arrival_pre_traverse_node(const TimingGraph& tg, const TimingConstraints& tc, const NodeId node_id) = 0;
         virtual bool do_required_pre_traverse_node(const TimingGraph& tg, const TimingConstraints& tc, const NodeId node_id) = 0;
