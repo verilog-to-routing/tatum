@@ -5,6 +5,7 @@
 #include "tatum/tags/TimingTags.hpp"
 #include "tatum/tags/TimingTag.hpp"
 #include "tatum/timing_analyzers.hpp"
+#include "tatum/report/graphviz_dot_writer.hpp"
 #include "util.hpp"
 
 using namespace tatum;
@@ -15,8 +16,14 @@ using std::endl;
 constexpr float RELATIVE_EPSILON = 1.e-5;
 constexpr float ABSOLUTE_EPSILON = 1.e-13;
 
+//Verify against golden reference results
 std::pair<size_t,bool> verify_node_tags(const NodeId node, TimingTags::tag_range analyzer_tags, const std::map<std::pair<DomainId,DomainId>,TagResult>& ref_results, std::string type);
 bool verify_tag(const TimingTag& tag, const TagResult& ref_result);
+
+//Verify against another analyzer
+std::pair<size_t,bool> verify_node_tags(const NodeId node, TimingTags::tag_range check_tags, TimingTags::tag_range ref_tags, std::string type);
+bool verify_tag(const TimingTag& ref_tag, const TimingTag& check_tag, NodeId node);
+
 bool verify_time(NodeId node, DomainId launch_domain, DomainId capture_domain, float analyzer_time, float reference_time);
 
 std::pair<size_t,bool> verify_analyzer(const TimingGraph& tg, std::shared_ptr<TimingAnalyzer> analyzer, GoldenReference& gr) {
@@ -71,6 +78,7 @@ std::pair<size_t,bool> verify_analyzer(const TimingGraph& tg, std::shared_ptr<Ti
     return {tags_checked,!error};
 }
 
+
 std::pair<size_t,bool> verify_node_tags(const NodeId node, TimingTags::tag_range analyzer_tags, const std::map<std::pair<DomainId,DomainId>,TagResult>& ref_results, std::string type) {
     bool error = false;
 
@@ -121,6 +129,138 @@ bool verify_tag(const TimingTag& tag, const TagResult& ref_result) {
 
     bool valid = true;
     valid &= verify_time(ref_result.node, ref_result.launch_domain, ref_result.capture_domain, tag.time().value(), ref_result.time);
+
+    return valid;
+}
+
+
+std::pair<size_t,bool> verify_equivalent_analysis(const TimingGraph& tg, const DelayCalculator& dc, std::shared_ptr<TimingAnalyzer> ref_analyzer,  std::shared_ptr<TimingAnalyzer> check_analyzer) {
+    bool error = false;
+    size_t tags_checked = 0;
+
+    auto setup_ref_analyzer = std::dynamic_pointer_cast<SetupTimingAnalyzer>(ref_analyzer);
+    auto hold_ref_analyzer = std::dynamic_pointer_cast<HoldTimingAnalyzer>(ref_analyzer);
+    auto setup_check_analyzer = std::dynamic_pointer_cast<SetupTimingAnalyzer>(check_analyzer);
+    auto hold_check_analyzer = std::dynamic_pointer_cast<HoldTimingAnalyzer>(check_analyzer);
+
+    auto dot_writer = make_graphviz_dot_writer(tg, dc);
+
+
+
+    for(LevelId level : tg.levels()) {
+
+        for(NodeId node : tg.level_nodes(level)) {
+
+
+            if(setup_ref_analyzer) {
+                TATUM_ASSERT(setup_check_analyzer);
+                auto res = verify_node_tags(node, setup_check_analyzer->setup_tags(node, TagType::DATA_ARRIVAL), setup_ref_analyzer->setup_tags(node, TagType::DATA_ARRIVAL), "setup_data_arrival");
+                tags_checked += res.first;
+                error |= res.second;
+
+                res = verify_node_tags(node, setup_check_analyzer->setup_tags(node, TagType::DATA_REQUIRED), setup_ref_analyzer->setup_tags(node, TagType::DATA_REQUIRED), "setup_data_required");
+                tags_checked += res.first;
+                error |= res.second;
+
+                res = verify_node_tags(node, setup_check_analyzer->setup_tags(node, TagType::CLOCK_LAUNCH), setup_ref_analyzer->setup_tags(node, TagType::CLOCK_LAUNCH), "setup_launch_clock");
+                tags_checked += res.first;
+                error |= res.second;
+
+                res = verify_node_tags(node, setup_check_analyzer->setup_tags(node, TagType::CLOCK_CAPTURE), setup_ref_analyzer->setup_tags(node, TagType::CLOCK_CAPTURE), "setup_capture_clock");
+                tags_checked += res.first;
+                error |= res.second;
+            }
+
+            if(hold_ref_analyzer) {
+                TATUM_ASSERT(hold_check_analyzer);
+
+                auto res = verify_node_tags(node, hold_check_analyzer->hold_tags(node, TagType::DATA_ARRIVAL), hold_ref_analyzer->hold_tags(node, TagType::DATA_ARRIVAL), "hold_data_arrival");
+                tags_checked += res.first;
+                error |= res.second;
+
+                res = verify_node_tags(node, hold_check_analyzer->hold_tags(node, TagType::DATA_REQUIRED), hold_ref_analyzer->hold_tags(node, TagType::DATA_REQUIRED), "hold_data_required");
+                tags_checked += res.first;
+                error |= res.second;
+
+                res = verify_node_tags(node, hold_check_analyzer->hold_tags(node, TagType::CLOCK_LAUNCH), hold_ref_analyzer->hold_tags(node, TagType::CLOCK_LAUNCH), "hold_launch_clock");
+                tags_checked += res.first;
+                error |= res.second;
+
+                res = verify_node_tags(node, hold_check_analyzer->hold_tags(node, TagType::CLOCK_CAPTURE), hold_ref_analyzer->hold_tags(node, TagType::CLOCK_CAPTURE), "hold_capture_clock");
+                tags_checked += res.first;
+                error |= res.second;
+            }
+
+
+
+            if (error) {
+                std::vector<tatum::NodeId> nodes = find_transitively_connected_nodes(tg, {node});
+                dot_writer.set_nodes_to_dump(nodes);
+
+                dot_writer.write_dot_file("check_tg_setup_annotated.dot", *setup_check_analyzer);
+                dot_writer.write_dot_file("ref_tg_setup_annotated.dot", *setup_ref_analyzer);
+                dot_writer.write_dot_file("check_tg_hold_annotated.dot", *hold_check_analyzer);
+                dot_writer.write_dot_file("ref_tg_hold_annotated.dot", *hold_ref_analyzer);
+                exit(1);
+            }
+        }
+    }
+
+    return {tags_checked,!error};
+}
+
+std::pair<size_t,bool> verify_node_tags(const NodeId node, TimingTags::tag_range check_tags, TimingTags::tag_range ref_tags, std::string type) {
+    bool error = false;
+
+    //Check that every tag in the analyzer matches the reference results
+    size_t tags_verified = 0;
+    for(const TimingTag& ref_tag : ref_tags) {
+
+        auto match_tag = [&](const TimingTag& tag) {
+            return ref_tag.launch_clock_domain() == tag.launch_clock_domain() 
+                   && ref_tag.capture_clock_domain() == tag.capture_clock_domain();
+        };
+
+        auto iter = std::find_if(check_tags.begin(), check_tags.end(), match_tag);
+
+        if(iter == check_tags.end()) {
+            cout << "Node: " << node << " Type: " << type << endl;
+            cout << "\tERROR No check tag found for clock domain pair " << ref_tag.launch_clock_domain() << ", " << ref_tag.capture_clock_domain() << endl;
+            error = true;
+        } else {
+            if(!verify_tag(*iter, ref_tag, node)) {
+                error = true;
+            }
+            ++tags_verified;
+        }
+    }
+
+    //See if there were any reference results we did not check
+    if(tags_verified != ref_tags.size()) {
+        cout << "Node: " << node << " Type: " << type << endl;
+        cout << "\tERROR Tags checked (" << tags_verified << ") does not match number of reference tags (" << ref_tags.size() << ")" << endl;
+
+        cout << "\t\tCalc Tags:" << endl;
+        for(const TimingTag& tag : check_tags) {
+            cout << "\t\t\tTag " << tag.launch_clock_domain() << " to " << tag.capture_clock_domain() << " time: " << tag.time().value() << endl;
+        }
+
+        cout << "\t\tRef Tags:" << endl;
+        for(const TimingTag& tag : ref_tags) {
+            cout << "\t\t\tTag " << tag.launch_clock_domain() << " to " << tag.capture_clock_domain() << " time: " << tag.time().value() << endl;
+        }
+        error = true;
+    }
+
+    return {tags_verified, error};
+}
+
+bool verify_tag(const TimingTag& check_tag, const TimingTag& ref_tag, const NodeId node) {
+    TATUM_ASSERT(ref_tag.launch_clock_domain() == check_tag.launch_clock_domain()
+                 && ref_tag.capture_clock_domain() == check_tag.capture_clock_domain());
+
+    bool valid = true;
+    valid &= verify_time(node, check_tag.launch_clock_domain(), check_tag.capture_clock_domain(), ref_tag.time().value(), check_tag.time().value());
 
     return valid;
 }
