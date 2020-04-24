@@ -87,6 +87,15 @@ inline bool TimingTag::min(const Time& new_time, const NodeId origin, const Timi
     return modified;
 }
 
+inline bool operator==(const TimingTag& lhs, const TimingTag& rhs) {
+    return std::tie(lhs.time_, lhs.origin_node_, lhs.launch_clock_domain_, lhs.capture_clock_domain_, lhs.type_) 
+           == std::tie(rhs.time_, rhs.origin_node_, rhs.launch_clock_domain_, rhs.capture_clock_domain_, rhs.type_);
+}
+
+inline bool operator!=(const TimingTag& lhs, const TimingTag& rhs) {
+    return !(lhs == rhs);
+}
+
 inline std::ostream& operator<<(std::ostream& os, TagType type) {
     if(type == TagType::DATA_ARRIVAL) os << "DATA_ARRIVAL";
     else if(type == TagType::DATA_REQUIRED) os << "DATA_REQUIRED";
