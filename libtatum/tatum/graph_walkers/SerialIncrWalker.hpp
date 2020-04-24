@@ -53,7 +53,7 @@ class SerialIncrWalker : public TimingGraphWalker {
             prepare_incr_arrival_update(tg, visitor);
 
             std::cout << "Arr Levels " << incr_arr_update_.min_level << ": " << incr_arr_update_.max_level << "\n";
-            for(size_t level_idx = size_t(incr_arr_update_.min_level); level_idx <= size_t(incr_arr_update_.max_level); ++level_idx) {
+            for(int level_idx = incr_arr_update_.min_level; level_idx <= incr_arr_update_.max_level; ++level_idx) {
                 LevelId level(level_idx);
 
                 auto& level_nodes = incr_arr_update_.nodes_to_process[level_idx];
@@ -89,7 +89,7 @@ class SerialIncrWalker : public TimingGraphWalker {
             prepare_incr_required_update(tg, visitor);
 
             std::cout << "Req Levels " << incr_req_update_.max_level << ": " << incr_req_update_.min_level << "\n";
-            for(int level_idx = size_t(incr_req_update_.max_level); level_idx >= int(size_t(incr_req_update_.min_level)); --level_idx) {
+            for(int level_idx = incr_req_update_.max_level; level_idx >= incr_req_update_.min_level; --level_idx) {
                 LevelId level(level_idx);
 
                 auto& level_nodes = incr_req_update_.nodes_to_process[level_idx];
@@ -156,13 +156,13 @@ class SerialIncrWalker : public TimingGraphWalker {
         void prepare_incr_arrival_update(const TimingGraph& tg, GraphVisitor& visitor) {
             incr_arr_update_.nodes_to_process.resize(tg.levels().size());
             if (incr_arr_update_.min_level && incr_arr_update_.max_level) {
-                for (int level = size_t(incr_arr_update_.min_level); level <= size_t(incr_arr_update_.max_level); ++level) {
+                for (int level = incr_arr_update_.min_level; level <= incr_arr_update_.max_level; ++level) {
                     incr_arr_update_.nodes_to_process[level].clear();
                 }
             }
 
-            incr_arr_update_.min_level = *(tg.levels().end() - 1);
-            incr_arr_update_.max_level = *tg.levels().begin();
+            incr_arr_update_.min_level = size_t(*(tg.levels().end() - 1));
+            incr_arr_update_.max_level = size_t(*tg.levels().begin());
 
             /*
              *for (LevelId level : tg.levels()) {
@@ -181,13 +181,13 @@ class SerialIncrWalker : public TimingGraphWalker {
         void prepare_incr_required_update(const TimingGraph& tg, GraphVisitor& visitor) {
             incr_req_update_.nodes_to_process.resize(tg.levels().size());
             if (incr_req_update_.min_level && incr_req_update_.max_level) {
-                for (int level = size_t(incr_req_update_.min_level); level <= size_t(incr_req_update_.max_level); ++level) {
+                for (int level = incr_req_update_.min_level; level <= incr_req_update_.max_level; ++level) {
                     incr_req_update_.nodes_to_process[level].clear();
                 }
             }
 
-            incr_req_update_.min_level = *(tg.levels().end() - 1);
-            incr_req_update_.max_level = *tg.levels().begin();
+            incr_req_update_.min_level = size_t(*(tg.levels().end() - 1));
+            incr_req_update_.max_level = size_t(*tg.levels().begin());
 
             /*
              *for (LevelId level : tg.levels()) {
@@ -226,13 +226,13 @@ class SerialIncrWalker : public TimingGraphWalker {
 
         struct t_incr_traversal_update {
             std::vector<std::vector<NodeId>> nodes_to_process;
-            LevelId min_level;
-            LevelId max_level;
+            int min_level;
+            int max_level;
 
             void enqueue_node(const TimingGraph& tg, NodeId node) {
-                LevelId level = tg.node_level(node);
+                int level = size_t(tg.node_level(node));
 
-                nodes_to_process[size_t(level)].push_back(node);
+                nodes_to_process[level].push_back(node);
                 min_level = std::min(min_level, level);
                 max_level = std::max(max_level, level);
             }
@@ -243,7 +243,7 @@ class SerialIncrWalker : public TimingGraphWalker {
                 }
 
                 size_t cnt = 0;
-                for (int level = size_t(min_level); level <= size_t(max_level); ++level) {
+                for (int level = min_level; level <= max_level; ++level) {
                     cnt += nodes_to_process[level].size();
                 }
                 return cnt;
