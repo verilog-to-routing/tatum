@@ -44,6 +44,16 @@ class SetupHoldAnalysis : public GraphVisitor {
             hold_visitor_.do_reset_node_required_tags(node_id); 
         }
 
+        void do_reset_node_arrival_tags_from_origin(const NodeId node_id, const NodeId origin) override { 
+            setup_visitor_.do_reset_node_arrival_tags_from_origin(node_id, origin); 
+            hold_visitor_.do_reset_node_arrival_tags_from_origin(node_id, origin); 
+        }
+
+        void do_reset_node_required_tags_from_origin(const NodeId node_id, const NodeId origin) override { 
+            setup_visitor_.do_reset_node_required_tags_from_origin(node_id, origin); 
+            hold_visitor_.do_reset_node_required_tags_from_origin(node_id, origin); 
+        }
+
         bool do_arrival_pre_traverse_node(const TimingGraph& tg, const TimingConstraints& tc, const NodeId node_id) override { 
             bool setup_unconstrained = setup_visitor_.do_arrival_pre_traverse_node(tg, tc, node_id); 
             bool hold_unconstrained = hold_visitor_.do_arrival_pre_traverse_node(tg, tc, node_id); 

@@ -80,7 +80,7 @@ std::map<std::string,std::vector<double>> profile_rand_incr(size_t num_iteration
         if (i > 0) {
             //Randomly invalidate edges
 
-            size_t EDGES_TO_INVALIDATE = 0.001 * tg.edges().size();
+            size_t EDGES_TO_INVALIDATE = 0.01 * tg.edges().size();
             for (size_t j = 0; j < EDGES_TO_INVALIDATE; j++) {
                 size_t iedge = uniform_distr(rng);
                 tatum::EdgeId edge(iedge);
