@@ -64,6 +64,10 @@ class SerialIncrWalker : public TimingGraphWalker {
 
                 for (NodeId node : level_nodes) {
 
+                    //std::cout << "  Processing Arr " << node << "\n";
+
+                    visitor.do_reset_node_arrival_tags(node);
+
                     bool node_updated = visitor.do_arrival_traverse_node(tg, tc, dc, node);
 
                     if (node_updated) {
@@ -105,6 +109,9 @@ class SerialIncrWalker : public TimingGraphWalker {
                 std::cout << "Processing Req Level " << size_t(level) << ": " << level_nodes.size() << " nodes\n";
 
                 for (NodeId node : level_nodes) {
+
+                    //std::cout << "  Processing Req " << node << "\n";
+                    visitor.do_reset_node_required_tags(node);
 
                     bool node_updated = visitor.do_required_traverse_node(tg, tc, dc, node);
 

@@ -135,6 +135,14 @@ inline TimingTags::tag_range TimingTags::tags(const TagType type) const {
     return tatum::util::make_range(begin(type), end(type));
 }
 
+inline TimingTags::mutable_tag_range TimingTags::mutable_tags() {
+    return tatum::util::make_range(begin(), end());
+}
+
+inline TimingTags::mutable_tag_range TimingTags::mutable_tags(const TagType type) {
+    return tatum::util::make_range(begin(type), end(type));
+}
+
 //Modifiers
 inline bool TimingTags::add_tag(const TimingTag& tag) {
     //Find the position to insert this tag

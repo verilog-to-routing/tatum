@@ -27,11 +27,11 @@ class CommonAnalysisOps {
         CommonAnalysisOps& operator=(const CommonAnalysisOps&) = delete;
         CommonAnalysisOps& operator=(CommonAnalysisOps&&) = delete;
 
-        TimingTags::tag_range get_tags(const NodeId node_id) { 
-            return node_tags_[node_id].tags(); 
+        TimingTags::mutable_tag_range get_mutable_tags(const NodeId node_id) { 
+            return node_tags_[node_id].mutable_tags(); 
         }
-        TimingTags::tag_range get_tags(const NodeId node_id, TagType type) { 
-            return node_tags_[node_id].tags(type); 
+        TimingTags::mutable_tag_range get_mutable_tags(const NodeId node_id, TagType type) { 
+            return node_tags_[node_id].mutable_tags(type); 
         }
 
         TimingTags::tag_range get_tags(const NodeId node_id) const { 

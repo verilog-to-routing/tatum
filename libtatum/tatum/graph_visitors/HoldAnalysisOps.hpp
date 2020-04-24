@@ -109,6 +109,14 @@ class HoldAnalysisOps : public CommonAnalysisOps {
             }
         }
 
+        Time invalid_arrival_time() {
+            return Time(std::numeric_limits<float>::infinity());
+        }
+
+        Time invalid_required_time() {
+            return Time(-std::numeric_limits<float>::infinity());
+        }
+
         Time calculate_slack(const Time required_time, const Time arrival_time) {
             //Hold requires the arrival to occur *after* the required time, so
             //slack is the amount of arrival time left after the required time; meaning

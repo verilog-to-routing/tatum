@@ -40,6 +40,7 @@ class TimingTags {
         typedef Iterator<const TimingTag> const_iterator;
 
         typedef tatum::util::Range<const_iterator> tag_range;
+        typedef tatum::util::Range<iterator> mutable_tag_range;
 
     public:
 
@@ -64,6 +65,11 @@ class TimingTags {
         ///\returns A range of all tags matching type
         tag_range tags(const TagType type) const;
 
+        ///\returns A range of all tags
+        mutable_tag_range mutable_tags();
+
+        ///\returns A range of all tags matching type
+        mutable_tag_range mutable_tags(const TagType type);
 
         /*
          * Modifiers
