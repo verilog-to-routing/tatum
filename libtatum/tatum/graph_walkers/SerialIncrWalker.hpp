@@ -50,7 +50,7 @@ class SerialIncrWalker : public TimingGraphWalker {
         }
 
         void do_arrival_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalculator& dc, GraphVisitor& visitor) override {
-            prepare_incr_arrival_update(tg);
+            prepare_incr_arrival_update(tg, visitor);
 
             std::cout << "Arr Levels " << incr_arr_update_.min_level << ": " << incr_arr_update_.max_level << "\n";
             for(size_t level_idx = size_t(incr_arr_update_.min_level); level_idx <= size_t(incr_arr_update_.max_level); ++level_idx) {
@@ -66,8 +66,6 @@ class SerialIncrWalker : public TimingGraphWalker {
 
                     //std::cout << "  Processing Arr " << node << "\n";
 
-                    visitor.do_reset_node_arrival_tags(node);
-
                     bool node_updated = visitor.do_arrival_traverse_node(tg, tc, dc, node);
 
                     if (node_updated) {
@@ -79,7 +77,7 @@ class SerialIncrWalker : public TimingGraphWalker {
                         for (EdgeId edge : tg.node_out_edges(node)) {
                             NodeId snk_node = tg.edge_sink_node(edge);
 
-                            incr_arr_update_.enqueue_node(tg, snk_node);
+                            enqueue_arr_node(tg, snk_node, visitor);
                         }
                     }
                 }
@@ -88,7 +86,7 @@ class SerialIncrWalker : public TimingGraphWalker {
         }
 
         void do_required_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalculator& dc, GraphVisitor& visitor) override {
-            prepare_incr_required_update(tg);
+            prepare_incr_required_update(tg, visitor);
 
             std::cout << "Req Levels " << incr_req_update_.max_level << ": " << incr_req_update_.min_level << "\n";
             for(int level_idx = size_t(incr_req_update_.max_level); level_idx >= int(size_t(incr_req_update_.min_level)); --level_idx) {
@@ -103,7 +101,6 @@ class SerialIncrWalker : public TimingGraphWalker {
                 for (NodeId node : level_nodes) {
 
                     //std::cout << "  Processing Req " << node << "\n";
-                    visitor.do_reset_node_required_tags(node);
 
                     bool node_updated = visitor.do_required_traverse_node(tg, tc, dc, node);
 
@@ -116,7 +113,7 @@ class SerialIncrWalker : public TimingGraphWalker {
                         for (EdgeId edge : tg.node_in_edges(node)) {
                             NodeId src_node = tg.edge_src_node(edge);
 
-                            incr_req_update_.enqueue_node(tg, src_node);
+                            enqueue_req_node(tg, src_node, visitor);
                         }
                     }
                 }
@@ -156,7 +153,7 @@ class SerialIncrWalker : public TimingGraphWalker {
                         nodes.end());
         }
 
-        void prepare_incr_arrival_update(const TimingGraph& tg) {
+        void prepare_incr_arrival_update(const TimingGraph& tg, GraphVisitor& visitor) {
             incr_arr_update_.nodes_to_process.resize(tg.levels().size());
             if (incr_arr_update_.min_level && incr_arr_update_.max_level) {
                 for (int level = size_t(incr_arr_update_.min_level); level <= size_t(incr_arr_update_.max_level); ++level) {
@@ -177,11 +174,11 @@ class SerialIncrWalker : public TimingGraphWalker {
             for (EdgeId edge : invalidated_edges_) {
                 NodeId node = tg.edge_sink_node(edge);
 
-                incr_arr_update_.enqueue_node(tg, node);
+                enqueue_arr_node(tg, node, visitor);
             }
         }
 
-        void prepare_incr_required_update(const TimingGraph& tg) {
+        void prepare_incr_required_update(const TimingGraph& tg, GraphVisitor& visitor) {
             incr_req_update_.nodes_to_process.resize(tg.levels().size());
             if (incr_req_update_.min_level && incr_req_update_.max_level) {
                 for (int level = size_t(incr_req_update_.min_level); level <= size_t(incr_req_update_.max_level); ++level) {
@@ -201,8 +198,20 @@ class SerialIncrWalker : public TimingGraphWalker {
             for (EdgeId edge : invalidated_edges_) {
                 NodeId node = tg.edge_src_node(edge);
 
-                incr_req_update_.enqueue_node(tg, node);
+                enqueue_req_node(tg, node, visitor);
             }
+        }
+
+        void enqueue_arr_node(const TimingGraph& tg, NodeId node, GraphVisitor& visitor) {
+            visitor.do_reset_node_arrival_tags(node);
+
+            incr_arr_update_.enqueue_node(tg, node);
+        }
+
+        void enqueue_req_node(const TimingGraph& tg, NodeId node, GraphVisitor& visitor) {
+            visitor.do_reset_node_required_tags(node);
+
+            incr_req_update_.enqueue_node(tg, node);
         }
 
         struct t_incr_traversal_update {
@@ -212,8 +221,6 @@ class SerialIncrWalker : public TimingGraphWalker {
 
             void enqueue_node(const TimingGraph& tg, NodeId node) {
                 LevelId level = tg.node_level(node);
-
-                TATUM_ASSERT(level);
 
                 nodes_to_process[size_t(level)].push_back(node);
                 min_level = std::min(min_level, level);
