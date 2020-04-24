@@ -3,8 +3,10 @@
 #include <chrono>
 #include <random>
 #include "profile.hpp"
+#include "verify.hpp"
 
 #include "tatum/TimingGraph.hpp"
+#include "tatum/analyzer_factory.hpp"
 
 #ifdef TATUM_STA_PROFILE_VTUNE
 #include "ittnotify.h"
@@ -65,7 +67,7 @@ std::map<std::string,std::vector<double>> profile(size_t num_iterations, std::sh
     return prof_data;
 }
 
-std::map<std::string,std::vector<double>> profile_rand_incr(size_t num_iterations, std::shared_ptr<tatum::TimingAnalyzer> serial_analyzer, tatum::FixedDelayCalculator& delay_calc, const tatum::TimingGraph& tg) {
+std::map<std::string,std::vector<double>> profile_rand_incr(size_t num_iterations, std::shared_ptr<tatum::TimingAnalyzer> check_analyzer, std::shared_ptr<tatum::TimingAnalyzer> /*ref_analyzer*/, tatum::FixedDelayCalculator& delay_calc, const tatum::TimingGraph& tg, const tatum::TimingConstraints& tc) {
 
     std::map<std::string,std::vector<double>> prof_data;
 
@@ -84,29 +86,45 @@ std::map<std::string,std::vector<double>> profile_rand_incr(size_t num_iteration
                 tatum::EdgeId edge(iedge);
 
                 //Invalidate
-                serial_analyzer->invalidate_edge(edge);
+                check_analyzer->invalidate_edge(edge);
+                //ref_analyzer->invalidate_edge(edge);
 
                 //Set new delays
+                std::cout << "New Delay: " << edge;
                 if (tg.edge_type(edge) == tatum::EdgeType::PRIMITIVE_CLOCK_CAPTURE) {
                     float new_setup = std::max<float>(0, delay_calc.setup_time(tg, edge).value() + normal_distr(rng));
                     float new_hold = std::max<float>(0, delay_calc.hold_time(tg, edge).value() + normal_distr(rng));
+                    std::cout << " setup: " << new_setup << " hold: " << new_hold;
                     delay_calc.set_setup_time(tg, edge, tatum::Time(new_setup));
                     delay_calc.set_hold_time(tg, edge, tatum::Time(new_hold));
                 } else {
                     float new_max = std::max<float>(0, delay_calc.max_edge_delay(tg, edge).value() + normal_distr(rng));
                     float new_min = std::max<float>(0, delay_calc.min_edge_delay(tg, edge).value() + normal_distr(rng));
+                    std::cout << " min: " << new_min << " max: " << new_max << " (was: " << delay_calc.min_edge_delay(tg, edge).value() << ", " << delay_calc.max_edge_delay(tg, edge).value() << ")";
                     delay_calc.set_max_edge_delay(tg, edge, tatum::Time(new_max));
                     delay_calc.set_min_edge_delay(tg, edge, tatum::Time(new_min));
                 }
+                std::cout << "\n";
             }
         }
 
         //Analyze
-        serial_analyzer->update_timing();
+        check_analyzer->update_timing();
 
+
+        std::shared_ptr<tatum::TimingAnalyzer> ref_analyzer = tatum::AnalyzerFactory<tatum::SetupHoldAnalysis>::make(tg, tc, delay_calc);
+        ref_analyzer->update_timing();
+
+        auto res = verify_equivalent_analysis(tg, delay_calc, ref_analyzer, check_analyzer);
+
+        if (res.second) {
+            std::cout << "Equivalent\n";
+        } else {
+            std::cout << "Not equivalent\n";
+        }
 
         for(auto key : {"arrival_pre_traversal_sec", "arrival_traversal_sec", "required_pre_traversal_sec", "required_traversal_sec", "reset_sec", "update_slack_sec", "analysis_sec"}) {
-            prof_data[key].push_back(serial_analyzer->get_profiling_data(key));
+            prof_data[key].push_back(check_analyzer->get_profiling_data(key));
         }
 
 
