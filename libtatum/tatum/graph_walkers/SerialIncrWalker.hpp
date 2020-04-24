@@ -226,8 +226,8 @@ class SerialIncrWalker : public TimingGraphWalker {
 
         struct t_incr_traversal_update {
             std::vector<std::vector<NodeId>> nodes_to_process;
-            int min_level;
-            int max_level;
+            int min_level = 0;
+            int max_level = 0;
 
             void enqueue_node(const TimingGraph& tg, NodeId node) {
                 int level = size_t(tg.node_level(node));
