@@ -279,7 +279,9 @@ bool verify_time(NodeId node, DomainId launch_domain, DomainId capture_domain, f
         //
         //This occurs in some cases (such as applying clock tags to primary outputs)
         //which are cuased by the differeing analysis methods
-    } else if (std::isnan(analyzer_time) && std::isnan(reference_time)) {
+    } else if ((std::isnan(analyzer_time) && std::isnan(reference_time)) //Both NaN
+               || (std::isinf(analyzer_time) && std::isinf(reference_time) //Both inf with same sign
+                   && (std::signbit(analyzer_time) == std::signbit(reference_time)))) {
         //They agree, pass
     } else if(arr_rel_err > RELATIVE_EPSILON && arr_abs_err > ABSOLUTE_EPSILON) {
         cout << "Node: " << node << " Launch Clk: " << launch_domain << " Capture Clk: " << capture_domain;
