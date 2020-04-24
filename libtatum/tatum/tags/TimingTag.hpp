@@ -95,6 +95,9 @@ class TimingTag {
 
         TagType type() const { return type_; }
 
+    public: //Utility
+        friend bool operator==(const TimingTag& lhs, const TimingTag& rhs);
+        friend bool operator!=(const TimingTag& lhs, const TimingTag& rhs);
     public: //Mutators
         ///\param new_time The new value set as the tag's time
         void set_time(const Time& new_time) { time_ = new_time; }
