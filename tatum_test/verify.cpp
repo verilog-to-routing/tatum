@@ -18,13 +18,13 @@ constexpr float ABSOLUTE_EPSILON = 1.e-13;
 
 //Verify against golden reference results
 std::pair<size_t,bool> verify_node_tags(const NodeId node, TimingTags::tag_range analyzer_tags, const std::map<std::pair<DomainId,DomainId>,TagResult>& ref_results, std::string type);
-bool verify_tag(const TimingTag& tag, const TagResult& ref_result);
+bool verify_tag(const TimingTag& tag, const TagResult& ref_result, std::string type);
 
 //Verify against another analyzer
 std::pair<size_t,bool> verify_node_tags(const NodeId node, TimingTags::tag_range check_tags, TimingTags::tag_range ref_tags, std::string type);
-bool verify_tag(const TimingTag& ref_tag, const TimingTag& check_tag, NodeId node);
+bool verify_tag(const TimingTag& ref_tag, const TimingTag& check_tag, NodeId node, std::string type);
 
-bool verify_time(NodeId node, DomainId launch_domain, DomainId capture_domain, float analyzer_time, float reference_time);
+bool verify_time(NodeId node, DomainId launch_domain, DomainId capture_domain, float analyzer_time, float reference_time, std::string type);
 
 std::pair<size_t,bool> verify_analyzer(const TimingGraph& tg, std::shared_ptr<TimingAnalyzer> analyzer, GoldenReference& gr) {
     bool error = false;
@@ -91,7 +91,7 @@ std::pair<size_t,bool> verify_node_tags(const NodeId node, TimingTags::tag_range
             cout << "\tERROR No reference tag found for clock domain pair " << tag.launch_clock_domain() << ", " << tag.capture_clock_domain() << endl;
             error = true;
         } else {
-            if(!verify_tag(tag, iter->second)) {
+            if(!verify_tag(tag, iter->second, type)) {
                 error = true;
             }
             ++tags_verified;
@@ -124,11 +124,11 @@ std::pair<size_t,bool> verify_node_tags(const NodeId node, TimingTags::tag_range
     return {tags_verified, error};
 }
 
-bool verify_tag(const TimingTag& tag, const TagResult& ref_result) {
+bool verify_tag(const TimingTag& tag, const TagResult& ref_result, std::string type) {
     TATUM_ASSERT(tag.launch_clock_domain() == ref_result.launch_domain && tag.capture_clock_domain() == ref_result.capture_domain);
 
     bool valid = true;
-    valid &= verify_time(ref_result.node, ref_result.launch_domain, ref_result.capture_domain, tag.time().value(), ref_result.time);
+    valid &= verify_time(ref_result.node, ref_result.launch_domain, ref_result.capture_domain, tag.time().value(), ref_result.time, type);
 
     return valid;
 }
@@ -228,7 +228,7 @@ std::pair<size_t,bool> verify_node_tags(const NodeId node, TimingTags::tag_range
             cout << "\tERROR No check tag found for clock domain pair " << ref_tag.launch_clock_domain() << ", " << ref_tag.capture_clock_domain() << endl;
             error = true;
         } else {
-            if(!verify_tag(*iter, ref_tag, node)) {
+            if(!verify_tag(*iter, ref_tag, node, type)) {
                 error = true;
             }
             ++tags_verified;
@@ -255,17 +255,17 @@ std::pair<size_t,bool> verify_node_tags(const NodeId node, TimingTags::tag_range
     return {tags_verified, error};
 }
 
-bool verify_tag(const TimingTag& check_tag, const TimingTag& ref_tag, const NodeId node) {
+bool verify_tag(const TimingTag& check_tag, const TimingTag& ref_tag, const NodeId node, std::string type) {
     TATUM_ASSERT(ref_tag.launch_clock_domain() == check_tag.launch_clock_domain()
                  && ref_tag.capture_clock_domain() == check_tag.capture_clock_domain());
 
     bool valid = true;
-    valid &= verify_time(node, check_tag.launch_clock_domain(), check_tag.capture_clock_domain(), ref_tag.time().value(), check_tag.time().value());
+    valid &= verify_time(node, check_tag.launch_clock_domain(), check_tag.capture_clock_domain(), ref_tag.time().value(), check_tag.time().value(), type);
 
     return valid;
 }
 
-bool verify_time(NodeId node, DomainId launch_domain, DomainId capture_domain, float analyzer_time, float reference_time) {
+bool verify_time(NodeId node, DomainId launch_domain, DomainId capture_domain, float analyzer_time, float reference_time, std::string type) {
     float arr_abs_err = fabs(analyzer_time - reference_time);
     float arr_rel_err = relative_error(analyzer_time, reference_time);
     if(std::isnan(analyzer_time) && (std::isnan(analyzer_time) != std::isnan(reference_time))) {
@@ -284,9 +284,9 @@ bool verify_time(NodeId node, DomainId launch_domain, DomainId capture_domain, f
                    && (std::signbit(analyzer_time) == std::signbit(reference_time)))) {
         //They agree, pass
     } else if(arr_rel_err > RELATIVE_EPSILON && arr_abs_err > ABSOLUTE_EPSILON) {
-        cout << "Node: " << node << " Launch Clk: " << launch_domain << " Capture Clk: " << capture_domain;
-        cout << " Calc_: " << analyzer_time;
-        cout << " Ref_: " << reference_time << endl;
+        cout << "Node: " << node << " " << type << " Launch Clk: " << launch_domain << " Capture Clk: " << capture_domain;
+        cout << " Calc: " << analyzer_time;
+        cout << " Ref: " << reference_time << endl;
         cout << "\tERROR time abs, rel errs: " << arr_abs_err;
         cout << ", " << arr_rel_err << endl;
         return false;
