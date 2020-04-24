@@ -88,14 +88,6 @@ class SerialIncrWalker : public TimingGraphWalker {
         }
 
         void do_required_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalculator& dc, GraphVisitor& visitor) override {
-            /*
-             *for(LevelId level_id : tg.reversed_levels()) {
-             *    for(NodeId node_id : tg.level_nodes(level_id)) {
-             *        visitor.do_required_traverse_node(tg, tc, dc, node_id);
-             *    }
-             *}
-             */
-
             prepare_incr_required_update(tg);
 
             std::cout << "Req Levels " << incr_req_update_.max_level << ": " << incr_req_update_.min_level << "\n";
