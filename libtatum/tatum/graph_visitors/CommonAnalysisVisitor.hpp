@@ -37,6 +37,9 @@ class CommonAnalysisVisitor : public GraphVisitor {
         void do_reset_node_arrival_tags(const NodeId node_id) override;
         void do_reset_node_required_tags(const NodeId node_id) override;
 
+        void do_reset_node_arrival_tags_from_origin(const NodeId node_id, const NodeId origin) override;
+        void do_reset_node_required_tags_from_origin(const NodeId node_id, const NodeId origin) override;
+
         bool do_arrival_pre_traverse_node(const TimingGraph& tg, const TimingConstraints& tc, const NodeId node_id) override;
 
         bool do_required_pre_traverse_node(const TimingGraph& tg, const TimingConstraints& tc, const NodeId node_id) override;
@@ -89,6 +92,31 @@ void CommonAnalysisVisitor<AnalysisOps>::do_reset_node_required_tags(const NodeI
         for (TimingTag& tag : ops_.get_mutable_tags(node_id, type)) {
             tag.set_origin_node(NodeId::INVALID());        
             tag.set_time(ops_.invalid_required_time());
+        }
+    }
+}
+
+
+template<class AnalysisOps>
+void CommonAnalysisVisitor<AnalysisOps>::do_reset_node_arrival_tags_from_origin(const NodeId node_id, const NodeId origin) {
+    for (TagType type : {TagType::CLOCK_LAUNCH, TagType::CLOCK_CAPTURE, TagType::DATA_ARRIVAL}) {
+        for (TimingTag& tag : ops_.get_mutable_tags(node_id, type)) {
+            if (tag.origin_node() == origin) {
+                tag.set_origin_node(NodeId::INVALID());        
+                tag.set_time(ops_.invalid_arrival_time());
+            }
+        }
+    }
+}
+
+template<class AnalysisOps>
+void CommonAnalysisVisitor<AnalysisOps>::do_reset_node_required_tags_from_origin(const NodeId node_id, const NodeId origin) {
+    for (TagType type : {TagType::DATA_REQUIRED}) {
+        for (TimingTag& tag : ops_.get_mutable_tags(node_id, type)) {
+            if (tag.origin_node() == origin) {
+                tag.set_origin_node(NodeId::INVALID());        
+                tag.set_time(ops_.invalid_required_time());
+            }
         }
     }
 }

@@ -77,7 +77,7 @@ class SerialIncrWalker : public TimingGraphWalker {
                         for (EdgeId edge : tg.node_out_edges(node)) {
                             NodeId snk_node = tg.edge_sink_node(edge);
 
-                            enqueue_arr_node(tg, snk_node, visitor);
+                            enqueue_arr_node(tg, snk_node, edge, visitor);
                         }
                     }
                 }
@@ -113,7 +113,7 @@ class SerialIncrWalker : public TimingGraphWalker {
                         for (EdgeId edge : tg.node_in_edges(node)) {
                             NodeId src_node = tg.edge_src_node(edge);
 
-                            enqueue_req_node(tg, src_node, visitor);
+                            enqueue_req_node(tg, src_node, edge, visitor);
                         }
                     }
                 }
@@ -174,7 +174,7 @@ class SerialIncrWalker : public TimingGraphWalker {
             for (EdgeId edge : invalidated_edges_) {
                 NodeId node = tg.edge_sink_node(edge);
 
-                enqueue_arr_node(tg, node, visitor);
+                enqueue_arr_node(tg, node, edge, visitor);
             }
         }
 
@@ -198,18 +198,28 @@ class SerialIncrWalker : public TimingGraphWalker {
             for (EdgeId edge : invalidated_edges_) {
                 NodeId node = tg.edge_src_node(edge);
 
-                enqueue_req_node(tg, node, visitor);
+                enqueue_req_node(tg, node, edge, visitor);
             }
         }
 
-        void enqueue_arr_node(const TimingGraph& tg, NodeId node, GraphVisitor& visitor) {
-            visitor.do_reset_node_arrival_tags(node);
+        void enqueue_arr_node(const TimingGraph& tg, NodeId node, EdgeId invalidated_edge, GraphVisitor& visitor) {
+            if (0) { //Block invalidation
+                visitor.do_reset_node_arrival_tags(node);
+            } else { //Edge invalidation
+                NodeId src_node = tg.edge_src_node(invalidated_edge);
+                visitor.do_reset_node_arrival_tags_from_origin(node, src_node);
+            }
 
             incr_arr_update_.enqueue_node(tg, node);
         }
 
-        void enqueue_req_node(const TimingGraph& tg, NodeId node, GraphVisitor& visitor) {
-            visitor.do_reset_node_required_tags(node);
+        void enqueue_req_node(const TimingGraph& tg, NodeId node, EdgeId invalidated_edge, GraphVisitor& visitor) {
+            if (0) { //Block invalidation
+                visitor.do_reset_node_required_tags(node);
+            } else { //Edge invalidation
+                NodeId snk_node = tg.edge_sink_node(invalidated_edge);
+                visitor.do_reset_node_required_tags_from_origin(node, snk_node);
+            }
 
             incr_req_update_.enqueue_node(tg, node);
         }
