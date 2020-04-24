@@ -512,7 +512,11 @@ int main(int argc, char** argv) {
             cout << "Running SerialIncr Analysis " << args.num_serial_incr_runs << " times" << endl;
 
             //Analyze
+#if 0
             serial_incr_prof_data = profile(args.num_serial_incr_runs, serial_incr_analyzer);
+#else
+            serial_incr_prof_data = profile_rand_incr(args.num_serial_incr_runs, serial_incr_analyzer, *delay_calculator, *timing_graph);
+#endif
 
             //Verify
             clock_gettime(CLOCK_MONOTONIC, &verify_start);
