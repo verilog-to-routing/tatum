@@ -101,6 +101,34 @@ Args parse_args(int argc, char** argv);
 double median(std::vector<double> values);
 double arithmean(std::vector<double> values);
 
+template<class I>
+double median(I begin, I end) {
+    std::sort(begin, end);
+
+    size_t size = std::distance(begin, end);
+    if(size % 2 == 0) {
+        return(*(begin + (size / 2) - 1) + *(begin + (size / 2))) / 2;
+    } else {
+        return *(begin + (size / 2));
+    }
+
+}
+
+template<class I>
+double arithmean(I begin, I end) {
+    return std::accumulate(begin, end, 0.) / std::distance(begin, end);
+}
+
+template<class T>
+double arithmean_skip_first(T values) {
+    return arithmean(std::begin(values) + 1, std::end(values));
+}
+
+template<class T>
+double median_skip_first(T values) {
+    return median(std::begin(values) + 1, std::end(values));
+}
+
 
 void usage(std::string prog) {
     Args default_args;
@@ -514,103 +542,67 @@ int main(int argc, char** argv) {
         auto serial_incr_hold_analyzer = std::dynamic_pointer_cast<tatum::HoldTimingAnalyzer>(serial_incr_analyzer);
 
         float serial_incr_verify_time = 0;
-        size_t serial_incr_tags_verified = 0;
         std::map<std::string,std::vector<double>> serial_incr_prof_data;
         {
             cout << "Running SerialIncr Analysis " << args.num_serial_incr_runs << " times" << endl;
 
             //Analyze
-#if 0
-            serial_incr_prof_data = profile(args.num_serial_incr_runs, serial_incr_analyzer);
-#else
-            serial_incr_prof_data = profile_rand_incr(args.num_serial_incr_runs, args.edge_change_prob, serial_incr_analyzer, serial_analyzer, *delay_calculator, *timing_graph);
-#endif
+            bool equivalent = profile_incr(args.num_serial_incr_runs,
+                                           args.edge_change_prob,
+                                           args.verify,
+                                           *timing_graph,
+                                           serial_incr_analyzer,
+                                           serial_analyzer,
+                                           *delay_calculator,
+                                           serial_incr_prof_data);
 
-            //Verify
-            clock_gettime(CLOCK_MONOTONIC, &verify_start);
-
-            if (args.verify) {
-                cout << "\n";
-                auto res = verify_analyzer(*timing_graph, serial_incr_analyzer, *golden_reference);
-
-                serial_incr_tags_verified = res.first;
-
-                if(!res.second) {
-                    cout << "Verification failed!\n";
-                    exit_code = 1;
-
-
-                }
+            if(!equivalent) {
+                cout << "Verification failed!\n";
+                exit_code = 1;
             }
 
-            std::vector<NodeId> nodes;
-            if (args.debug_dot_node == -1) {
-                //Pass
-            } else if (args.debug_dot_node < -1) {
-                auto tg_nodes = timing_graph->nodes();
-                nodes = std::vector<NodeId>(tg_nodes.begin(), tg_nodes.end());
-            } else if (args.debug_dot_node >= 0) {
-                nodes = find_transitively_connected_nodes(*timing_graph, {NodeId(args.debug_dot_node)});
-            }
-            if (args.debug_dot_node != -1) {
-                auto dot_writer = make_graphviz_dot_writer(*timing_graph, *delay_calculator);
-                dot_writer.set_nodes_to_dump(nodes);
-
-                std::shared_ptr<tatum::SetupTimingAnalyzer> debug_setup_analyzer = std::dynamic_pointer_cast<tatum::SetupTimingAnalyzer>(serial_incr_analyzer);
-                dot_writer.write_dot_file("debug_tg_setup_annotated.dot", *debug_setup_analyzer);
-                std::shared_ptr<tatum::HoldTimingAnalyzer> debug_hold_analyzer = std::dynamic_pointer_cast<tatum::HoldTimingAnalyzer>(serial_incr_analyzer);
-                dot_writer.write_dot_file("debug_tg_hold_annotated.dot", *debug_setup_analyzer);
-            }
-
-            clock_gettime(CLOCK_MONOTONIC, &verify_end);
-            serial_incr_verify_time += tatum::time_sec(verify_start, verify_end);
+            serial_incr_verify_time += std::accumulate(serial_incr_prof_data["verify_sec"].begin(), serial_incr_prof_data["verify_sec"].end(), 0.);
 
             cout << endl;
-            cout << "SerialIncr Analysis took " << std::setprecision(6) << std::setw(6) << arithmean(serial_incr_prof_data["analysis_sec"])*args.num_serial_incr_runs << " sec";
+            cout << "SerialIncr Analysis took " << std::setprecision(6) << std::setw(6) << arithmean_skip_first(serial_incr_prof_data["analysis_sec"])*args.num_serial_incr_runs << " sec";
             if(serial_incr_prof_data["analysis_sec"].size() > 0) {
-                cout << " AVG: " << arithmean(serial_incr_prof_data["analysis_sec"]);
-                cout << " Median: " << median(serial_incr_prof_data["analysis_sec"]);
+                cout << " AVG: " << arithmean_skip_first(serial_incr_prof_data["analysis_sec"]);
+                cout << " Median: " << median_skip_first(serial_incr_prof_data["analysis_sec"]);
                 cout << " Min: " << *std::min_element(serial_incr_prof_data["analysis_sec"].begin(), serial_incr_prof_data["analysis_sec"].end());
                 cout << " Max: " << *std::max_element(serial_incr_prof_data["analysis_sec"].begin(), serial_incr_prof_data["analysis_sec"].end());
             }
             cout << endl;
 
-            cout << "\tReset             Median: " << std::setprecision(6) << std::setw(6) << median(serial_incr_prof_data["reset_sec"]) << " s";
-            cout << " (" << std::setprecision(2) << median(serial_incr_prof_data["reset_sec"])/median(serial_incr_prof_data["analysis_sec"]) << ")" << endl;
+            cout << "\tReset             Median: " << std::setprecision(6) << std::setw(6) << median_skip_first(serial_incr_prof_data["reset_sec"]) << " s";
+            cout << " (" << std::setprecision(2) << median_skip_first(serial_incr_prof_data["reset_sec"])/median_skip_first(serial_incr_prof_data["analysis_sec"]) << ")" << endl;
 
-            cout << "\tArr Pre-traversal Median: " << std::setprecision(6) << std::setw(6) << median(serial_incr_prof_data["arrival_pre_traversal_sec"]) << " s";
-            cout << " (" << std::setprecision(2) << median(serial_incr_prof_data["arrival_pre_traversal_sec"])/median(serial_incr_prof_data["analysis_sec"]) << ")" << endl;
+            cout << "\tArr Pre-traversal Median: " << std::setprecision(6) << std::setw(6) << median_skip_first(serial_incr_prof_data["arrival_pre_traversal_sec"]) << " s";
+            cout << " (" << std::setprecision(2) << median_skip_first(serial_incr_prof_data["arrival_pre_traversal_sec"])/median_skip_first(serial_incr_prof_data["analysis_sec"]) << ")" << endl;
 
-            cout << "\tReq Pre-traversal Median: " << std::setprecision(6) << std::setw(6) << median(serial_incr_prof_data["required_pre_traversal_sec"]) << " s";
-            cout << " (" << std::setprecision(2) << median(serial_incr_prof_data["required_pre_traversal_sec"])/median(serial_incr_prof_data["analysis_sec"]) << ")" << endl;
+            cout << "\tReq Pre-traversal Median: " << std::setprecision(6) << std::setw(6) << median_skip_first(serial_incr_prof_data["required_pre_traversal_sec"]) << " s";
+            cout << " (" << std::setprecision(2) << median_skip_first(serial_incr_prof_data["required_pre_traversal_sec"])/median_skip_first(serial_incr_prof_data["analysis_sec"]) << ")" << endl;
 
-            cout << "\tArr     traversal Median: " << std::setprecision(6) << std::setw(6) << median(serial_incr_prof_data["arrival_traversal_sec"]) << " s";
-            cout << " (" << std::setprecision(2) << median(serial_incr_prof_data["arrival_traversal_sec"])/median(serial_incr_prof_data["analysis_sec"]) << ")" << endl;
+            cout << "\tArr     traversal Median: " << std::setprecision(6) << std::setw(6) << median_skip_first(serial_incr_prof_data["arrival_traversal_sec"]) << " s";
+            cout << " (" << std::setprecision(2) << median_skip_first(serial_incr_prof_data["arrival_traversal_sec"])/median_skip_first(serial_incr_prof_data["analysis_sec"]) << ")" << endl;
 
-            cout << "\tReq     traversal Median: " << std::setprecision(6) << std::setw(6) << median(serial_incr_prof_data["required_traversal_sec"]) << " s";
-            cout << " (" << std::setprecision(2) << median(serial_incr_prof_data["required_traversal_sec"])/median(serial_incr_prof_data["analysis_sec"]) << ")" << endl;
+            cout << "\tReq     traversal Median: " << std::setprecision(6) << std::setw(6) << median_skip_first(serial_incr_prof_data["required_traversal_sec"]) << " s";
+            cout << " (" << std::setprecision(2) << median_skip_first(serial_incr_prof_data["required_traversal_sec"])/median_skip_first(serial_incr_prof_data["analysis_sec"]) << ")" << endl;
 
-            cout << "\tUpdate slack      Median: " << std::setprecision(6) << std::setw(6) << median(serial_incr_prof_data["update_slack_sec"]) << " s";
-            cout << " (" << std::setprecision(2) << median(serial_incr_prof_data["update_slack_sec"])/median(serial_incr_prof_data["analysis_sec"]) << ")" << endl;
+            cout << "\tUpdate slack      Median: " << std::setprecision(6) << std::setw(6) << median_skip_first(serial_incr_prof_data["update_slack_sec"]) << " s";
+            cout << " (" << std::setprecision(2) << median_skip_first(serial_incr_prof_data["update_slack_sec"])/median_skip_first(serial_incr_prof_data["analysis_sec"]) << ")" << endl;
 
             cout << "Verifying SerialIncr Analysis took: " <<  serial_incr_verify_time<< " sec" << endl;
-            if(serial_incr_tags_verified == golden_reference->num_tags() || serial_incr_tags_verified == golden_reference->num_tags()/2) {
-                //Potentially allow / 2 for setup only analysis from setup/hold golden
-                cout << "\tVerified " << serial_tags_verified << " tags (expected " << golden_reference->num_tags() << " or " << golden_reference->num_tags()/2 << ") accross " << timing_graph->nodes().size() << " nodes" << endl;
-            } else {
-                cout << "WARNING: Expected tags (" << golden_reference->num_tags() << ") differs from tags checked (" << serial_incr_tags_verified << ") , verification may not have occured!" << endl;
-            }
         }
         cout << endl;
 
 
-        cout << "SerialIncr Speed-Up: " << std::fixed << median(serial_prof_data["analysis_sec"]) / median(serial_incr_prof_data["analysis_sec"]) << "x" << endl;
-        cout << "\t            Reset: " << std::fixed << median(serial_prof_data["reset_sec"]) / median(serial_incr_prof_data["reset_sec"]) << "x" << endl;
-        cout << "\tArr Pre-traversal: " << std::fixed << median(serial_prof_data["arrival_pre_traversal_sec"]) / median(serial_incr_prof_data["arrival_pre_traversal_sec"]) << "x" << endl;
-        cout << "\tReq Pre-traversal: " << std::fixed << median(serial_prof_data["required_pre_traversal_sec"]) / median(serial_incr_prof_data["required_pre_traversal_sec"]) << "x" << endl;
-        cout << "\t    Arr-traversal: " << std::fixed << median(serial_prof_data["arrival_traversal_sec"]) / median(serial_incr_prof_data["arrival_traversal_sec"]) << "x" << endl;
-        cout << "\t    Req-traversal: " << std::fixed << median(serial_prof_data["required_traversal_sec"]) / median(serial_incr_prof_data["required_traversal_sec"]) << "x" << endl;
-        cout << "\t     Update-slack: " << std::fixed << median(serial_prof_data["update_slack_sec"]) / median(serial_incr_prof_data["update_slack_sec"]) << "x" << endl;
+        cout << "SerialIncr Speed-Up: " << std::fixed << median(serial_incr_prof_data["ref_analysis_sec"]) / median(serial_incr_prof_data["analysis_sec"]) << "x" << endl;
+        cout << "\t            Reset: " << std::fixed << median(serial_incr_prof_data["ref_reset_sec"]) / median(serial_incr_prof_data["reset_sec"]) << "x" << endl;
+        cout << "\tArr Pre-traversal: " << std::fixed << median(serial_incr_prof_data["ref_arrival_pre_traversal_sec"]) / median(serial_incr_prof_data["arrival_pre_traversal_sec"]) << "x" << endl;
+        cout << "\tReq Pre-traversal: " << std::fixed << median(serial_incr_prof_data["ref_required_pre_traversal_sec"]) / median(serial_incr_prof_data["required_pre_traversal_sec"]) << "x" << endl;
+        cout << "\t    Arr-traversal: " << std::fixed << median(serial_incr_prof_data["ref_arrival_traversal_sec"]) / median(serial_incr_prof_data["arrival_traversal_sec"]) << "x" << endl;
+        cout << "\t    Req-traversal: " << std::fixed << median(serial_incr_prof_data["ref_required_traversal_sec"]) / median(serial_incr_prof_data["required_traversal_sec"]) << "x" << endl;
+        cout << "\t     Update-slack: " << std::fixed << median(serial_incr_prof_data["ref_update_slack_sec"]) / median(serial_incr_prof_data["update_slack_sec"]) << "x" << endl;
         cout << endl;
 
         cout << endl << "Net SerialIncr Analysis elapsed time: " << serial_incr_analyzer->get_profiling_data("total_analysis_sec") << " sec over " << serial_incr_analyzer->get_profiling_data("num_full_updates") << " full updates" << endl;
