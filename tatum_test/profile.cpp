@@ -7,6 +7,7 @@
 
 #include "tatum/TimingGraph.hpp"
 #include "tatum/analyzer_factory.hpp"
+#include "tatum/base/sta_util.hpp"
 
 #ifdef TATUM_STA_PROFILE_VTUNE
 #include "ittnotify.h"
@@ -67,18 +68,21 @@ std::map<std::string,std::vector<double>> profile(size_t num_iterations, std::sh
     return prof_data;
 }
 
-std::map<std::string,std::vector<double>> profile_rand_incr(size_t num_iterations,
-                                                            float edge_change_prob,
-                                                            std::shared_ptr<tatum::TimingAnalyzer> check_analyzer,
-                                                            std::shared_ptr<tatum::TimingAnalyzer> ref_analyzer,
-                                                            tatum::FixedDelayCalculator& delay_calc,
-                                                            const tatum::TimingGraph& tg) {
-
-    std::map<std::string,std::vector<double>> prof_data;
+bool profile_incr(size_t num_iterations,
+                  float edge_change_prob,
+                  bool verify,
+                  const tatum::TimingGraph& tg,
+                  std::shared_ptr<tatum::TimingAnalyzer> check_analyzer,
+                  std::shared_ptr<tatum::TimingAnalyzer> ref_analyzer,
+                  tatum::FixedDelayCalculator& delay_calc,
+                  std::map<std::string,std::vector<double>>& prof_data) {
 
     std::minstd_rand rng;
     std::uniform_int_distribution<size_t> uniform_distr(0, tg.edges().size() - 1);
     std::normal_distribution<float> normal_distr(0, 1e-9);
+
+    struct timespec verify_start;
+    struct timespec verify_end;
 
     for(size_t i = 0; i < num_iterations; i++) {
 
@@ -115,27 +119,34 @@ std::map<std::string,std::vector<double>> profile_rand_incr(size_t num_iteration
 
         //Analyze
         check_analyzer->update_timing();
-
-
         ref_analyzer->update_timing();
 
-        auto res = verify_equivalent_analysis(tg, delay_calc, ref_analyzer, check_analyzer);
+        //Verify
+        clock_gettime(CLOCK_MONOTONIC, &verify_start);
 
-        if (res.second) {
-            std::cout << "Equivalent\n";
-        } else {
-            std::cout << "Not equivalent\n";
-            exit(1);
+        if (verify) {
+            auto res = verify_equivalent_analysis(tg, delay_calc, ref_analyzer, check_analyzer);
+
+            if (res.second) {
+                std::cout << "Equivalent\n";
+            } else {
+                std::cout << "Not equivalent\n";
+                return false;
+            }
+
         }
+        clock_gettime(CLOCK_MONOTONIC, &verify_end);
 
+        std::cout << "Arr Sec: incr=" << check_analyzer->get_profiling_data("arrival_traversal_sec") << " ref=" << ref_analyzer->get_profiling_data("arrival_traversal_sec") << "\n";
         for(auto key : {"arrival_pre_traversal_sec", "arrival_traversal_sec", "required_pre_traversal_sec", "required_traversal_sec", "reset_sec", "update_slack_sec", "analysis_sec"}) {
             prof_data[key].push_back(check_analyzer->get_profiling_data(key));
+            prof_data[std::string("ref_") + key].push_back(ref_analyzer->get_profiling_data(key));
         }
-
+        prof_data["verify_sec"].push_back(tatum::time_sec(verify_start, verify_end));
 
         std::cout << ".";
         std::cout.flush();
     }
 
-    return prof_data;
+    return true;
 }
