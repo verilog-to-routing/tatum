@@ -65,7 +65,7 @@ class SerialIncrWalker : public TimingGraphWalker {
 
                 for (NodeId node : level_nodes) {
 
-                    std::cout << "  Processing Arr " << node << "\n";
+                    //std::cout << "  Processing Arr " << node << "\n";
 
                     bool node_updated = visitor.do_arrival_traverse_node(tg, tc, dc, node);
 
@@ -102,7 +102,7 @@ class SerialIncrWalker : public TimingGraphWalker {
 
                 for (NodeId node : level_nodes) {
 
-                    std::cout << "  Processing Req " << node << "\n";
+                    //std::cout << "  Processing Req " << node << "\n";
 
                     bool node_updated = visitor.do_required_traverse_node(tg, tc, dc, node);
 
@@ -232,7 +232,7 @@ class SerialIncrWalker : public TimingGraphWalker {
 
             }
 
-            std::cout << "  Enqueing arr " << node << "\n";
+            //std::cout << "  Enqueing arr " << node << "\n";
             incr_arr_update_.enqueue_node(tg, node);
         }
 
@@ -244,7 +244,7 @@ class SerialIncrWalker : public TimingGraphWalker {
                 visitor.do_reset_node_required_tags_from_origin(node, snk_node);
             }
 
-            std::cout << "  Enqueing req " << node << "\n";
+            //std::cout << "  Enqueing req " << node << "\n";
             incr_req_update_.enqueue_node(tg, node);
         }
 
