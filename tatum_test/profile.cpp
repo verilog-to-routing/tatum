@@ -67,7 +67,12 @@ std::map<std::string,std::vector<double>> profile(size_t num_iterations, std::sh
     return prof_data;
 }
 
-std::map<std::string,std::vector<double>> profile_rand_incr(size_t num_iterations, std::shared_ptr<tatum::TimingAnalyzer> check_analyzer, std::shared_ptr<tatum::TimingAnalyzer> /*ref_analyzer*/, tatum::FixedDelayCalculator& delay_calc, const tatum::TimingGraph& tg, const tatum::TimingConstraints& tc) {
+std::map<std::string,std::vector<double>> profile_rand_incr(size_t num_iterations,
+                                                            float edge_change_prob,
+                                                            std::shared_ptr<tatum::TimingAnalyzer> check_analyzer,
+                                                            std::shared_ptr<tatum::TimingAnalyzer> ref_analyzer,
+                                                            tatum::FixedDelayCalculator& delay_calc,
+                                                            const tatum::TimingGraph& tg) {
 
     std::map<std::string,std::vector<double>> prof_data;
 
@@ -80,14 +85,14 @@ std::map<std::string,std::vector<double>> profile_rand_incr(size_t num_iteration
         if (i > 0) {
             //Randomly invalidate edges
 
-            size_t EDGES_TO_INVALIDATE = 0.01 * tg.edges().size();
+            size_t EDGES_TO_INVALIDATE = edge_change_prob * tg.edges().size();
             for (size_t j = 0; j < EDGES_TO_INVALIDATE; j++) {
                 size_t iedge = uniform_distr(rng);
                 tatum::EdgeId edge(iedge);
 
                 //Invalidate
                 check_analyzer->invalidate_edge(edge);
-                //ref_analyzer->invalidate_edge(edge);
+                ref_analyzer->invalidate_edge(edge);
 
                 //Set new delays
                 std::cout << "New Delay: " << edge;
@@ -112,7 +117,6 @@ std::map<std::string,std::vector<double>> profile_rand_incr(size_t num_iteration
         check_analyzer->update_timing();
 
 
-        std::shared_ptr<tatum::TimingAnalyzer> ref_analyzer = tatum::AnalyzerFactory<tatum::SetupHoldAnalysis>::make(tg, tc, delay_calc);
         ref_analyzer->update_timing();
 
         auto res = verify_equivalent_analysis(tg, delay_calc, ref_analyzer, check_analyzer);
@@ -121,6 +125,7 @@ std::map<std::string,std::vector<double>> profile_rand_incr(size_t num_iteration
             std::cout << "Equivalent\n";
         } else {
             std::cout << "Not equivalent\n";
+            exit(1);
         }
 
         for(auto key : {"arrival_pre_traversal_sec", "arrival_traversal_sec", "required_pre_traversal_sec", "required_traversal_sec", "reset_sec", "update_slack_sec", "analysis_sec"}) {
