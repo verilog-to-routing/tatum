@@ -63,6 +63,10 @@ struct Args {
     //Number of serial incremental runs to perform
     size_t num_serial_incr_runs = 10;
 
+    //What percentange of edges have delay changes
+    //for each serial incremental run
+    float edge_change_prob = 0.01;
+
     //Number of parallel runs to perform
     size_t num_parallel_runs = 30;
 
@@ -115,6 +119,8 @@ void usage(std::string prog) {
     cout << "                                               (default " << default_args.num_serial_incr_runs << ")\n";
     cout << "    --num_parallel NUM_PARALLEL_RUNS:          Number of serial runs to perform.\n";
     cout << "                                               (default " << default_args.num_parallel_runs << ")\n";
+    cout << "    --edge_change_prob EDGE_CHANGE_PROB:       Probability of an edge delay changing in a serial incremental run\n";
+    cout << "                                               (default " << default_args.edge_change_prob << ")\n";
     cout << "    --unit_delay UNIT_DELAY:                   Use specified unit delay for all edges.\n";
     cout << "                                               0 uses delay model from input.\n";
     cout << "                                               (default " << default_args.unit_delay << ")\n";
@@ -187,6 +193,8 @@ Args parse_args(int argc, char** argv) {
                     args.num_serial_incr_runs = arg_val;
                 } else if (argv[i] == std::string("--num_parallel")) { 
                     args.num_parallel_runs = arg_val;
+                } else if (argv[i] == std::string("--edge_change_prob")) { 
+                    args.edge_change_prob = arg_val;
                 } else if (argv[i] == std::string("--unit_delay")) { 
                     args.unit_delay = arg_val;
                 } else if (argv[i] == std::string("--opt_graph_layout")) { 
@@ -515,7 +523,7 @@ int main(int argc, char** argv) {
 #if 0
             serial_incr_prof_data = profile(args.num_serial_incr_runs, serial_incr_analyzer);
 #else
-            serial_incr_prof_data = profile_rand_incr(args.num_serial_incr_runs, 0.01, serial_incr_analyzer, serial_analyzer, *delay_calculator, *timing_graph);
+            serial_incr_prof_data = profile_rand_incr(args.num_serial_incr_runs, args.edge_change_prob, serial_incr_analyzer, serial_analyzer, *delay_calculator, *timing_graph);
 #endif
 
             //Verify
