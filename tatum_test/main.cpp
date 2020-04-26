@@ -515,7 +515,7 @@ int main(int argc, char** argv) {
 #if 0
             serial_incr_prof_data = profile(args.num_serial_incr_runs, serial_incr_analyzer);
 #else
-            serial_incr_prof_data = profile_rand_incr(args.num_serial_incr_runs, serial_incr_analyzer, serial_analyzer, *delay_calculator, *timing_graph, *timing_constraints);
+            serial_incr_prof_data = profile_rand_incr(args.num_serial_incr_runs, 0.01, serial_incr_analyzer, serial_analyzer, *delay_calculator, *timing_graph);
 #endif
 
             //Verify
