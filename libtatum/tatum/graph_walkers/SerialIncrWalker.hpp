@@ -199,6 +199,15 @@ class SerialIncrWalker : public TimingGraphWalker {
             if (0) { //Block invalidation
                 visitor.do_reset_node_arrival_tags(node);
             } else { //Edge invalidation
+                //Data arrival tags track their associated origin node (i.e. dominant
+                //edge which determines the tag value). Rather than invalidate all
+                //tags to ensure the correctly updated tag when the node is re-traversed,
+                //we can get away with only invalidating the tag when the dominant edge
+                //is invalidated.
+                //
+                //This ensures that cases where non-dominate edges change delay value,
+                //but not enought to effect the tag value are detected as 'unchanged',
+                //which helps keep the number of updated nodes small.
                 NodeId src_node = tg.edge_src_node(invalidated_edge);
                 visitor.do_reset_node_arrival_tags_from_origin(node, src_node);
 
@@ -215,7 +224,12 @@ class SerialIncrWalker : public TimingGraphWalker {
                         NodeId sink_src_node = tg.edge_src_node(sink_in_edge);
                         enqueue_req_node(tg, sink_src_node, sink_in_edge, visitor);
                     }
+                } else if (tg.node_type(node) == NodeType::SOURCE) {
+                    //On propagating to a SOURCE node CLOCK_LAUNCH becomes DATA_ARRIVAL
+                    //with no associated origin node, so we must reset all the arrival tags
+                    visitor.do_reset_node_arrival_tags(node);
                 }
+
             }
 
             std::cout << "  Enqueing arr " << node << "\n";
