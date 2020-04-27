@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include "tatum/graph_walkers/TimingGraphWalker.hpp"
 #include "tatum/TimingGraph.hpp"
 #include "tatum/delay_calc/DelayCalculator.hpp"
