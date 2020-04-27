@@ -2,6 +2,7 @@
 #include <cmath>
 #include <chrono>
 #include <random>
+#include <queue>
 #include "profile.hpp"
 #include "verify.hpp"
 
@@ -81,6 +82,28 @@ bool profile_incr(size_t num_iterations,
     std::uniform_int_distribution<size_t> uniform_distr(0, tg.edges().size() - 1);
     std::normal_distribution<float> normal_distr(0, 1e-9);
 
+    //Record clock-related edges
+    std::set<tatum::EdgeId> clk_edges;
+    std::queue<tatum::EdgeId> q;
+    for (tatum::NodeId node : tg.nodes()) {
+        if (tg.node_type(node) == tatum::NodeType::SOURCE
+            || tg.node_type(node) == tatum::NodeType::SINK) {
+            for (tatum::EdgeId edge : tg.node_in_edges(node)) {
+                clk_edges.insert(edge);
+            }
+        }
+    }
+    while (!q.empty()) {
+        tatum::EdgeId clk_edge = q.front();
+        q.pop();
+        clk_edges.insert(clk_edge);
+
+        tatum::NodeId parent_node = tg.edge_src_node(clk_edge);
+        for (tatum::EdgeId parent_clk_edge : tg.node_in_edges(parent_node)) {
+            q.push(parent_clk_edge);
+        }
+    }
+
     struct timespec verify_start;
     struct timespec verify_end;
 
@@ -93,6 +116,16 @@ bool profile_incr(size_t num_iterations,
             for (size_t j = 0; j < EDGES_TO_INVALIDATE; j++) {
                 size_t iedge = uniform_distr(rng);
                 tatum::EdgeId edge(iedge);
+
+#if 1
+                //Avoid changing clock edges
+                while(clk_edges.count(edge)) {
+                    size_t iedge2 = uniform_distr(rng);
+                    edge = tatum::EdgeId(iedge2);
+                }
+                TATUM_ASSERT(!clk_edges.count(edge));
+#endif
+
 
                 //Invalidate
                 check_analyzer->invalidate_edge(edge);
