@@ -206,27 +206,41 @@ class SerialIncrWalker : public TimingGraphWalker {
                 //is invalidated.
                 //
                 //This ensures that cases where non-dominate edges change delay value,
-                //but not enought to effect the tag value are detected as 'unchanged',
-                //which helps keep the number of updated nodes small.
+                //but not in ways which effect the tag value, we detect that the tag
+                //is 'unchanged', which helps keep the number of updated nodes small.
                 NodeId src_node = tg.edge_src_node(invalidated_edge);
                 visitor.do_reset_node_arrival_tags_from_origin(node, src_node);
 
-                if (tg.node_type(node) == NodeType::SINK) {
-                    //We mark required times on sinks during the arrival traversal,
-                    //so we need to invalidate them when updating a sink and ensure
-                    //they are enqued for required time processing
+
+                //At SOURCE/SINK nodes clock launch/capture tags are converted into
+                //data arrival/required tags, so we also need to carefully reset those
+                //tags as well (since they don't track origin nodes this must be done
+                //seperately).
+                EdgeType edge_type = tg.edge_type(invalidated_edge);
+                if (edge_type == EdgeType::PRIMITIVE_CLOCK_CAPTURE) {
+                    //We mark required times on sinks based the clock capture time during
+                    //the arrival traversal.
+                    //
+                    //Therefore we need to invalidate the data required times (so they are
+                    //re-calculated correctly) when the clock caputre edge has been 
+                    //invalidated. Note that we don't need to enqueue the sink node for 
+                    //required time traversal, since the required time will be updated during
+                    //the arrival traversasl.
                     visitor.do_reset_node_required_tags(node);
 
-                    //Since the required time traversal doesn't update the sink node,
-                    //it's dependent nodes won't be enqueued for processing, so do that
-                    //here
+                    //However, since the required time traversal doesn't update the sink node,
+                    //it's dependent nodes won't be enqueued for processing, even if the required
+                    //times changed, so we explicitly do that here
                     for (EdgeId sink_in_edge : tg.node_in_edges(node)) {
                         NodeId sink_src_node = tg.edge_src_node(sink_in_edge);
                         enqueue_req_node(tg, sink_src_node, sink_in_edge, visitor);
                     }
-                } else if (tg.node_type(node) == NodeType::SOURCE) {
-                    //On propagating to a SOURCE node CLOCK_LAUNCH becomes DATA_ARRIVAL
-                    //with no associated origin node, so we must reset all the arrival tags
+                } else if (edge_type == EdgeType::PRIMITIVE_CLOCK_LAUNCH) {
+                    //On propagating to a SOURCE node, CLOCK_LAUNCH becomes DATA_ARRIVAL
+                    //we therefore invalidate any outstanding arrival tags if the clock launch
+                    //edge has been invalidated.
+                    //
+                    //This ensures the correct data arrivaltags are generated
                     visitor.do_reset_node_arrival_tags(node);
                 }
 
