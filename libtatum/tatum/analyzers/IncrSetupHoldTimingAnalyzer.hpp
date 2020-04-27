@@ -13,7 +13,7 @@ namespace tatum { namespace detail {
  * re-analyzes the timing graph whenever update_timing_impl() is 
  * called.
  */
-template<class GraphWalker=SerialWalker>
+template<class GraphWalker=SerialIncrWalker>
 class IncrSetupHoldTimingAnalyzer : public SetupHoldTimingAnalyzer {
     public:
         IncrSetupHoldTimingAnalyzer(const TimingGraph& timing_graph, const TimingConstraints& timing_constraints, const DelayCalculator& delay_calculator)
@@ -28,6 +28,7 @@ class IncrSetupHoldTimingAnalyzer : public SetupHoldTimingAnalyzer {
             graph_walker_.set_profiling_data("total_analysis_sec", 0.);
             graph_walker_.set_profiling_data("analysis_sec", 0.);
             graph_walker_.set_profiling_data("num_full_updates", 0.);
+            graph_walker_.set_profiling_data("num_incr_updates", 0.);
         }
 
     protected:
@@ -36,16 +37,19 @@ class IncrSetupHoldTimingAnalyzer : public SetupHoldTimingAnalyzer {
             auto start_time = Clock::now();
 
             if (never_updated_) {
+                //Invalidate all edges
                 for (EdgeId edge : timing_graph_.edges()) {
                     graph_walker_.invalidate_edge(edge);
                 }
 
+                //Only need to pre-traverse the first update
                 graph_walker_.do_arrival_pre_traversal(timing_graph_, timing_constraints_, setup_hold_visitor_);            
             }
 
             graph_walker_.do_arrival_traversal(timing_graph_, timing_constraints_, delay_calculator_, setup_hold_visitor_);            
 
             if (never_updated_) {
+                //Only need to pre-traverse the first update
                 graph_walker_.do_required_pre_traversal(timing_graph_, timing_constraints_, setup_hold_visitor_);            
             }
 
@@ -55,24 +59,26 @@ class IncrSetupHoldTimingAnalyzer : public SetupHoldTimingAnalyzer {
 
             double analysis_sec = std::chrono::duration_cast<dsec>(Clock::now() - start_time).count();
 
-            never_updated_ = false;
             graph_walker_.clear_invalidated_edges();
 
             //Record profiling data
             double total_analysis_sec = analysis_sec + graph_walker_.get_profiling_data("total_analysis_sec");
             graph_walker_.set_profiling_data("total_analysis_sec", total_analysis_sec);
             graph_walker_.set_profiling_data("analysis_sec", analysis_sec);
-            graph_walker_.set_profiling_data("num_full_updates", graph_walker_.get_profiling_data("num_full_updates") + 1);
+            graph_walker_.set_profiling_data("num_incr_updates", graph_walker_.get_profiling_data("num_incr_updates") + 1);
+
+            never_updated_ = false;
         }
 
         //Update only setup timing
         virtual void update_setup_timing_impl() override {
+            TATUM_ASSERT(!never_updated_);
             auto& setup_visitor = setup_hold_visitor_.setup_visitor();
 
-            graph_walker_.do_arrival_pre_traversal(timing_graph_, timing_constraints_, setup_visitor);            
+            //graph_walker_.do_arrival_pre_traversal(timing_graph_, timing_constraints_, setup_visitor);            
             graph_walker_.do_arrival_traversal(timing_graph_, timing_constraints_, delay_calculator_, setup_visitor);            
 
-            graph_walker_.do_required_pre_traversal(timing_graph_, timing_constraints_, setup_visitor);            
+            //graph_walker_.do_required_pre_traversal(timing_graph_, timing_constraints_, setup_visitor);            
             graph_walker_.do_required_traversal(timing_graph_, timing_constraints_, delay_calculator_, setup_visitor);            
 
             graph_walker_.do_update_slack(timing_graph_, delay_calculator_, setup_visitor);
@@ -80,12 +86,13 @@ class IncrSetupHoldTimingAnalyzer : public SetupHoldTimingAnalyzer {
 
         //Update only hold timing
         virtual void update_hold_timing_impl() override {
+            TATUM_ASSERT(!never_updated_);
             auto& hold_visitor = setup_hold_visitor_.hold_visitor();
 
-            graph_walker_.do_arrival_pre_traversal(timing_graph_, timing_constraints_, hold_visitor);            
+            //graph_walker_.do_arrival_pre_traversal(timing_graph_, timing_constraints_, hold_visitor);            
             graph_walker_.do_arrival_traversal(timing_graph_, timing_constraints_, delay_calculator_, hold_visitor);            
 
-            graph_walker_.do_required_pre_traversal(timing_graph_, timing_constraints_, hold_visitor);            
+            //graph_walker_.do_required_pre_traversal(timing_graph_, timing_constraints_, hold_visitor);            
             graph_walker_.do_required_traversal(timing_graph_, timing_constraints_, delay_calculator_, hold_visitor);            
 
             graph_walker_.do_update_slack(timing_graph_, delay_calculator_, hold_visitor);

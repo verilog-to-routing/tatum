@@ -7,6 +7,6 @@
  * ever call to update_timing_impl() incrementally re-analyze the timing graph.
  */
 
-//#include "IncrSetupTimingAnalyzer.hpp"
-//#include "IncrHoldTimingAnalyzer.hpp"
+#include "IncrSetupTimingAnalyzer.hpp"
+#include "IncrHoldTimingAnalyzer.hpp"
 #include "IncrSetupHoldTimingAnalyzer.hpp"
