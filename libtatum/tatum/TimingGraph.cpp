@@ -421,17 +421,6 @@ void TimingGraph::force_levelize() {
                     }
                 }
             }
-
-            //Also track the primary outputs (those with fan-in AND no fan-out)
-            //
-            // There may be some node with neither any fan-in or fan-out. 
-            // We will treat them as primary inputs, so they should not be to
-            // the primary outputs
-            if(   node_out_edges(node_id).size() == 0 
-               && node_in_edges(node_id).size() != 0
-               && node_type(node_id) == NodeType::SINK) {
-                logical_outputs_.push_back(node_id);
-            }
         }
 
         if(inserted_node_in_level) {
@@ -444,6 +433,8 @@ void TimingGraph::force_levelize() {
     level_nodes_.emplace_back(last_level);
     level_idx++;
     level_ids_.emplace_back(level_idx);
+
+    logical_outputs_ = std::move(last_level);
 
     //Build the reverse node-to-level look-up
     node_levels_.resize(nodes().size());
