@@ -281,10 +281,6 @@ class SerialIncrWalker : public TimingGraphWalker {
             }
 
             size_t total_nodes_to_process() {
-                if (!min_level || !max_level) {
-                    return 0;
-                }
-
                 size_t cnt = 0;
                 for (int level = min_level; level <= max_level; ++level) {
                     cnt += nodes_to_process[level].size();
