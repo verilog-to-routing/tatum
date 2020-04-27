@@ -117,7 +117,7 @@ bool profile_incr(size_t num_iterations,
                 size_t iedge = uniform_distr(rng);
                 tatum::EdgeId edge(iedge);
 
-#if 1
+#if 0
                 //Avoid changing clock edges
                 while(clk_edges.count(edge)) {
                     size_t iedge2 = uniform_distr(rng);
