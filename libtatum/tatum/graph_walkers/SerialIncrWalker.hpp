@@ -78,7 +78,6 @@ class SerialIncrWalker : public TimingGraphWalker {
                             NodeId snk_node = tg.edge_sink_node(edge);
                             enqueue_arr_node(tg, snk_node, edge, visitor);
                         }
-                    } else {
                     }
                 }
             }
