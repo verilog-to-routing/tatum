@@ -30,8 +30,13 @@ class CommonAnalysisOps {
         TimingTags::mutable_tag_range get_mutable_tags(const NodeId node_id) { 
             return node_tags_[node_id].mutable_tags(); 
         }
+
         TimingTags::mutable_tag_range get_mutable_tags(const NodeId node_id, TagType type) { 
             return node_tags_[node_id].mutable_tags(type); 
+        }
+
+        TimingTags::mutable_tag_range get_mutable_slack_tags(const NodeId node_id) { 
+            return node_slacks_[node_id].mutable_tags(); 
         }
 
         TimingTags::tag_range get_tags(const NodeId node_id) const { 
@@ -70,6 +75,10 @@ class CommonAnalysisOps {
 
         void reset_edge(const EdgeId edge) { 
             edge_slacks_[edge].clear();
+        }
+
+        Time invalid_slack_time() const {
+            return Time(std::numeric_limits<float>::infinity());
         }
 
 
