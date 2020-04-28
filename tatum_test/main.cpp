@@ -54,6 +54,9 @@ struct Args {
     //Input file to load
     std::string input_file = "";
 
+    //Analysis type to perform
+    std::string analysis_type = "setuphold";
+
     //Concurrency (0 is machine concurrency)
     size_t num_workers = 0;
 
@@ -138,6 +141,9 @@ void usage(std::string prog) {
     cout << "    tg_file:                      The input file (or '-' for stdin)\n";
     cout << "\n";
     cout << "  Options:\n";
+    cout << "    --analysis_type ANALYSIS_TYPE:             Type of analysis to perform\n";
+    cout << "                                               'setuphold', 'setup', or 'hold'\n";
+    cout << "                                               (default " << default_args.analysis_type << ")\n";
     cout << "    --num_workers NUM_WORKERS:                 Number of parallel workers.\n";
     cout << "                                               0 implies machine concurrency.\n";
     cout << "                                               (default " << default_args.num_workers << ")\n";
@@ -202,6 +208,8 @@ Args parse_args(int argc, char** argv) {
         } else if (arg_str.size() >= 2 && arg_str[0] == '-' && arg_str[1] == '-') {
             if (arg_str == "--write_echo") {
                 args.write_echo = argv[i+1];
+            } else if (arg_str == "--analysis_type") {
+                args.analysis_type = argv[i+1];
             } else {
 
                 std::istringstream ss(argv[i+1]);
@@ -248,7 +256,7 @@ Args parse_args(int argc, char** argv) {
                 args.input_file = arg_str;
             } else {
                 std::stringstream msg;
-                msg << "Unrecognized positional argument '" << arg_str<< "'\n";
+                msg << "Unrecognized positional argument '" << arg_str<< "' (note: options must come before file)\n";
                 cmd_error(prog, msg.str());
             }
             i++;
@@ -406,7 +414,18 @@ int main(int argc, char** argv) {
     std::shared_ptr<tatum::TimingAnalyzer> setup_hold_analyzer = tatum::AnalyzerFactory<tatum::SetupHoldAnalysis>::make(*timing_graph, *timing_constraints, *delay_calculator);
 
     //Create the timing analyzer
-    std::shared_ptr<tatum::TimingAnalyzer> serial_analyzer = tatum::AnalyzerFactory<tatum::SetupHoldAnalysis>::make(*timing_graph, *timing_constraints, *delay_calculator);
+    std::shared_ptr<tatum::TimingAnalyzer> serial_analyzer;
+    if (args.analysis_type == "setuphold") {
+        serial_analyzer = tatum::AnalyzerFactory<tatum::SetupHoldAnalysis>::make(*timing_graph, *timing_constraints, *delay_calculator);
+    } else if (args.analysis_type == "setup") {
+        serial_analyzer = tatum::AnalyzerFactory<tatum::SetupAnalysis>::make(*timing_graph, *timing_constraints, *delay_calculator);
+    } else if (args.analysis_type == "hold") {
+        serial_analyzer = tatum::AnalyzerFactory<tatum::HoldAnalysis>::make(*timing_graph, *timing_constraints, *delay_calculator);
+    } else {
+        std::stringstream ss;
+        ss << "Unrecognized analysis type '" << args.analysis_type << "'";
+        cmd_error(argv[0], ss.str());
+    }
     auto serial_setup_analyzer = std::dynamic_pointer_cast<tatum::SetupTimingAnalyzer>(serial_analyzer);
     auto serial_hold_analyzer = std::dynamic_pointer_cast<tatum::HoldTimingAnalyzer>(serial_analyzer);
 
@@ -537,7 +556,19 @@ int main(int argc, char** argv) {
     std::cout << endl;
 
     if (args.num_serial_incr_runs) {
-        std::shared_ptr<tatum::TimingAnalyzer> serial_incr_analyzer = tatum::AnalyzerFactory<tatum::SetupHoldAnalysis,tatum::SerialIncrWalker>::make(*timing_graph, *timing_constraints, *delay_calculator);
+
+        std::shared_ptr<tatum::TimingAnalyzer> serial_incr_analyzer;
+        if (args.analysis_type == "setuphold") {
+            serial_incr_analyzer = tatum::AnalyzerFactory<tatum::SetupHoldAnalysis,tatum::SerialIncrWalker>::make(*timing_graph, *timing_constraints, *delay_calculator);
+        } else if (args.analysis_type == "setup") {
+            serial_incr_analyzer = tatum::AnalyzerFactory<tatum::SetupAnalysis,tatum::SerialIncrWalker>::make(*timing_graph, *timing_constraints, *delay_calculator);
+        } else if (args.analysis_type == "hold") {
+            serial_incr_analyzer = tatum::AnalyzerFactory<tatum::HoldAnalysis,tatum::SerialIncrWalker>::make(*timing_graph, *timing_constraints, *delay_calculator);
+        } else {
+            std::stringstream ss;
+            ss << "Unrecognized analysis type '" << args.analysis_type << "'";
+            cmd_error(argv[0], ss.str());
+        }
         auto serial_incr_setup_analyzer = std::dynamic_pointer_cast<tatum::SetupTimingAnalyzer>(serial_incr_analyzer);
         auto serial_incr_hold_analyzer = std::dynamic_pointer_cast<tatum::HoldTimingAnalyzer>(serial_incr_analyzer);
 
@@ -609,7 +640,19 @@ int main(int argc, char** argv) {
     }
 
     if (args.num_parallel_runs) {
-        std::shared_ptr<tatum::TimingAnalyzer> parallel_analyzer = tatum::AnalyzerFactory<tatum::SetupHoldAnalysis,tatum::ParallelWalker>::make(*timing_graph, *timing_constraints, *delay_calculator);
+        std::shared_ptr<tatum::TimingAnalyzer> parallel_analyzer;
+        if (args.analysis_type == "setuphold") {
+            parallel_analyzer = tatum::AnalyzerFactory<tatum::SetupHoldAnalysis,tatum::ParallelWalker>::make(*timing_graph, *timing_constraints, *delay_calculator);
+        } else if (args.analysis_type == "setup") {
+            parallel_analyzer = tatum::AnalyzerFactory<tatum::SetupAnalysis,tatum::ParallelWalker>::make(*timing_graph, *timing_constraints, *delay_calculator);
+        } else if (args.analysis_type == "hold") {
+            parallel_analyzer = tatum::AnalyzerFactory<tatum::HoldAnalysis,tatum::ParallelWalker>::make(*timing_graph, *timing_constraints, *delay_calculator);
+        } else {
+            std::stringstream ss;
+            ss << "Unrecognized analysis type '" << args.analysis_type << "'";
+            cmd_error(argv[0], ss.str());
+        }
+
         auto parallel_setup_analyzer = std::dynamic_pointer_cast<tatum::SetupTimingAnalyzer>(parallel_analyzer);
         auto parallel_hold_analyzer = std::dynamic_pointer_cast<tatum::HoldTimingAnalyzer>(parallel_analyzer);
 
