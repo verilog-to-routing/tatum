@@ -54,7 +54,7 @@ class SerialIncrWalker : public TimingGraphWalker {
             resize_incr_update_levels(tg);
             prepare_incr_arrival_update(tg, visitor);
 
-            std::cout << "Arr Levels " << incr_arr_update_.min_level << ": " << incr_arr_update_.max_level << "\n";
+            //std::cout << "Arr Levels " << incr_arr_update_.min_level << ": " << incr_arr_update_.max_level << "\n";
             for(int level_idx = incr_arr_update_.min_level; level_idx <= incr_arr_update_.max_level; ++level_idx) {
                 LevelId level(level_idx);
 
@@ -62,7 +62,7 @@ class SerialIncrWalker : public TimingGraphWalker {
 
                 uniquify(level_nodes);
 
-                std::cout << "Processing Arr Level " << size_t(level) << ": " << level_nodes.size() << " nodes\n";
+                //std::cout << "Processing Arr Level " << size_t(level) << ": " << level_nodes.size() << " nodes\n";
 
                 for (NodeId node : level_nodes) {
 
@@ -82,7 +82,7 @@ class SerialIncrWalker : public TimingGraphWalker {
                     }
                 }
             }
-            std::cout  << "Arr Processed " << incr_arr_update_.total_levels_to_process() << " levels, " << incr_arr_update_.total_nodes_to_process() << " nodes\n";
+            //std::cout  << "Arr Processed " << incr_arr_update_.total_levels_to_process() << " levels, " << incr_arr_update_.total_nodes_to_process() << " nodes\n";
             complete_incr_arrival_update(tg);
         }
 
@@ -90,7 +90,7 @@ class SerialIncrWalker : public TimingGraphWalker {
             resize_incr_update_levels(tg);
             prepare_incr_required_update(tg, visitor);
 
-            std::cout << "Req Levels " << incr_req_update_.max_level << ": " << incr_req_update_.min_level << "\n";
+            //std::cout << "Req Levels " << incr_req_update_.max_level << ": " << incr_req_update_.min_level << "\n";
             for(int level_idx = incr_req_update_.max_level; level_idx >= incr_req_update_.min_level; --level_idx) {
                 LevelId level(level_idx);
 
@@ -98,7 +98,7 @@ class SerialIncrWalker : public TimingGraphWalker {
 
                 uniquify(level_nodes);
 
-                std::cout << "Processing Req Level " << size_t(level) << ": " << level_nodes.size() << " nodes\n";
+                //std::cout << "Processing Req Level " << size_t(level) << ": " << level_nodes.size() << " nodes\n";
 
                 for (NodeId node : level_nodes) {
 
@@ -122,7 +122,7 @@ class SerialIncrWalker : public TimingGraphWalker {
                     }
                 }
             }
-            std::cout  << "Req Processed " << incr_req_update_.total_levels_to_process() << " levels, " << incr_req_update_.total_nodes_to_process() << " nodes\n";
+            //std::cout  << "Req Processed " << incr_req_update_.total_levels_to_process() << " levels, " << incr_req_update_.total_nodes_to_process() << " nodes\n";
 
             complete_incr_required_update(tg);
         }
@@ -130,7 +130,7 @@ class SerialIncrWalker : public TimingGraphWalker {
         void do_update_slack_impl(const TimingGraph& tg, const DelayCalculator& dc, GraphVisitor& visitor) override {
             uniquify(nodes_to_update_slack_);
 
-            std::cout << "Processing slack updates for " << nodes_to_update_slack_.size() << " nodes\n";
+            //std::cout << "Processing slack updates for " << nodes_to_update_slack_.size() << " nodes\n";
 
             for(NodeId node : nodes_to_update_slack_) {
                 //std::cout << "  Processing slack " << node << "\n";
@@ -171,7 +171,7 @@ class SerialIncrWalker : public TimingGraphWalker {
             incr_req_update_.min_level = size_t(*(tg.levels().end() - 1));
             incr_req_update_.max_level = size_t(*tg.levels().begin());
 
-            std::cout << "Invalidated Edges: " << invalidated_edges_.size() << " / " << tg.edges().size() << " (" << invalidated_edges_.size() / tg.edges().size() << ")\n";
+            //std::cout << "Invalidated Edges: " << invalidated_edges_.size() << " / " << tg.edges().size() << " (" << invalidated_edges_.size() / tg.edges().size() << ")\n";
             for (EdgeId edge : invalidated_edges_) {
                 NodeId node = tg.edge_sink_node(edge);
 
