@@ -54,6 +54,10 @@ std::pair<size_t,bool> verify_analyzer(const TimingGraph& tg, std::shared_ptr<Ti
                 res = verify_node_tags(node, setup_analyzer->setup_tags(node, TagType::CLOCK_CAPTURE), gr.get_result(node, tatumparse::TagType::SETUP_CAPTURE_CLOCK), "setup_capture_clock");
                 tags_checked += res.first;
                 error |= res.second;
+
+                res = verify_node_tags(node, setup_analyzer->setup_tags(node, TagType::SLACK), gr.get_result(node, tatumparse::TagType::SETUP_SLACK), "setup_slack");
+                tags_checked += res.first;
+                error |= res.second;
             }
             if(hold_analyzer) {
                 auto res = verify_node_tags(node, hold_analyzer->hold_tags(node, TagType::DATA_ARRIVAL), gr.get_result(node, tatumparse::TagType::HOLD_DATA_ARRIVAL), "hold_data_arrival");
@@ -69,6 +73,10 @@ std::pair<size_t,bool> verify_analyzer(const TimingGraph& tg, std::shared_ptr<Ti
                 error |= res.second;
 
                 res = verify_node_tags(node, hold_analyzer->hold_tags(node, TagType::CLOCK_CAPTURE), gr.get_result(node, tatumparse::TagType::HOLD_CAPTURE_CLOCK), "hold_capture_clock");
+                tags_checked += res.first;
+                error |= res.second;
+
+                res = verify_node_tags(node, hold_analyzer->hold_tags(node, TagType::SLACK), gr.get_result(node, tatumparse::TagType::HOLD_SLACK), "hold_slack");
                 tags_checked += res.first;
                 error |= res.second;
             }
@@ -170,6 +178,10 @@ std::pair<size_t,bool> verify_equivalent_analysis(const TimingGraph& tg, const D
                 res = verify_node_tags(node, setup_check_analyzer->setup_tags(node, TagType::CLOCK_CAPTURE), setup_ref_analyzer->setup_tags(node, TagType::CLOCK_CAPTURE), "setup_capture_clock");
                 tags_checked += res.first;
                 error |= res.second;
+
+                res = verify_node_tags(node, setup_check_analyzer->setup_slacks(node), setup_ref_analyzer->setup_slacks(node), "setup_slack");
+                tags_checked += res.first;
+                error |= res.second;
             }
 
             if(hold_ref_analyzer) {
@@ -188,6 +200,10 @@ std::pair<size_t,bool> verify_equivalent_analysis(const TimingGraph& tg, const D
                 error |= res.second;
 
                 res = verify_node_tags(node, hold_check_analyzer->hold_tags(node, TagType::CLOCK_CAPTURE), hold_ref_analyzer->hold_tags(node, TagType::CLOCK_CAPTURE), "hold_capture_clock");
+                tags_checked += res.first;
+                error |= res.second;
+
+                res = verify_node_tags(node, hold_check_analyzer->hold_slacks(node), hold_ref_analyzer->hold_slacks(node), "hold_slack");
                 tags_checked += res.first;
                 error |= res.second;
             }
