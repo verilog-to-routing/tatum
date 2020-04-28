@@ -44,6 +44,11 @@ class SetupHoldAnalysis : public GraphVisitor {
             hold_visitor_.do_reset_node_required_tags(node_id); 
         }
 
+        void do_reset_node_slack_tags(const NodeId node_id) override { 
+            setup_visitor_.do_reset_node_slack_tags(node_id); 
+            hold_visitor_.do_reset_node_slack_tags(node_id); 
+        }
+
         void do_reset_node_arrival_tags_from_origin(const NodeId node_id, const NodeId origin) override { 
             setup_visitor_.do_reset_node_arrival_tags_from_origin(node_id, origin); 
             hold_visitor_.do_reset_node_arrival_tags_from_origin(node_id, origin); 

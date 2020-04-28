@@ -72,7 +72,7 @@ class SerialIncrWalker : public TimingGraphWalker {
 
                     if (node_updated) {
                         //Record that this node was updated, for later efficient slack update
-                        nodes_to_update_slack_.emplace_back(node);
+                        enqueue_slack_node(node);
 
                         //Queue this node's downstream dependencies for updating
                         for (EdgeId edge : tg.node_out_edges(node)) {
@@ -108,8 +108,10 @@ class SerialIncrWalker : public TimingGraphWalker {
 
                     if (node_updated) {
 
+                        //std::cout << "    Enqueing slack\n";
+
                         //Record that this node was updated, for later efficient slack update
-                        nodes_to_update_slack_.emplace_back(node);
+                        enqueue_slack_node(node);
 
                         //Queue this node's downstream dependencies for updating
                         for (EdgeId edge : tg.node_in_edges(node)) {
@@ -131,6 +133,13 @@ class SerialIncrWalker : public TimingGraphWalker {
             std::cout << "Processing slack updates for " << nodes_to_update_slack_.size() << " nodes\n";
 
             for(NodeId node : nodes_to_update_slack_) {
+                //std::cout << "  Processing slack " << node << "\n";
+
+                for (EdgeId edge : tg.node_in_edges(node)) {
+                    visitor.do_reset_edge(edge);
+                }
+                visitor.do_reset_node_slack_tags(node);
+
                 visitor.do_slack_traverse_node(tg, dc, node);
             }
 
@@ -260,6 +269,10 @@ class SerialIncrWalker : public TimingGraphWalker {
 
             //std::cout << "  Enqueing req " << node << "\n";
             incr_req_update_.enqueue_node(tg, node);
+        }
+
+        void enqueue_slack_node(const NodeId node) {
+            nodes_to_update_slack_.push_back(node); 
         }
 
         void resize_incr_update_levels(const TimingGraph& tg) {
