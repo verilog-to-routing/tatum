@@ -215,15 +215,18 @@ std::pair<size_t,bool> verify_equivalent_analysis(const TimingGraph& tg, const D
 
     if (error) {
         std::cout << "Dumping dot\n";
-        //std::vector<tatum::NodeId> nodes = find_transitively_connected_nodes(tg, {NodeId(5133)});
+#if 0
+        std::vector<tatum::NodeId> nodes = find_transitively_connected_nodes(tg, {NodeId(4630)});
+#else
         const auto& tg_nodes = tg.nodes();
         std::vector<tatum::NodeId> nodes(tg_nodes.begin(), tg_nodes.end());
+#endif
         dot_writer.set_nodes_to_dump(nodes);
 
-        dot_writer.write_dot_file("check_tg_setup_annotated.dot", *setup_check_analyzer);
-        dot_writer.write_dot_file("ref_tg_setup_annotated.dot", *setup_ref_analyzer);
-        dot_writer.write_dot_file("check_tg_hold_annotated.dot", *hold_check_analyzer);
-        dot_writer.write_dot_file("ref_tg_hold_annotated.dot", *hold_ref_analyzer);
+        if (setup_check_analyzer) dot_writer.write_dot_file("check_tg_setup_annotated.dot", *setup_check_analyzer);
+        if (setup_ref_analyzer) dot_writer.write_dot_file("ref_tg_setup_annotated.dot", *setup_ref_analyzer);
+        if (hold_check_analyzer) dot_writer.write_dot_file("check_tg_hold_annotated.dot", *hold_check_analyzer);
+        if (hold_ref_analyzer) dot_writer.write_dot_file("ref_tg_hold_annotated.dot", *hold_ref_analyzer);
     }
 
     return {tags_checked,!error};
