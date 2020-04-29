@@ -140,21 +140,26 @@ class ParallelLevelizedWalker : public TimingGraphWalker {
 
         void do_reset_impl(const TimingGraph& tg, GraphVisitor& visitor) override {
             auto nodes = tg.nodes();
-            auto edges = tg.edges();
 #if defined(TATUM_USE_TBB)
             tbb::parallel_for_each(nodes.begin(), nodes.end(), [&](auto node) {
                 visitor.do_reset_node(node);
             });
+#   ifdef TATUM_CALCULATE_EDGE_SLACKS
+            auto edges = tg.edges();
             tbb::parallel_for_each(edges.begin(), edges.end(), [&](auto edge) {
                 visitor.do_reset_edge(edge);
             });
+#   endif
 #else //Serial
             for(auto node_iter = nodes.begin(); node_iter != nodes.end(); ++node_iter) {
                 visitor.do_reset_node(*node_iter);
             }
+#   ifdef TATUM_CALCULATE_EDGE_SLACKS
+            auto edges = tg.edges();
             for(auto edge_iter = edges.begin(); edge_iter != edges.end(); ++edge_iter) {
                 visitor.do_reset_edge(*edge_iter);
             }
+#   endif
 #endif
         }
 

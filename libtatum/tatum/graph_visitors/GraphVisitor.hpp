@@ -9,7 +9,10 @@ class GraphVisitor {
     public:
         virtual ~GraphVisitor() {}
         virtual void do_reset_node(const NodeId node_id) = 0;
+
+#ifdef TATUM_CALCULATE_EDGE_SLACKS
         virtual void do_reset_edge(const EdgeId edge_id) = 0;
+#endif
 
         virtual void do_reset_node_arrival_tags(const NodeId node_id) = 0;
         virtual void do_reset_node_required_tags(const NodeId node_id) = 0;
