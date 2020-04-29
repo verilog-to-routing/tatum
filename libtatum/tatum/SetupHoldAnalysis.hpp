@@ -29,10 +29,12 @@ class SetupHoldAnalysis : public GraphVisitor {
             hold_visitor_.do_reset_node(node_id); 
         }
 
+#ifdef TATUM_CALCULATE_EDGE_SLACKS
         void do_reset_edge(const EdgeId edge_id) override { 
             setup_visitor_.do_reset_edge(edge_id); 
             hold_visitor_.do_reset_edge(edge_id); 
         }
+#endif
 
         void do_reset_node_arrival_tags(const NodeId node_id) override { 
             setup_visitor_.do_reset_node_arrival_tags(node_id); 
@@ -96,12 +98,16 @@ class SetupHoldAnalysis : public GraphVisitor {
 
         TimingTags::tag_range setup_tags(const NodeId node_id) const { return setup_visitor_.setup_tags(node_id); }
         TimingTags::tag_range setup_tags(const NodeId node_id, TagType type) const { return setup_visitor_.setup_tags(node_id, type); }
+#ifdef TATUM_CALCULATE_EDGE_SLACKS
         TimingTags::tag_range setup_edge_slacks(const EdgeId edge_id) const { return setup_visitor_.setup_edge_slacks(edge_id); }
+#endif
         TimingTags::tag_range setup_node_slacks(const NodeId node_id) const { return setup_visitor_.setup_node_slacks(node_id); }
 
         TimingTags::tag_range hold_tags(const NodeId node_id) const { return hold_visitor_.hold_tags(node_id); }
         TimingTags::tag_range hold_tags(const NodeId node_id, TagType type) const { return hold_visitor_.hold_tags(node_id, type); }
+#ifdef TATUM_CALCULATE_EDGE_SLACKS
         TimingTags::tag_range hold_edge_slacks(const EdgeId edge_id) const { return hold_visitor_.hold_edge_slacks(edge_id); }
+#endif
         TimingTags::tag_range hold_node_slacks(const NodeId node_id) const { return hold_visitor_.hold_node_slacks(node_id); }
 
         SetupAnalysis& setup_visitor() { return setup_visitor_; }

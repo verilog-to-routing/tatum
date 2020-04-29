@@ -96,12 +96,16 @@ class FullSetupHoldTimingAnalyzer : public SetupHoldTimingAnalyzer {
 
         TimingTags::tag_range setup_tags_impl(NodeId node_id) const override { return setup_hold_visitor_.setup_tags(node_id); }
         TimingTags::tag_range setup_tags_impl(NodeId node_id, TagType type) const override { return setup_hold_visitor_.setup_tags(node_id, type); }
+#ifdef TATUM_CALCULATE_EDGE_SLACKS
         TimingTags::tag_range setup_edge_slacks_impl(EdgeId edge_id) const override { return setup_hold_visitor_.setup_edge_slacks(edge_id); }
+#endif
         TimingTags::tag_range setup_node_slacks_impl(NodeId node_id) const override { return setup_hold_visitor_.setup_node_slacks(node_id); }
 
         TimingTags::tag_range hold_tags_impl(NodeId node_id) const override { return setup_hold_visitor_.hold_tags(node_id); }
         TimingTags::tag_range hold_tags_impl(NodeId node_id, TagType type) const override { return setup_hold_visitor_.hold_tags(node_id, type); }
+#ifdef TATUM_CALCULATE_EDGE_SLACKS
         TimingTags::tag_range hold_edge_slacks_impl(EdgeId edge_id) const override { return setup_hold_visitor_.hold_edge_slacks(edge_id); }
+#endif
         TimingTags::tag_range hold_node_slacks_impl(NodeId node_id) const override { return setup_hold_visitor_.hold_node_slacks(node_id); }
 
     private:

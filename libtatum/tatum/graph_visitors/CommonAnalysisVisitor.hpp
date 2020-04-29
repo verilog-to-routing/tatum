@@ -32,7 +32,9 @@ class CommonAnalysisVisitor : public GraphVisitor {
             : ops_(num_tags, num_slacks) { }
 
         void do_reset_node(const NodeId node_id) override { ops_.reset_node(node_id); }
+#ifdef TATUM_CALCULATE_EDGE_SLACKS
         void do_reset_edge(const EdgeId edge_id) override { ops_.reset_edge(edge_id); }
+#endif
 
         void do_reset_node_arrival_tags(const NodeId node_id) override;
         void do_reset_node_required_tags(const NodeId node_id) override;
@@ -443,9 +445,15 @@ bool CommonAnalysisVisitor<AnalysisOps>::do_slack_traverse_node(const TimingGrap
     bool timing_modified = false;
 
     //Calculate the slack for each edge
+#ifdef TATUM_CALCULATE_EDGE_SLACKS
     for(const EdgeId edge : tg.node_in_edges(node)) {
         timing_modified |= do_slack_traverse_edge(tg, dc, edge);
     }
+#else
+    //Avoid unused param warnings
+    static_cast<void>(dc);
+    static_cast<void>(tg);
+#endif
 
     //Calculate the slacks at each node
     for(const TimingTag& arr_tag : ops_.get_tags(node, TagType::DATA_ARRIVAL)) {

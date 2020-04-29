@@ -88,9 +88,11 @@ class SerialWalker : public TimingGraphWalker {
             for(NodeId node_id : tg.nodes()) {
                 visitor.do_reset_node(node_id);
             }
+#ifdef TATUM_CALCULATE_EDGE_SLACKS
             for(EdgeId edge_id : tg.edges()) {
                 visitor.do_reset_edge(edge_id);
             }
+#endif
         }
 
         size_t num_unconstrained_startpoints_impl() const override { return num_unconstrained_startpoints_; }
