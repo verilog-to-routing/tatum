@@ -18,10 +18,7 @@ class SerialIncrWalker : public TimingGraphWalker {
 
             invalidated_edges_.push_back(edge);
 
-            if (edge_invalidated_.size() <= size_t(edge)) {
-                edge_invalidated_.resize(size_t(edge)+1, false);
-            }
-            edge_invalidated_[edge] = true;
+            mark_invalidated(edge);
         }
 
         void clear_invalidated_edges_impl() override {
@@ -63,7 +60,6 @@ class SerialIncrWalker : public TimingGraphWalker {
         }
 
         void do_arrival_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalculator& dc, GraphVisitor& visitor) override {
-            nodes_modified_.clear();
             prepare_incr_update(tg);
 
             //std::cout << "Arr Levels " << incr_arr_update_.min_level << ": " << incr_arr_update_.max_level << "\n";
@@ -72,7 +68,7 @@ class SerialIncrWalker : public TimingGraphWalker {
 
                 auto& level_nodes = incr_arr_update_.nodes_to_process[level_idx];
 
-                uniquify(level_nodes);
+                sort(level_nodes);
 
                 //std::cout << "Processing Arr Level " << size_t(level) << ": " << level_nodes.size() << " nodes\n";
 
@@ -96,7 +92,6 @@ class SerialIncrWalker : public TimingGraphWalker {
                 }
             }
             //std::cout  << "Arr Processed " << incr_arr_update_.total_levels_to_process() << " levels, " << incr_arr_update_.total_nodes_to_process() << " nodes\n";
-            complete_incr_arrival_update(tg);
         }
 
         void do_required_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalculator& dc, GraphVisitor& visitor) override {
@@ -107,7 +102,7 @@ class SerialIncrWalker : public TimingGraphWalker {
 
                 auto& level_nodes = incr_req_update_.nodes_to_process[level_idx];
 
-                uniquify(level_nodes);
+                sort(level_nodes);
 
                 //std::cout << "Processing Req Level " << size_t(level) << ": " << level_nodes.size() << " nodes\n";
 
@@ -135,12 +130,10 @@ class SerialIncrWalker : public TimingGraphWalker {
                 }
             }
             //std::cout  << "Req Processed " << incr_req_update_.total_levels_to_process() << " levels, " << incr_req_update_.total_nodes_to_process() << " nodes\n";
-
-            complete_incr_required_update(tg);
         }
 
         void do_update_slack_impl(const TimingGraph& tg, const DelayCalculator& dc, GraphVisitor& visitor) override {
-            uniquify(nodes_modified_);
+            sort(nodes_modified_);
 
             //std::cout << "Processing slack updates for " << nodes_modified_.size() << " nodes\n";
 
@@ -184,14 +177,43 @@ class SerialIncrWalker : public TimingGraphWalker {
             return !is_invalidated(edge);
         }
 
-        void uniquify(std::vector<NodeId>& nodes) {
+        void mark_invalidated(EdgeId edge) {
+            if (edge_invalidated_.size() <= size_t(edge)) {
+                edge_invalidated_.resize(size_t(edge)+1, false);
+            }
+            edge_invalidated_[edge] = true;
+        }
+
+        bool is_modified(NodeId node) const {
+            if (node_is_modified_.size() > size_t(node)) {
+                return node_is_modified_[node];
+            }
+            return false; //Not yet marked, so not queued
+        }
+
+        void mark_modified(NodeId node) {
+            if (node_is_modified_.size() <= size_t(node)) {
+                node_is_modified_.resize(size_t(node)+1, false);
+            }
+            node_is_modified_[node] = true;
+        }
+
+        void clear_modified() {
+            nodes_modified_.clear();
+            node_is_modified_.clear();
+        }
+
+        void sort(std::vector<NodeId>& nodes) {
             std::sort(nodes.begin(), nodes.end());
-            nodes.erase(std::unique(nodes.begin(), nodes.end()),
-                        nodes.end());
         }
 
         void prepare_incr_update(const TimingGraph& tg) {
+            clear_modified();
             resize_incr_update_levels(tg);
+            incr_arr_update_.clear(tg);
+            incr_req_update_.clear(tg);
+
+
             incr_arr_update_.min_level = size_t(*(tg.levels().end() - 1));
             incr_arr_update_.max_level = size_t(*tg.levels().begin());
             incr_req_update_.min_level = size_t(*(tg.levels().end() - 1));
@@ -207,24 +229,6 @@ class SerialIncrWalker : public TimingGraphWalker {
             }
         }
 
-        void complete_incr_arrival_update(const TimingGraph& tg) {
-            for (int level = incr_arr_update_.min_level; level <= incr_arr_update_.max_level; ++level) {
-                incr_arr_update_.nodes_to_process[level].clear();
-            }
-
-            incr_arr_update_.min_level = size_t(*(tg.levels().end() - 1));
-            incr_arr_update_.max_level = size_t(*tg.levels().begin());
-        }
-
-        void complete_incr_required_update(const TimingGraph& tg) {
-            for (int level = incr_req_update_.min_level; level <= incr_req_update_.max_level; ++level) {
-                incr_req_update_.nodes_to_process[level].clear();
-            }
-
-            incr_req_update_.min_level = size_t(*(tg.levels().end() - 1));
-            incr_req_update_.max_level = size_t(*tg.levels().begin());
-        }
-
         void enqueue_arr_node(const TimingGraph& tg, NodeId node, EdgeId invalidated_edge) {
             //std::cout << "  Enqueing arr " << node << "\n";
             invalidate_edge_impl(invalidated_edge);
@@ -238,6 +242,10 @@ class SerialIncrWalker : public TimingGraphWalker {
         }
 
         void enqueue_slack_node(const NodeId node) {
+            if (is_modified(node)) return;
+
+            mark_modified(node);
+
             nodes_modified_.push_back(node); 
         }
 
@@ -313,29 +321,61 @@ class SerialIncrWalker : public TimingGraphWalker {
         }
 
         struct t_incr_traversal_update {
-            std::vector<std::vector<NodeId>> nodes_to_process;
-            int min_level = 0;
-            int max_level = 0;
+            public:
+                std::vector<std::vector<NodeId>> nodes_to_process;
+                int min_level = 0;
+                int max_level = 0;
 
-            void enqueue_node(const TimingGraph& tg, NodeId node) {
-                int level = size_t(tg.node_level(node));
+                void enqueue_node(const TimingGraph& tg, NodeId node) {
+                    if (is_enqueued(node)) return;
 
-                nodes_to_process[level].push_back(node);
-                min_level = std::min(min_level, level);
-                max_level = std::max(max_level, level);
-            }
+                    mark_enqueued(node);
 
-            size_t total_nodes_to_process() {
-                size_t cnt = 0;
-                for (int level = min_level; level <= max_level; ++level) {
-                    cnt += nodes_to_process[level].size();
+                    int level = size_t(tg.node_level(node));
+
+                    nodes_to_process[level].push_back(node);
+                    min_level = std::min(min_level, level);
+                    max_level = std::max(max_level, level);
                 }
-                return cnt;
-            }
 
-            size_t total_levels_to_process() {
-                return size_t(max_level) - size_t(min_level) + 1;
-            }
+                size_t total_nodes_to_process() const {
+                    size_t cnt = 0;
+                    for (int level = min_level; level <= max_level; ++level) {
+                        cnt += nodes_to_process[level].size();
+                    }
+                    return cnt;
+                }
+
+                size_t total_levels_to_process() const {
+                    return size_t(max_level) - size_t(min_level) + 1;
+                }
+
+                bool is_enqueued(NodeId node) const {
+                    if (node_is_enqueued.size() > size_t(node)) {
+                        return node_is_enqueued[node];
+                    }
+                    return false; //Not yet marked, so not queued
+                }
+
+                void clear(const TimingGraph& tg) {
+                    for (int level = min_level; level <= max_level; ++level) {
+                        nodes_to_process[level].clear();
+                    }
+                    node_is_enqueued.clear();
+
+                    min_level = size_t(*(tg.levels().end() - 1));
+                    max_level = size_t(*tg.levels().begin());
+                }
+            private:
+                void mark_enqueued(NodeId node) {
+                    if (node_is_enqueued.size() <= size_t(node)) {
+                        node_is_enqueued.resize(size_t(node)+1, false);
+                    }
+                    node_is_enqueued[node] = true;
+                }
+
+                tatum::util::linear_map<NodeId,bool> node_is_enqueued;
+
         };
 
         t_incr_traversal_update incr_arr_update_;
@@ -343,7 +383,9 @@ class SerialIncrWalker : public TimingGraphWalker {
 
         std::vector<EdgeId> invalidated_edges_;
         tatum::util::linear_map<EdgeId,bool> edge_invalidated_;
+
         std::vector<NodeId> nodes_modified_; //Nodes which have been modified during timing update
+        tatum::util::linear_map<NodeId,bool> node_is_modified_;
 
         size_t num_unconstrained_startpoints_ = 0;
         size_t num_unconstrained_endpoints_ = 0;
