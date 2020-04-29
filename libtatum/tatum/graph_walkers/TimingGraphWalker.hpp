@@ -3,8 +3,10 @@
 #include "tatum/TimingConstraintsFwd.hpp"
 #include "tatum/delay_calc/DelayCalculator.hpp"
 #include "tatum/graph_visitors/GraphVisitor.hpp"
+#include "tatum/util/tatum_range.hpp"
 #include <chrono>
 #include <map>
+#include <vector>
 
 namespace tatum {
 
@@ -22,6 +24,9 @@ namespace tatum {
  */
 class TimingGraphWalker {
     public:
+        typedef tatum::util::Range<std::vector<NodeId>::const_iterator> node_range;
+
+    public:
         virtual ~TimingGraphWalker() = default;
 
         ///Invalidates the specified timing graph edge (for incremental updates)
@@ -31,6 +36,10 @@ class TimingGraphWalker {
 
         void clear_invalidated_edges() {
             clear_invalidated_edges_impl();
+        }
+
+        node_range modified_nodes() const {
+            return modified_nodes_impl();
         }
 
         ///Performs the arrival time pre-traversal
@@ -119,9 +128,12 @@ class TimingGraphWalker {
     protected:
         ///Sub-class defined edge invalidation
         virtual void invalidate_edge_impl(const EdgeId edge) = 0;
-        //
+
         ///Sub-class defined clearing of edge invalidation
         virtual void clear_invalidated_edges_impl() = 0;
+
+        ///Sub-class defined clearing of edge invalidation
+        virtual node_range modified_nodes_impl() const = 0;
 
         ///Sub-class defined arrival time pre-traversal
         ///\param tg The timing graph

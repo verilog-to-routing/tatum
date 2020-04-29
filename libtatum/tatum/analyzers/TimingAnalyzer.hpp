@@ -1,7 +1,9 @@
 #pragma once
 #include <string>
+#include <vector>
 
 #include "tatum/TimingGraphFwd.hpp"
+#include "tatum/util/tatum_range.hpp"
 
 namespace tatum {
 
@@ -25,6 +27,8 @@ namespace tatum {
  */
 class TimingAnalyzer {
     public:
+        typedef tatum::util::Range<std::vector<NodeId>::const_iterator> node_range;
+    public:
         virtual ~TimingAnalyzer() {}
 
         ///Perform timing analysis to update timing information (i.e. arrival & required times)
@@ -33,15 +37,19 @@ class TimingAnalyzer {
         ///Invalidates the specified edge in the timing graph (for incremental updates)
         void invalidate_edge(const EdgeId edge) { invalidate_edge_impl(edge); }
 
+        node_range modified_nodes() const { return modified_nodes_impl(); }
+
         double get_profiling_data(std::string key) const { return get_profiling_data_impl(key); }
 
         virtual size_t num_unconstrained_startpoints() const { return num_unconstrained_startpoints_impl(); }
         virtual size_t num_unconstrained_endpoints() const { return num_unconstrained_endpoints_impl(); }
 
     protected:
-        virtual void invalidate_edge_impl(const EdgeId edge) = 0;
 
         virtual void update_timing_impl() = 0;
+
+        virtual void invalidate_edge_impl(const EdgeId edge) = 0;
+        virtual node_range modified_nodes_impl() const = 0;
 
         virtual double get_profiling_data_impl(std::string key) const = 0;
 

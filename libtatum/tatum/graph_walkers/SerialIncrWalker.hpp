@@ -21,6 +21,10 @@ class SerialIncrWalker : public TimingGraphWalker {
             invalidated_edges_.clear();
         }
 
+        node_range modified_nodes_impl() const override {
+            return tatum::util::make_range(nodes_modified_.cbegin(), nodes_modified_.cend());
+        }
+
         void do_arrival_pre_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, GraphVisitor& visitor) override {
             size_t num_unconstrained = 0;
 
@@ -51,6 +55,7 @@ class SerialIncrWalker : public TimingGraphWalker {
         }
 
         void do_arrival_traversal_impl(const TimingGraph& tg, const TimingConstraints& tc, const DelayCalculator& dc, GraphVisitor& visitor) override {
+            nodes_modified_.clear();
             resize_incr_update_levels(tg);
             prepare_incr_arrival_update(tg, visitor);
 
@@ -128,11 +133,11 @@ class SerialIncrWalker : public TimingGraphWalker {
         }
 
         void do_update_slack_impl(const TimingGraph& tg, const DelayCalculator& dc, GraphVisitor& visitor) override {
-            uniquify(nodes_to_update_slack_);
+            uniquify(nodes_modified_);
 
-            //std::cout << "Processing slack updates for " << nodes_to_update_slack_.size() << " nodes\n";
+            //std::cout << "Processing slack updates for " << nodes_modified_.size() << " nodes\n";
 
-            for(NodeId node : nodes_to_update_slack_) {
+            for(NodeId node : nodes_modified_) {
                 //std::cout << "  Processing slack " << node << "\n";
 
                 for (EdgeId edge : tg.node_in_edges(node)) {
@@ -142,8 +147,6 @@ class SerialIncrWalker : public TimingGraphWalker {
 
                 visitor.do_slack_traverse_node(tg, dc, node);
             }
-
-            nodes_to_update_slack_.clear();
         }
 
         void do_reset_impl(const TimingGraph& tg, GraphVisitor& visitor) override {
@@ -272,7 +275,7 @@ class SerialIncrWalker : public TimingGraphWalker {
         }
 
         void enqueue_slack_node(const NodeId node) {
-            nodes_to_update_slack_.push_back(node); 
+            nodes_modified_.push_back(node); 
         }
 
         void resize_incr_update_levels(const TimingGraph& tg) {
@@ -308,9 +311,9 @@ class SerialIncrWalker : public TimingGraphWalker {
 
         t_incr_traversal_update incr_arr_update_;
         t_incr_traversal_update incr_req_update_;
-        std::vector<NodeId> nodes_to_update_slack_;
 
         std::vector<EdgeId> invalidated_edges_;
+        std::vector<NodeId> nodes_modified_; //Nodes which have been modified during timing update
 
         size_t num_unconstrained_startpoints_ = 0;
         size_t num_unconstrained_endpoints_ = 0;
