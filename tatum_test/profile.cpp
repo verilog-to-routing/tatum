@@ -10,11 +10,11 @@
 #include "tatum/analyzer_factory.hpp"
 #include "tatum/base/sta_util.hpp"
 
-#ifdef TATUM_STA_PROFILE_VTUNE
+#ifdef TATUM_TEST_PROFILE_VTUNE
 #include "ittnotify.h"
 #endif
 
-#ifdef TATUM_STA_PROFILE_CALLGRIND
+#ifdef TATUM_TEST_PROFILE_CALLGRIND
 #include <valgrind/callgrind.h>
 #endif
 
@@ -28,28 +28,28 @@ std::map<std::string,std::vector<double>> profile(size_t num_iterations, std::sh
 
     std::map<std::string,std::vector<double>> prof_data;
 
-#ifdef TATUM_STA_PROFILE_CALLGRIND
+#ifdef TATUM_TEST_PROFILE_CALLGRIND
     CALLGRIND_START_INSTRUMENTATION;
 #endif
 
     for(size_t i = 0; i < num_iterations; i++) {
         //Analyze
 
-#ifdef TATUM_STA_PROFILE_VTUNE
+#ifdef TATUM_TEST_PROFILE_VTUNE
         __itt_resume();
 #endif
 
-#ifdef TATUM_STA_PROFILE_CALLGRIND
+#ifdef TATUM_TEST_PROFILE_CALLGRIND
         CALLGRIND_TOGGLE_COLLECT;
 #endif
 
         serial_analyzer->update_timing();
 
-#ifdef TATUM_STA_PROFILE_CALLGRIND
+#ifdef TATUM_TEST_PROFILE_CALLGRIND
         CALLGRIND_TOGGLE_COLLECT;
 #endif
 
-#ifdef TATUM_STA_PROFILE_VTUNE
+#ifdef TATUM_TEST_PROFILE_VTUNE
         __itt_pause();
 #endif
 
@@ -62,7 +62,7 @@ std::map<std::string,std::vector<double>> profile(size_t num_iterations, std::sh
         std::cout.flush();
     }
 
-#ifdef TATUM_STA_PROFILE_CALLGRIND
+#ifdef TATUM_TEST_PROFILE_CALLGRIND
     CALLGRIND_STOP_INSTRUMENTATION;
 #endif
 
@@ -93,19 +93,14 @@ bool profile_incr(size_t num_iterations,
             }
         }
     }
-    while (!q.empty()) {
-        tatum::EdgeId clk_edge = q.front();
-        q.pop();
-        clk_edges.insert(clk_edge);
-
-        tatum::NodeId parent_node = tg.edge_src_node(clk_edge);
-        for (tatum::EdgeId parent_clk_edge : tg.node_in_edges(parent_node)) {
-            q.push(parent_clk_edge);
-        }
-    }
 
     struct timespec verify_start;
     struct timespec verify_end;
+
+#ifdef TATUM_TEST_PROFILE_CALLGRIND
+    std::cout << "Callgrind Start Instrumentation\n";
+    CALLGRIND_START_INSTRUMENTATION;
+#endif
 
     for(size_t i = 0; i < num_iterations; i++) {
 
@@ -117,41 +112,41 @@ bool profile_incr(size_t num_iterations,
                 size_t iedge = uniform_distr(rng);
                 tatum::EdgeId edge(iedge);
 
-#if 0
-                //Avoid changing clock edges
-                while(clk_edges.count(edge)) {
-                    size_t iedge2 = uniform_distr(rng);
-                    edge = tatum::EdgeId(iedge2);
-                }
-                TATUM_ASSERT(!clk_edges.count(edge));
-#endif
-
-
                 //Invalidate
                 check_analyzer->invalidate_edge(edge);
                 ref_analyzer->invalidate_edge(edge);
 
                 //Set new delays
-                std::cout << "New Delay: " << edge;
+                //std::cout << "New Delay: " << edge;
                 if (tg.edge_type(edge) == tatum::EdgeType::PRIMITIVE_CLOCK_CAPTURE) {
                     float new_setup = std::max<float>(0, delay_calc.setup_time(tg, edge).value() + normal_distr(rng));
                     float new_hold = std::max<float>(0, delay_calc.hold_time(tg, edge).value() + normal_distr(rng));
-                    std::cout << " setup: " << new_setup << " hold: " << new_hold;
+                    //std::cout << " setup: " << new_setup << " hold: " << new_hold;
                     delay_calc.set_setup_time(tg, edge, tatum::Time(new_setup));
                     delay_calc.set_hold_time(tg, edge, tatum::Time(new_hold));
                 } else {
                     float new_max = std::max<float>(0, delay_calc.max_edge_delay(tg, edge).value() + normal_distr(rng));
                     float new_min = std::max<float>(0, delay_calc.min_edge_delay(tg, edge).value() + normal_distr(rng));
-                    std::cout << " min: " << new_min << " max: " << new_max << " (was: " << delay_calc.min_edge_delay(tg, edge).value() << ", " << delay_calc.max_edge_delay(tg, edge).value() << ")";
+                    //std::cout << " min: " << new_min << " max: " << new_max << " (was: " << delay_calc.min_edge_delay(tg, edge).value() << ", " << delay_calc.max_edge_delay(tg, edge).value() << ")";
                     delay_calc.set_max_edge_delay(tg, edge, tatum::Time(new_max));
                     delay_calc.set_min_edge_delay(tg, edge, tatum::Time(new_min));
                 }
-                std::cout << "\n";
+                //std::cout << "\n";
             }
         }
 
         //Analyze
+
+#ifdef TATUM_TEST_PROFILE_CALLGRIND
+        std::cout << "Toggle Collect (Start)\n";
+        CALLGRIND_TOGGLE_COLLECT;
+#endif
         check_analyzer->update_timing();
+
+#ifdef TATUM_TEST_PROFILE_CALLGRIND
+        CALLGRIND_TOGGLE_COLLECT;
+        std::cout << "Toggle Collect (End)\n";
+#endif
         ref_analyzer->update_timing();
 
         //Verify
@@ -170,7 +165,8 @@ bool profile_incr(size_t num_iterations,
         }
         clock_gettime(CLOCK_MONOTONIC, &verify_end);
 
-        std::cout << "Arr Sec: incr=" << check_analyzer->get_profiling_data("arrival_traversal_sec") << " ref=" << ref_analyzer->get_profiling_data("arrival_traversal_sec") << "\n";
+        std::cout << "Arr: incr=" << check_analyzer->get_profiling_data("arrival_traversal_sec") << " ref=" << ref_analyzer->get_profiling_data("arrival_traversal_sec") << "\n";
+        std::cout << "Req: incr=" << check_analyzer->get_profiling_data("required_traversal_sec") << " ref=" << ref_analyzer->get_profiling_data("required_traversal_sec") << "\n";
         for(auto key : {"arrival_pre_traversal_sec", "arrival_traversal_sec", "required_pre_traversal_sec", "required_traversal_sec", "reset_sec", "update_slack_sec", "analysis_sec"}) {
             prof_data[key].push_back(check_analyzer->get_profiling_data(key));
             prof_data[std::string("ref_") + key].push_back(ref_analyzer->get_profiling_data(key));
@@ -180,6 +176,13 @@ bool profile_incr(size_t num_iterations,
         std::cout << ".";
         std::cout.flush();
     }
+
+#ifdef TATUM_TEST_PROFILE_CALLGRIND
+    std::cout << "Callgrind Dump Stats\n";
+    CALLGRIND_DUMP_STATS;
+    std::cout << "Callgrind Stop Instrumentation\n";
+    CALLGRIND_STOP_INSTRUMENTATION;
+#endif
 
     return true;
 }
