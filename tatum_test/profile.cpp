@@ -146,6 +146,10 @@ bool profile_incr(size_t num_iterations,
 #ifdef TATUM_TEST_PROFILE_CALLGRIND
         CALLGRIND_TOGGLE_COLLECT;
         std::cout << "Toggle Collect (End)\n";
+        std::stringstream ss;
+        ss << "incr_update" << i;
+        std::cout << "Callgrind Dump Stats " << ss.str() << "\n";
+        CALLGRIND_DUMP_STATS_AT(ss.str().c_str());
 #endif
         ref_analyzer->update_timing();
 
@@ -178,8 +182,6 @@ bool profile_incr(size_t num_iterations,
     }
 
 #ifdef TATUM_TEST_PROFILE_CALLGRIND
-    std::cout << "Callgrind Dump Stats\n";
-    CALLGRIND_DUMP_STATS;
     std::cout << "Callgrind Stop Instrumentation\n";
     CALLGRIND_STOP_INSTRUMENTATION;
 #endif
