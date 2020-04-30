@@ -434,7 +434,13 @@ void TimingGraph::force_levelize() {
     level_idx++;
     level_ids_.emplace_back(level_idx);
 
-    logical_outputs_ = std::move(last_level);
+    //Add SINK type nodes in the last level to logical outputs
+    //Note that we only do this for sinks, since non-sink nodes may end up
+    //in the last level (e.g. due to breaking combinational loops)
+    auto is_sink = [this](NodeId id) {
+        return this->node_type(id) == NodeType::SINK;
+    };
+    std::copy_if(last_level.begin(), last_level.end(), std::back_inserter(logical_outputs_), is_sink);
 
     //Build the reverse node-to-level look-up
     node_levels_.resize(nodes().size());
