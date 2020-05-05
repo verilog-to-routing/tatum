@@ -336,7 +336,6 @@ class SerialIncrWalker : public TimingGraphWalker {
                 }
             }
 #endif
-            }
         }
 
         void invalidate_node_for_required_traversal(const NodeId node, const TimingGraph& tg, GraphVisitor& visitor) {
