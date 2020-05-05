@@ -9,9 +9,9 @@ namespace tatum { namespace detail {
 /**
  * A concrete implementation of a SetupTimingAnalyzer.
  *
- * This is a full (i.e. non-incremental) analyzer, which fully
- * re-analyzes the timing graph whenever update_timing_impl() is 
- * called.
+ * This is an incremental analyzer, which will incrementally
+ * update the timing graph based on edges which have been marked
+ * as invalidated.
  */
 template<class GraphWalker=SerialIncrWalker>
 class IncrSetupTimingAnalyzer : public SetupTimingAnalyzer {
