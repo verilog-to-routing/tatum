@@ -37,6 +37,7 @@ class TimingAnalyzer {
         ///Invalidates the specified edge in the timing graph (for incremental updates)
         void invalidate_edge(const EdgeId edge) { invalidate_edge_impl(edge); }
 
+        ///Returns the set of nodes which were modified by the last call to update_timing()
         node_range modified_nodes() const { return modified_nodes_impl(); }
 
         double get_profiling_data(std::string key) const { return get_profiling_data_impl(key); }
