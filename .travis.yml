@@ -1,6 +1,5 @@
 language: cpp
 dist: trusty #Ubuntu 14.04 by default
-sudo: false #Use container based infrastructure
 
 matrix:
     include:
