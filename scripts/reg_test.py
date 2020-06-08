@@ -15,7 +15,7 @@ TATUM_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 tests = {
     'basic': [os.path.join(TATUM_ROOT, 'test', 'basic')],
-    'mcnc20': ["http://www.eecg.utoronto.ca/~kmurray/tatum/golden_results/mcnc20_tatum_golden.tar.gz"],
+    'mcnc20': ["http://www.eecg.utoronto.ca/~kmurray/tatum/golden_results/mcnc20_tatum_golden.tar"],
     'vtr': ["http://www.eecg.utoronto.ca/~kmurray/tatum/golden_results/vtr_tatum_golden.tar"],
     'titan_other': ["http://www.eecg.utoronto.ca/~kmurray/tatum/golden_results/titan_other_tatum_golden.tar"],
     #'titan': [
