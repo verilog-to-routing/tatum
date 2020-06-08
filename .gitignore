@@ -56,5 +56,6 @@ callgrind*
 #Test files
 test/mcnc20
 test/vtr
+test/titan_other
 *.tar
 *.tar.gz

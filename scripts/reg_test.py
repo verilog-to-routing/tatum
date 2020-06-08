@@ -18,9 +18,7 @@ tests = {
     'basic': [os.path.join(TATUM_ROOT, 'test', 'basic')],
     'mcnc20': ["http://www.eecg.utoronto.ca/~kmurray/tatum/golden_results/mcnc20_tatum_golden.tar.gz"],
     'vtr': ["http://www.eecg.utoronto.ca/~kmurray/tatum/golden_results/vtr_tatum_golden.tar"],
-    #'titan_other': [
-
-        #],
+    'titan_other': ["http://www.eecg.utoronto.ca/~kmurray/tatum/golden_results/titan_other_tatum_golden.tar"],
     #'titan': [
 
         #],
