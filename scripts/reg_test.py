@@ -10,7 +10,6 @@ import urllib.request
 import math
 import subprocess
 import shutil
-import pathlib
 TATUM_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -171,7 +170,6 @@ def download_extract_test(args, test_name, test_url):
         get_url(args, test_url, benchmark_tar)
 
         test_files_dir = os.path.join(TATUM_ROOT, "test")
-        pathlib.Path(test_files_dir).mkdir(parents=True, exist_ok=True)
 
         print("Extracting test files to {}".format(test_files_dir))
         with tarfile.TarFile.open(benchmark_tar, mode="r|*") as tar_file:
