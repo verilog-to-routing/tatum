@@ -10,6 +10,7 @@ import urllib.request
 import math
 import subprocess
 import shutil
+import lzma
 
 TATUM_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -17,6 +18,7 @@ TATUM_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 tests = {
     'basic': [os.path.join(TATUM_ROOT, 'test', 'basic')],
     'mcnc20': ["http://www.eecg.utoronto.ca/~kmurray/tatum/golden_results/mcnc20_tatum_golden.tar.gz"],
+    'vtr': ["http://www.eecg.utoronto.ca/~kmurray/tatum/golden_results/vtr_tatum_golden.tar"],
     #'vtr': [
 
         #],
@@ -123,16 +125,28 @@ def run_single_test(args, work_dir, test_file):
     if args.tatum_nworkers:
         cmd += ['--num_workers', str(args.tatum_nworkers)]
 
-    cmd += [test_file]
 
     print(" {}".format(test_file), end='')
 
-    if args.debug:
-        print()
-        print(" cmd: {} log: {}".format(' '.join(cmd), log))
+    if test_file.endswith(".xz"):
 
-    with open(log, 'w') as outfile:
-        retcode = subprocess.call(cmd, stdout=outfile, stderr=outfile)
+        cmd += ["-"] #Read from stdin
+
+        cmd_str = "xzcat {} | {} > {}".format(test_file, " ".join(cmd), log)
+
+        if args.debug:
+            print(cmd_str)
+
+        retcode = os.system(cmd_str)
+    else:
+        cmd += [test_file] #Read file directly
+
+        if args.debug:
+            print()
+            print(" cmd: {} log: {}".format(' '.join(cmd), log))
+
+        with open(log, 'w') as outfile:
+            retcode = subprocess.call(cmd, stdout=outfile, stderr=outfile)
 
     if retcode == 0:
         print(" PASSED")
@@ -151,7 +165,7 @@ def download_extract_test(args, work_dir, test_url):
 
     test_files = []
 
-    if '.tar' in test_url:
+    if 'tar' in test_url:
         #A tar file of benchmark files
         benchmark_tar = os.path.join(work_dir, os.path.basename(test_url))
     
@@ -160,8 +174,8 @@ def download_extract_test(args, work_dir, test_url):
         with tarfile.TarFile.open(benchmark_tar, mode="r|*") as tar_file:
             tar_file.extractall(path=work_dir)
 
-        test_files += glob.glob("{}/*.tatum".format(work_dir))
-        test_files += glob.glob("{}/*/*.tatum".format(work_dir))
+        test_files += glob.glob("{}/*.tatum.*".format(work_dir))
+        test_files += glob.glob("{}/*/*.tatum.*".format(work_dir))
     else:
         #A directory of benchmark files
 
@@ -191,7 +205,7 @@ def download_progress_callback(block_num, block_size, expected_size):
     progress_increment = int(math.ceil(total_blocks / 100))
 
     if block_num % progress_increment == 0:
-        print(".", end='', flush=False)
+        print(".", end='', flush=True)
     if block_num*block_size >= expected_size:
         print("")
 
