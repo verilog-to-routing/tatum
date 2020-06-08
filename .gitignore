@@ -52,3 +52,9 @@ callgrind*
 *.rpt
 *.dot
 *.echo
+
+#Test files
+test/mcnc20
+test/vtr
+*.tar
+*.tar.gz
