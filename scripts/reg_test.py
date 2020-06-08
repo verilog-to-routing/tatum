@@ -10,8 +10,7 @@ import urllib.request
 import math
 import subprocess
 import shutil
-import lzma
-
+import pathlib
 TATUM_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -19,9 +18,6 @@ tests = {
     'basic': [os.path.join(TATUM_ROOT, 'test', 'basic')],
     'mcnc20': ["http://www.eecg.utoronto.ca/~kmurray/tatum/golden_results/mcnc20_tatum_golden.tar.gz"],
     'vtr': ["http://www.eecg.utoronto.ca/~kmurray/tatum/golden_results/vtr_tatum_golden.tar"],
-    #'vtr': [
-
-        #],
     #'titan_other': [
 
         #],
@@ -70,6 +66,11 @@ def parse_args():
                         default=False,
                         action='store_true')
 
+    parser.add_argument("-f", "--force",
+                        help="Force download even if test files already found",
+                        default=False,
+                        action='store_true')
+
     return parser.parse_args()
 
 def main():
@@ -85,7 +86,7 @@ def main():
         for test_url in tests[test_name]:
             work_dir = tempfile.mkdtemp(prefix="tatum_reg_test")
             try:
-                test_files = download_extract_test(args, work_dir, test_url)
+                test_files = download_extract_test(args, test_name, test_url)
                 num_failures += run_test(args, work_dir, test_name, test_files)
             finally:
                 if not args.debug:
@@ -161,30 +162,36 @@ def run_single_test(args, work_dir, test_file):
 
     return num_failed
 
-def download_extract_test(args, work_dir, test_url):
+def download_extract_test(args, test_name, test_url):
 
     test_files = []
 
     if 'tar' in test_url:
         #A tar file of benchmark files
-        benchmark_tar = os.path.join(work_dir, os.path.basename(test_url))
+        benchmark_tar = os.path.join(os.path.join(TATUM_ROOT, os.path.basename(test_url)))
     
-        get_url(test_url, benchmark_tar)
+        get_url(args, test_url, benchmark_tar)
 
+        test_files_dir = os.path.join(TATUM_ROOT, "test")
+        pathlib.Path(test_files_dir).mkdir(parents=True, exist_ok=True)
+
+        print("Extracting test files to {}".format(test_files_dir))
         with tarfile.TarFile.open(benchmark_tar, mode="r|*") as tar_file:
-            tar_file.extractall(path=work_dir)
+            tar_file.extractall(path=test_files_dir)
 
-        test_files += glob.glob("{}/*.tatum.*".format(work_dir))
-        test_files += glob.glob("{}/*/*.tatum.*".format(work_dir))
+        test_files += glob.glob("{}/{}/*.tatum*".format(test_files_dir, test_name))
     else:
         #A directory of benchmark files
 
         test_files += glob.glob("{}/*.tatum".format(test_url))
-        test_files += glob.glob("{}/*/*.tatum".format(test_url))
 
     return test_files
 
-def get_url(url, filename):
+def get_url(args, url, filename):
+    if not args.force and os.path.exists(filename):
+        print("Found existing {}, skipping download".format(filename))
+        return
+
     if '://' in url:
         download_url(url, filename)
     else:
