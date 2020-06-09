@@ -18,9 +18,7 @@ tests = {
     'mcnc20': ["http://www.eecg.utoronto.ca/~kmurray/tatum/golden_results/mcnc20_tatum_golden.tar"],
     'vtr': ["http://www.eecg.utoronto.ca/~kmurray/tatum/golden_results/vtr_tatum_golden.tar"],
     'titan_other': ["http://www.eecg.utoronto.ca/~kmurray/tatum/golden_results/titan_other_tatum_golden.tar"],
-    #'titan': [
-
-        #],
+    'titan23': ["http://www.eecg.utoronto.ca/~kmurray/tatum/golden_results/titan23_tatum_golden.tar"],
     #'tau15_unit_delay': [
 
         #],
