@@ -10,6 +10,7 @@ import urllib.request
 import math
 import subprocess
 import shutil
+import hashlib
 TATUM_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -165,13 +166,18 @@ def download_extract_test(args, test_name, test_url):
         #A tar file of benchmark files
         benchmark_tar = os.path.join(os.path.join(TATUM_ROOT, os.path.basename(test_url)))
     
-        get_url(args, test_url, benchmark_tar)
+        new_tar = get_url(args, test_url, benchmark_tar)
 
         test_files_dir = os.path.join(TATUM_ROOT, "test")
 
-        print("Extracting test files to {}".format(test_files_dir))
-        with tarfile.TarFile.open(benchmark_tar, mode="r|*") as tar_file:
-            tar_file.extractall(path=test_files_dir)
+        if new_tar or args.force:
+
+            print("Extracting test files to {}".format(test_files_dir))
+            with tarfile.TarFile.open(benchmark_tar, mode="r|*") as tar_file:
+                tar_file.extractall(path=test_files_dir)
+        else:
+            print("Skipping file extraction".format(test_files_dir))
+
 
         test_files += glob.glob("{}/{}/*.tatum*".format(test_files_dir, test_name))
     else:
@@ -183,13 +189,21 @@ def download_extract_test(args, test_name, test_url):
 
 def get_url(args, url, filename):
     if not args.force and os.path.exists(filename):
-        print("Found existing {}, skipping download".format(filename))
-        return
+        print("Found existing file {}, checking if hash matches".format(filename))
+        file_matches = check_hash_match(args, url, filename)
+
+        if file_matches:
+            print("Existing file {} matches, skipping download".format(filename))
+            return False
+        else:
+            print("Existing file {} contents differ, re-downloading".format(filename))
 
     if '://' in url:
         download_url(url, filename)
     else:
         shutl.copytree(url, filename)
+
+    return True
 
 def download_url(url, filename):
     """
@@ -209,6 +223,36 @@ def download_progress_callback(block_num, block_size, expected_size):
         print(".", end='', flush=True)
     if block_num*block_size >= expected_size:
         print("")
+
+def check_hash_match(args, url, filename):
+    checksum_url = url + ".sha256"
+    try:
+        web_hash = urllib.request.urlopen(checksum_url).read()
+    except urllib.error.HTTPError as e:
+        print("Failed to find expected SHA256 checksum at {} (reason '{}')".format(checksum_url, e))
+        return False
+
+    local_hash = hash_file(filename)
+
+    web_digest_bytes = web_hash.split()[0]
+    local_digest_bytes = str.encode(local_hash)
+
+    if web_digest_bytes == local_digest_bytes:
+        return True
+
+    return False
+
+def hash_file(filepath):
+    BUF_SIZE = 65536
+    sha256 = hashlib.sha256()
+    with open(filepath, "rb") as f:
+        while True:
+            data = f.read(BUF_SIZE)
+            if not data:
+                break
+            sha256.update(data)
+
+    return sha256.hexdigest()
 
 if __name__ == "__main__":
     main()
