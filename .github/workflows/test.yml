@@ -26,10 +26,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Get number of CPU cores
-        uses: SimenB/github-actions-cpu-cores@v2
-        id: cpu-cores
-
       - name: 'Install Dependencies'
         run: sudo apt update && sudo apt install -y libtbb-dev
 
@@ -37,8 +33,8 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -DTATUM_EXECUTION_ENGINE=${{ matrix.engine }}
-          make -j${{ steps.cpu-cores.outputs.count}}
+          cmake .. -DTATUM_EXECUTION_ENGINE=${{ matrix.engine }} -DCMAKE_COMPILE_WARNING_AS_ERROR=on
+          make -j2
 
       - name: 'Run Regression Tests'
         run: ./scripts/reg_test.py --tatum_test_exec build/tatum_test/tatum_test --tatum_nworkers 2 ${{ matrix.test }}
