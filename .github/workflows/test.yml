@@ -20,13 +20,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        engine: ["auto", "serial", "tbb"]
+        engine: ["serial", "tbb"]
         test: ["basic", "mcnc20", "vtr", "titan_other"]
     name: 'R: Test Tatum ${{ matrix.engine }} on ${{ matrix.test }}'
     steps:
       - uses: actions/checkout@v6
 
       - name: 'Install Dependencies'
+        if: ${{ matrix.engine == 'tbb' }}
         run: sudo apt update && sudo apt install -y libtbb-dev
 
       - name: 'Build Tatum'
