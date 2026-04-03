@@ -33,7 +33,8 @@
 #include "profile.hpp"
 
 #if defined(TATUM_USE_TBB) 
-# include <tbb/task_scheduler_init.h>
+# include <tbb/global_control.h>
+# include <tbb/info.h>
 #endif
 typedef std::chrono::duration<double> dsec;
 typedef std::chrono::high_resolution_clock Clock;
@@ -310,9 +311,10 @@ int main(int argc, char** argv) {
 #if defined(TATUM_USE_TBB) 
     size_t actual_num_workers = args.num_workers;
     if (actual_num_workers == 0) {
-        actual_num_workers = tbb::task_scheduler_init::default_num_threads();
+        actual_num_workers = oneapi::tbb::info::default_concurrency();
+    } else {
+        oneapi::tbb::global_control global_limit(oneapi::tbb::global_control::max_allowed_parallelism, actual_num_workers);
     }
-    auto tbb_scheduler = std::make_unique<tbb::task_scheduler_init>(actual_num_workers);
     cout << "Tatum executing with up to " << actual_num_workers << " workers via TBB\n";
 #else //Serial
     cout << "Tatum built with only serial execution support, ignoring --num_workers != 1\n";
