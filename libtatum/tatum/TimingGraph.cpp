@@ -800,7 +800,7 @@ bool TimingGraph::validate_structure() const {
             NodeId src_node = kv.first.first;
             NodeId sink_node = kv.first.second;
             std::stringstream ss;
-            ss << "Dulplicate timing edges found " << src_node << " -> " << sink_node
+            ss << "Duplicate timing edges found " << src_node << " -> " << sink_node
                << ", duplicate edges: ";
             for(EdgeId edge : edge_ids) {
                 ss << edge << " ";
