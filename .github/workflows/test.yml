@@ -1,0 +1,44 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch:
+  schedule:
+  - cron: '0 0 * * 0' # Weekly on Sundays
+
+# If this workflow is already running on a PR or branch, cancel it.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  RegressionTests:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: ["auto", "serial", "tbb"]
+        test: ["basic", "mcnc20", "vtr", "titan_other"]
+    name: 'R: Test Tatum ${{ matrix.engine }} on ${{ matrix.test }}'
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Get number of CPU cores
+        uses: SimenB/github-actions-cpu-cores@v2
+        id: cpu-cores
+
+      - name: 'Install Dependencies'
+        run: sudo apt update && sudo apt install -y libtbb-dev
+
+      - name: 'Build Tatum'
+        run: |
+          mkdir build
+          cd build
+          cmake .. -DTATUM_EXECUTION_ENGINE=${{ matrix.engine }}
+          make -j${{ steps.cpu-cores.outputs.count}}
+
+      - name: 'Run Regression Tests'
+        run: ./scripts/reg_test.py --tatum_test_exec build/tatum_test/tatum_test --tatum_nworkers 2 ${{ matrix.test }}
