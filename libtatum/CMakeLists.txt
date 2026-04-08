@@ -9,7 +9,7 @@ project("libtatum")
 set(TBB_SUPPORTED FALSE)
 
 #Check for Thread Building Blocks support
-find_package(TBB)
+find_package(TBB QUIET)
 
 if (TBB_FOUND)
     set(TBB_SUPPORTED TRUE)
